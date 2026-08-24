@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckIcon, WarningIcon } from "@/components/icons";
+import { formatRank, formatScore } from "@/lib/format";
 import { fill, type Dictionary, type Lang } from "@/lib/i18n";
 
 /**
@@ -146,71 +147,122 @@ function Steps({ t, stage }: { t: Dictionary; stage: Stage }) {
   );
 }
 
+interface LadderRow {
+  rank: number;
+  playerName: string;
+  nameKey: string;
+  score: number;
+}
+
+/** Cuántas coincidencias se listan. Más que esto es ruido, no ayuda a elegir. */
+const MAX_MATCHES = 8;
+
+/**
+ * Selección de cuenta desde el ladder, no escritura del nombre.
+ *
+ * Antes había que tipear el nombre exacto. Sobraba —el nombre que se guarda
+ * sale siempre de la API, no de lo que escriba la persona— y además excluía a
+ * quien no puede escribirlo: hoy mismo hay varios nombres coreanos en el top
+ * 10, imposibles de tipear desde un teclado latino.
+ *
+ * Ahora el texto solo filtra, y la identidad se elige tocando una fila. De paso
+ * se ve el puesto y los SP, que confirman que es la cuenta correcta antes de
+ * seguir.
+ */
 function FindStep({ t, onFound }: { t: Dictionary; onFound: (f: Found) => void }) {
-  const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
+  const [rows, setRows] = useState<LadderRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
-  /**
-   * No hay endpoint de "buscarme": el ladder público ya está disponible, así
-   * que se resuelve contra `/api/leaderboard` en vez de agregar una ruta que
-   * solo sirva para esto.
-   */
-  async function find(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
+  // El ladder público ya está disponible: no hace falta un endpoint de
+  // "buscarme", alcanza con traerlo una vez y filtrar en el cliente.
+  useEffect(() => {
+    let cancelled = false;
 
-    try {
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? t.link.connError);
-        return;
-      }
+    fetch("/api/leaderboard")
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (cancelled) return;
+        if (!ok) return setError(data.error ?? t.link.connError);
+        setRows(data.rows as LadderRow[]);
+      })
+      .catch(() => {
+        if (!cancelled) setError(t.link.connError);
+      });
 
-      const key = name.trim().normalize("NFC").replace(/\s+/g, " ").toLowerCase();
-      const matches = (data.rows as { playerName: string; nameKey: string }[]).filter(
-        (r) => r.nameKey === key
-      );
+    return () => {
+      cancelled = true;
+    };
+  }, [t.link.connError]);
 
-      if (matches.length === 0) {
-        setError(fill(t.table.noResults, { q: name.trim(), total: data.total }));
-        return;
-      }
+  const matches = useMemo(() => {
+    const q = query.trim().normalize("NFC").replace(/\s+/g, " ").toLowerCase();
+    if (!q || !rows) return [];
+    return rows.filter((r) => r.nameKey.includes(q)).slice(0, MAX_MATCHES);
+  }, [query, rows]);
 
-      onFound({ playerName: matches[0].playerName, ambiguous: matches.length > 1 });
-    } catch {
-      setError(t.link.connError);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const searching = query.trim().length > 0;
 
   return (
-    <form onSubmit={find} className="rounded-xl border border-line bg-surface p-4 sm:p-6">
+    <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
       <h2 className="mb-1 text-[15px] font-semibold">{t.link.findTitle}</h2>
       <p className="mb-4 text-[13px] text-ink-3">{t.link.findSubtitle}</p>
 
-      <div className="flex gap-2.5">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t.link.findPlaceholder}
-          maxLength={20}
-          className="min-w-0 flex-1 rounded-lg border border-line-strong bg-bg px-3.5 py-2.5 text-[14px] outline-none focus:border-accent"
-        />
-        <button
-          type="submit"
-          disabled={busy || !name.trim()}
-          className="shrink-0 rounded-lg bg-accent px-5 py-2.5 text-[14px] font-semibold text-bg transition-colors hover:bg-accent-bright disabled:opacity-40"
-        >
-          {busy ? "…" : t.link.findButton}
-        </button>
-      </div>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t.link.findPlaceholder}
+        disabled={!rows && !error}
+        className="w-full rounded-lg border border-line-strong bg-bg px-3.5 py-2.5 text-[14px] outline-none focus:border-accent disabled:opacity-50"
+      />
+
+      {!rows && !error && (
+        <p className="mt-3 text-[12.5px] text-ink-4">{t.link.findLoading}</p>
+      )}
+
+      {rows && !searching && (
+        <p className="mt-3 text-[12.5px] text-ink-4">{t.link.findHint}</p>
+      )}
+
+      {searching && matches.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1.5">
+          {matches.map((row) => (
+            <li key={`${row.rank}-${row.nameKey}`}>
+              <button
+                type="button"
+                onClick={() =>
+                  onFound({
+                    playerName: row.playerName,
+                    // Homónimo: hay otra fila con el mismo nameKey.
+                    ambiguous:
+                      rows!.filter((r) => r.nameKey === row.nameKey).length > 1,
+                  })
+                }
+                className="flex w-full items-center gap-3 rounded-lg border border-line-strong bg-bg px-3.5 py-2.5 text-left transition-colors hover:border-accent"
+              >
+                <span className="num w-9 shrink-0 text-[13px] text-ink-4">
+                  {formatRank(row.rank)}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
+                  {row.playerName}
+                </span>
+                <span className="num shrink-0 text-[13px] text-ink-3">
+                  {formatScore(row.score)}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {searching && rows && matches.length === 0 && (
+        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-4">
+          {fill(t.table.noResults, { q: query.trim(), total: formatScore(rows.length) })}
+        </p>
+      )}
 
       {error && <ErrorNote>{error}</ErrorNote>}
-    </form>
+    </section>
   );
 }
 
