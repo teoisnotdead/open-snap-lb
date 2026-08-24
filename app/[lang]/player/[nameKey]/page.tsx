@@ -192,7 +192,16 @@ export default async function PlayerPage({
           <Stat label={t.player.daysTracked} value={daysTracked || undefined} plain />
         </section>
 
-        {player ? (
+        {/*
+          La condición mira si HAY datos, no si el jugador está en `players`.
+          Antes miraba solo lo segundo, apoyándose en que sin doc de jugador no
+          podía haber historial — cierto con el flujo viejo, falso ahora: los
+          snapshots sobreviven al documento (una petición rechazada después de
+          aprobada, un borrado a pedido). Con la condición vieja, esas
+          mediciones reales quedaban invisibles y la página decía "no tenemos
+          datos" teniéndolos.
+        */}
+        {player || points.length > 0 ? (
           <ProgressChart history={points} playerName={displayName} lang={lang} t={t} />
         ) : (
           <NotLinked lang={lang} t={t} />
