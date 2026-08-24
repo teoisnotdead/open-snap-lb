@@ -223,7 +223,13 @@ disponible públicamente hoy.
 
 ---
 
-## 6. Implicaciones para las Fases 1 y 2 — necesito tu decisión
+## 6. Implicaciones para las Fases 1 y 2 — RESUELTO
+
+> **DECIDIDO (2026-08-23): opción (A).** La identidad es el `playerName`
+> normalizado (`nameKey`). No usamos los workers de terceros: construimos solo
+> con lo que devuelve la API oficial. Además se descartó `region` por completo
+> — ya no hay regiones en el juego, y la API ignora el parámetro igual.
+> El detalle del modelo resultante está en `data-model.md`.
 
 El plan usa `uid` como clave primaria de `players` y como input de
 `/api/verify/*`. **Ese `uid` no existe en el endpoint oficial**, así que hay

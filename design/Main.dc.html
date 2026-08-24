@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #08080B; }
+    a { color: #F0B429; text-decoration: none; }
+    a:hover { color: #FFCB55; }
+    .lb-row:hover { background: #101016; }
+    .num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1080px; background: #08080B; color: #ECECF2; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <!-- ============ TOP BAR ============ -->
+  <header style="height: 68px; flex-shrink: 0; border-bottom: 1px solid #1B1B24; display: flex; align-items: center; justify-content: space-between; padding: 0 32px;">
+    <div style="display: flex; align-items: center; gap: 40px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+          <path d="M11 1.5 L20.5 11 L11 20.5 L1.5 11 Z" stroke="{{accent}}" stroke-width="1.8" stroke-linejoin="round"></path>
+          <path d="M11 6.5 L15.5 11 L11 15.5 L6.5 11 Z" fill="{{accent}}"></path>
+        </svg>
+        <span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.02em;">OPENSNAP</span>
+        <span class="num" style="font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: #5E5E6C; border: 1px solid #26262F; border-radius: 3px; padding: 2px 5px;">LB</span>
+      </div>
+      <nav style="display: flex; align-items: center; gap: 28px; font-size: 14px;">
+        <span style="font-weight: 600; color: #ECECF2; padding-bottom: 3px; border-bottom: 2px solid {{accent}};">Leaderboard</span>
+        <span style="color: #9797A6;">Vincular cuenta</span>
+        <span style="color: #9797A6;">Cómo funciona</span>
+      </nav>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #5CD9A6; box-shadow: 0 0 0 3px rgba(92,217,166,0.14);"></span>
+        <span style="font-size: 12.5px; color: #9797A6;">Sincronizado hace <span class="num" style="color: #ECECF2;">12</span> min</span>
+      </div>
+      <div class="num" style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: #9797A6; border: 1px solid #26262F; border-radius: 4px; padding: 5px 10px;">TEMPORADA 2026-08</div>
+    </div>
+  </header>
+
+  <!-- ============ STAT STRIP ============ -->
+  <section style="flex-shrink: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #1B1B24; border-bottom: 1px solid #1B1B24;">
+    <div style="background: #08080B; padding: 20px 32px;">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C; margin-bottom: 7px;">JUGADORES EN EL LADDER</div>
+      <div class="num" style="font-size: 26px; font-weight: 500; letter-spacing: -0.02em;">50 254</div>
+    </div>
+    <div style="background: #08080B; padding: 20px 24px;">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C; margin-bottom: 7px;">VISIBLES EN TABLA</div>
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <div class="num" style="font-size: 26px; font-weight: 500; letter-spacing: -0.02em;">1 000</div>
+        <span style="font-size: 11.5px; color: #5E5E6C;">tope de la API</span>
+      </div>
+    </div>
+    <div style="background: #08080B; padding: 20px 24px;">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C; margin-bottom: 7px;">SP MÁXIMO</div>
+      <div class="num" style="font-size: 26px; font-weight: 500; letter-spacing: -0.02em;">10 169</div>
+    </div>
+    <div style="background: #08080B; padding: 20px 24px;">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C; margin-bottom: 7px;">CUENTAS VERIFICADAS</div>
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <div class="num" style="font-size: 26px; font-weight: 500; letter-spacing: -0.02em;">38</div>
+        <span style="font-size: 11.5px; color: {{accent}};">+4 esta semana</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SEARCH + FILTERS ============ -->
+  <section style="flex-shrink: 0; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+    <div style="display: flex; align-items: center; gap: 14px; flex-grow: 1;">
+      <div style="display: flex; align-items: center; gap: 10px; background: #101015; border: 1px solid #26262F; border-radius: 8px; padding: 0 14px; height: 42px; width: 380px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7.2" cy="7.2" r="4.7" stroke="#5E5E6C" stroke-width="1.6"></circle>
+          <path d="M10.8 10.8 L14 14" stroke="#5E5E6C" stroke-width="1.6" stroke-linecap="round"></path>
+        </svg>
+        <span style="font-size: 14px; color: #5E5E6C;">Buscar jugador…</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 7px;">
+        <span style="font-size: 13px; font-weight: 600; color: #08080B; background: #ECECF2; border-radius: 6px; padding: 8px 14px;">Todos</span>
+        <span style="font-size: 13px; color: #9797A6; border: 1px solid #26262F; border-radius: 6px; padding: 8px 14px;">Creadores</span>
+        <span style="font-size: 13px; color: #9797A6; border: 1px solid #26262F; border-radius: 6px; padding: 8px 14px;">Verificados</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <span class="num" style="font-size: 12.5px; color: #5E5E6C;">1 000 resultados</span>
+      <span style="font-size: 13.5px; font-weight: 600; color: #08080B; background: {{accent}}; border-radius: 7px; padding: 10px 18px;">Vinculá tu cuenta</span>
+    </div>
+  </section>
+
+  <!-- ============ TABLE ============ -->
+  <section style="flex-grow: 1; padding: 0 32px; min-height: 0;">
+    <div style="border: 1px solid #1B1B24; border-radius: 10px; overflow: hidden; background: #0B0B0F;">
+
+      <div style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 40px; background: #101015; border-bottom: 1px solid #1B1B24; font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C;">
+        <div>RANK</div>
+        <div>JUGADOR</div>
+        <div style="text-align: right;">SNAP POINTS</div>
+        <div style="text-align: right;">Δ 24 H</div>
+        <div style="text-align: right;">CANALES</div>
+      </div>
+
+      <!-- rank 1 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 17px; font-weight: 600; color: {{accent}};">01</div>
+        <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+          <span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Cerebro = No Hands</span>
+        </div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">10 169</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+37</div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 2.5h13v9.5l-3.7 3.7h-3l-2.3 2.3v-2.3H4z" stroke="#9797A6" stroke-width="1.5" stroke-linejoin="round"></path><path d="M9.2 6.2v4M13.2 6.2v4" stroke="#9797A6" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        </div>
+      </div>
+
+      <!-- rank 2 verified -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 17px; font-weight: 600; color: #C8C8D4;">02</div>
+        <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+          <span style="font-size: 15px; font-weight: 500;">Sizer</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; color: {{accent}}; border: 1px solid rgba(240,180,41,0.32); border-radius: 4px; padding: 2px 6px 2px 4px;">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.6" stroke="{{accent}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            VERIFICADO
+          </span>
+        </div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 987</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+112</div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 2.5h13v9.5l-3.7 3.7h-3l-2.3 2.3v-2.3H4z" stroke="#ECECF2" stroke-width="1.5" stroke-linejoin="round"></path><path d="M9.2 6.2v4M13.2 6.2v4" stroke="#ECECF2" stroke-width="1.5" stroke-linecap="round"></path></svg>
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1.8" y="4.5" width="16.4" height="11" rx="3.4" stroke="#ECECF2" stroke-width="1.5"></rect><path d="M8.4 7.9 L12.8 10 L8.4 12.1 Z" fill="#ECECF2"></path></svg>
+        </div>
+      </div>
+
+      <!-- rank 3 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 17px; font-weight: 600; color: #C8C8D4;">03</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">아이엠어닥터</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 753</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #FF7B6B;">−24</div>
+        <div></div>
+      </div>
+
+      <!-- 4 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">04</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">Holic</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 700</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+8</div>
+        <div></div>
+      </div>
+
+      <!-- 5 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">05</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">Butt</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 667</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #FF7B6B;">−51</div>
+        <div></div>
+      </div>
+
+      <!-- 6 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">06</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">Black Coffee</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 652</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+64</div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1.8" y="4.5" width="16.4" height="11" rx="3.4" stroke="#9797A6" stroke-width="1.5"></rect><path d="M8.4 7.9 L12.8 10 L8.4 12.1 Z" fill="#9797A6"></path></svg>
+        </div>
+      </div>
+
+      <!-- 7 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">07</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">HELIXRD04</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 587</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+19</div>
+        <div></div>
+      </div>
+
+      <!-- 8 verified -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">08</div>
+        <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+          <span style="font-size: 15px; font-weight: 500;">Derek</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; color: {{accent}}; border: 1px solid rgba(240,180,41,0.32); border-radius: 4px; padding: 2px 6px 2px 4px;">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.6" stroke="{{accent}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            VERIFICADO
+          </span>
+        </div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 579</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #FF7B6B;">−33</div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 2.5h13v9.5l-3.7 3.7h-3l-2.3 2.3v-2.3H4z" stroke="#ECECF2" stroke-width="1.5" stroke-linejoin="round"></path><path d="M9.2 6.2v4M13.2 6.2v4" stroke="#ECECF2" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        </div>
+      </div>
+
+      <!-- 9 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">09</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">코난</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 478</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+71</div>
+        <div></div>
+      </div>
+
+      <!-- 10 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">10</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">ACP</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 435</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+5</div>
+        <div></div>
+      </div>
+
+      <!-- 11 -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px; border-bottom: 1px solid #14141A;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">11</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">kgp_cefal</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 422</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #FF7B6B;">−12</div>
+        <div></div>
+      </div>
+
+      <!-- 12 untapped -->
+      <div class="lb-row" style="display: grid; grid-template-columns: 78px minmax(0, 1fr) 148px 122px 128px; gap: 16px; align-items: center; padding: 0 20px; height: 56px;">
+        <div class="num" style="font-size: 15px; color: #9797A6;">12</div>
+        <div style="min-width: 0;"><span style="font-size: 15px; font-weight: 500;">Brazilian Arishem</span></div>
+        <div class="num" style="text-align: right; font-size: 15px; font-weight: 500;">9 358</div>
+        <div class="num" style="text-align: right; font-size: 13.5px; color: #5CD9A6;">+88</div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 1.9 L17.4 6.1 v7.8 L10 18.1 L2.6 13.9 V6.1 Z" stroke="#9797A6" stroke-width="1.5" stroke-linejoin="round"></path><path d="M6.9 11.8 v-2.4 M10 11.8 V7.7 M13.1 11.8 v-3.3" stroke="#9797A6" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer style="flex-shrink: 0; padding: 18px 32px 22px; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #5E5E6C;">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1.9 L13 12.4 H1 Z" stroke="#5E5E6C" stroke-width="1.4" stroke-linejoin="round"></path><path d="M7 6v2.6" stroke="#5E5E6C" stroke-width="1.4" stroke-linecap="round"></path><circle cx="7" cy="10.4" r="0.7" fill="#5E5E6C"></circle></svg>
+      Cuando dos jugadores comparten nombre solo mostramos los links si podemos desambiguar por historial.
+    </div>
+    <div style="font-size: 12px; color: #5E5E6C;">
+      Proyecto no oficial · datos del leaderboard público de Marvel Snap · sin afiliación con Second Dinner ni Nuverse
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F0B429","options":["#F0B429","#B4F04A","#5AD7F0","#F06AA8"],"section":"Tema"},"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#F0B429' };
+  }
+}
+</script>
+</body>
+</html>

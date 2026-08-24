@@ -1,0 +1,76 @@
+name: Sync leaderboard snapshots
+
+# Vercel Cron en plan Hobby solo permite UNA corrida por día, que es inútil para
+# una serie temporal. Así que el disparador es este workflow, que le pega a una
+# API route protegida con un bearer token.
+
+on:
+  schedule:
+    # Cada hora, en el minuto 7. NO en el minuto 0 a propósito: GitHub encola
+    # todos los cron de la hora en punto y los retrasa bastante cuando hay
+    # carga. Un minuto impar sale antes.
+    - cron: "7 * * * *"
+
+  # Para dispararlo a mano desde la pestaña Actions.
+  workflow_dispatch:
+
+# Si una corrida se cuelga, la siguiente espera en vez de solaparse. El sync es
+# idempotente dentro de la misma hora, pero dos a la vez no aportan nada.
+concurrency:
+  group: leaderboard-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger sync endpoint
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Faltan los secrets APP_URL o CRON_SECRET. Ver el README."
+            exit 1
+          fi
+
+          # Sin barra final, venga como venga el secret.
+          url="${APP_URL%/}/api/cron/sync"
+          body="$(mktemp)"
+
+          # --retry cubre el arranque en frío de una función serverless y algún
+          # 5xx transitorio; no reintenta un 401, que sería inútil.
+          code="$(curl -sS -o "$body" -w '%{http_code}' \
+            --max-time 120 \
+            --retry 3 --retry-delay 10 --retry-connrefused \
+            -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H 'content-type: application/json' \
+            "$url")"
+
+          echo "HTTP $code"
+          cat "$body"; echo
+
+          if [ "$code" != "200" ]; then
+            echo "::error::El sync devolvió HTTP $code"
+            exit 1
+          fi
+
+          # Resumen legible en la pantalla de la corrida, para no tener que
+          # abrir los logs solo para ver cuántos snapshots entraron.
+          {
+            echo "### Sync OK"
+            echo ""
+            echo "| Métrica | Valor |"
+            echo "|---|---|"
+            jq -r '
+              to_entries
+              | map(select(.value | type != "boolean"))
+              | .[]
+              | "| \(.key) | \(.value) |"
+            ' "$body" 2>/dev/null || echo "| respuesta | $(cat "$body") |"
+          } >> "$GITHUB_STEP_SUMMARY"

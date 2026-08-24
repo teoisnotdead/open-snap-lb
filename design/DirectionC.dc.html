@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #08080B; }
+    a { color: #F0B429; } a:hover { color: #FFCB55; }
+    .m { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1200px; height: 800px; background: #08080B; color: #ECECF2; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="flex-shrink: 0; padding: 22px 28px 18px; border-bottom: 1px dashed #35353F;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 7px;">
+      <span class="m" style="font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: #08080B; background: #F0B429; border-radius: 3px; padding: 3px 8px;">DIRECCIÓN C</span>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.02em;">Creadores al frente</h2>
+    </div>
+    <p style="margin: 0 0 5px; font-size: 13.5px; color: #9797A6; max-width: 900px; line-height: 1.5;"><strong style="color: #ECECF2;">A favor:</strong> la vinculación de cuentas es la función nueva del proyecto, así que la portada la muestra: quién está en vivo, quién se verificó, dónde mirarlos jugar. La tabla queda abajo.</p>
+    <p style="margin: 0; font-size: 13.5px; color: #9797A6; max-width: 900px; line-height: 1.5;"><strong style="color: #ECECF2;">En contra:</strong> le da la portada a ~38 verificados sobre 50 254 jugadores, y hoy arrancaríamos con esa franja casi vacía. Empuja el ranking, que es a lo que la gente viene, abajo del fold.</p>
+  </div>
+
+  <div style="flex-grow: 1; padding: 20px 28px; min-height: 0; display: flex; flex-direction: column; gap: 20px;">
+
+    <div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C;">CREADORES VERIFICADOS EN EL TOP 1 000</span>
+        <span style="font-size: 12.5px; color: #5E5E6C;">ver los 38 →</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
+
+        <div style="border: 1px dashed #35353F; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 11px;">
+            <span style="width: 40px; height: 40px; border-radius: 50%; background: #1B1B24; flex-shrink: 0;"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 14.5px; font-weight: 600;">Sizer</div>
+              <div class="m" style="font-size: 11.5px; color: #5E5E6C;">#2 · 9 987 SP</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #FF7B6B;"></span>
+            <span style="font-size: 12px; color: #ECECF2;">En vivo en Twitch</span>
+          </div>
+        </div>
+
+        <div style="border: 1px dashed #35353F; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 11px;">
+            <span style="width: 40px; height: 40px; border-radius: 50%; background: #1B1B24; flex-shrink: 0;"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 14.5px; font-weight: 600;">Derek</div>
+              <div class="m" style="font-size: 11.5px; color: #5E5E6C;">#8 · 9 579 SP</div>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: #5E5E6C;">twitch.tv/derek</div>
+        </div>
+
+        <div style="border: 1px dashed #35353F; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 11px;">
+            <span style="width: 40px; height: 40px; border-radius: 50%; background: #1B1B24; flex-shrink: 0;"></span>
+            <div style="min-width: 0;">
+              <div style="font-size: 14.5px; font-weight: 600;">Black Coffee</div>
+              <div class="m" style="font-size: 11.5px; color: #5E5E6C;">#6 · 9 652 SP</div>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: #5E5E6C;">youtube.com/@blackcoffee</div>
+        </div>
+
+        <div style="border: 1px dashed #35353F; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;">
+          <span style="font-size: 22px; color: #35353F;">+</span>
+          <div style="font-size: 12.5px; color: #9797A6; line-height: 1.4;">¿Estás en el top 1 000?<br><span style="color: #F0B429;">Vinculá tu cuenta</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C;">LEADERBOARD COMPLETO</span>
+        <span style="border: 1px dashed #35353F; border-radius: 6px; padding: 6px 12px; font-size: 12.5px; color: #5E5E6C;">Buscar jugador…</span>
+      </div>
+
+      <div style="border: 1px dashed #35353F; border-radius: 10px; overflow: hidden;">
+        <div class="m" style="display: grid; grid-template-columns: 56px minmax(0,1fr) 110px 90px; gap: 14px; font-size: 10.5px; letter-spacing: 0.1em; color: #5E5E6C; padding: 10px 16px; border-bottom: 1px solid #26262F;">
+          <span>RANK</span><span>JUGADOR</span><span style="text-align: right;">SP</span><span style="text-align: right;">Δ 24 H</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 56px minmax(0,1fr) 110px 90px; gap: 14px; align-items: center; padding: 13px 16px; border-bottom: 1px solid #14141A;"><span class="m" style="font-size: 14px; color: #F0B429;">01</span><span style="font-size: 14.5px;">Cerebro = No Hands</span><span class="m" style="text-align: right; font-size: 14px;">10 169</span><span class="m" style="text-align: right; font-size: 12.5px; color: #5CD9A6;">+37</span></div>
+        <div style="display: grid; grid-template-columns: 56px minmax(0,1fr) 110px 90px; gap: 14px; align-items: center; padding: 13px 16px; border-bottom: 1px solid #14141A;"><span class="m" style="font-size: 14px; color: #9797A6;">02</span><span style="font-size: 14.5px;">Sizer</span><span class="m" style="text-align: right; font-size: 14px;">9 987</span><span class="m" style="text-align: right; font-size: 12.5px; color: #5CD9A6;">+112</span></div>
+        <div style="display: grid; grid-template-columns: 56px minmax(0,1fr) 110px 90px; gap: 14px; align-items: center; padding: 13px 16px; border-bottom: 1px solid #14141A;"><span class="m" style="font-size: 14px; color: #9797A6;">03</span><span style="font-size: 14.5px;">아이엠어닥터</span><span class="m" style="text-align: right; font-size: 14px;">9 753</span><span class="m" style="text-align: right; font-size: 12.5px; color: #FF7B6B;">−24</span></div>
+        <div style="display: grid; grid-template-columns: 56px minmax(0,1fr) 110px 90px; gap: 14px; align-items: center; padding: 13px 16px; border-bottom: 1px solid #14141A;"><span class="m" style="font-size: 14px; color: #9797A6;">04</span><span style="font-size: 14.5px;">Holic</span><span class="m" style="text-align: right; font-size: 14px;">9 700</span><span class="m" style="text-align: right; font-size: 12.5px; color: #5CD9A6;">+8</span></div>
+        <div style="display: grid; grid-template-columns: 56px minmax(0,1fr) 110px 90px; gap: 14px; align-items: center; padding: 13px 16px;"><span class="m" style="font-size: 14px; color: #9797A6;">05</span><span style="font-size: 14.5px;">Butt</span><span class="m" style="text-align: right; font-size: 14px;">9 667</span><span class="m" style="text-align: right; font-size: 12.5px; color: #FF7B6B;">−51</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

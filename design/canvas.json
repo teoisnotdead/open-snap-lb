@@ -1,0 +1,41 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Pantallas" },
+    { "id": "page-2", "name": "Direcciones alternativas" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "page-1", "title": "Leaderboard", "x": 0, "y": 0, "w": 1440, "h": 1080 },
+    { "file": "PlayerDetail.dc.html", "page": "page-1", "title": "Detalle de jugador", "x": 1560, "y": 0, "w": 1440, "h": 1080 },
+    { "file": "LinkAccount.dc.html", "page": "page-1", "title": "Vincular cuenta", "x": 0, "y": 1240, "w": 1440, "h": 1000 },
+    { "file": "Mobile.dc.html", "page": "page-1", "title": "Leaderboard · móvil", "x": 1560, "y": 1240, "w": 390, "h": 844 },
+    { "file": "DirectionB.dc.html", "page": "page-2", "title": "Dirección B", "x": 0, "y": 0, "w": 1200, "h": 800 },
+    { "file": "DirectionC.dc.html", "page": "page-2", "title": "Dirección C", "x": 1320, "y": 0, "w": 1200, "h": 800 }
+  ],
+  "annotations": [
+    {
+      "id": "nota-direccion",
+      "page": "page-1",
+      "x": 2100,
+      "y": 1240,
+      "w": 300,
+      "text": "Dirección elegida: \"telemetría competitiva\".\n\nCasi-negro cálido + un solo acento ámbar (el oro del ranking). Bricolage Grotesque para display, IBM Plex Sans/Mono con numerales tabulares para que las columnas de SP se alineen.\n\nEl chip de color arriba de cada artboard cambia el acento si querés probar otro."
+    },
+    {
+      "id": "nota-datos",
+      "page": "page-1",
+      "x": 2100,
+      "y": 1560,
+      "w": 300,
+      "text": "Los nombres y los SP son datos reales del ladder de hoy (2026-08).\n\nLos deltas de 24 h y el histórico de la gráfica son inventados: todavía no tenemos snapshots acumulados. Van a aparecer solos una vez que el cron corra unos días."
+    },
+    {
+      "id": "nota-alternativas",
+      "page": "page-2",
+      "x": 0,
+      "y": -170,
+      "w": 420,
+      "text": "Dos alternativas en baja fidelidad, por si la dirección de la página 1 no te cierra.\n\nNo hace falta elegir una de estas: si te gusta el look principal, seguimos con ese y estas se descartan."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

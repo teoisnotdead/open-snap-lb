@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #08080B; }
+    a { color: #F0B429; } a:hover { color: #FFCB55; }
+    .m { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1200px; height: 800px; background: #08080B; color: #ECECF2; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="flex-shrink: 0; padding: 22px 28px 18px; border-bottom: 1px dashed #35353F;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 7px;">
+      <span class="m" style="font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: #08080B; background: #F0B429; border-radius: 3px; padding: 3px 8px;">DIRECCIÓN B</span>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.02em;">Terminal denso</h2>
+    </div>
+    <p style="margin: 0 0 5px; font-size: 13.5px; color: #9797A6; max-width: 900px; line-height: 1.5;"><strong style="color: #ECECF2;">A favor:</strong> todo monoespaciado y sin cards. Entran 20+ filas sin scrollear, las columnas se comparan de un vistazo y se siente como una herramienta de datos, no como una landing.</p>
+    <p style="margin: 0; font-size: 13.5px; color: #9797A6; max-width: 900px; line-height: 1.5;"><strong style="color: #ECECF2;">En contra:</strong> intimida al visitante casual que solo quiere buscar a un streamer, y deja poco lugar para links y badges.</p>
+  </div>
+
+  <div style="flex-grow: 1; padding: 18px 28px; min-height: 0;">
+
+    <div class="m" style="display: flex; align-items: center; gap: 16px; font-size: 12px; color: #5E5E6C; margin-bottom: 14px;">
+      <span style="border: 1px dashed #35353F; padding: 6px 10px;">&gt; buscar_</span>
+      <span>season=2026-08</span>
+      <span>n=1000/50254</span>
+      <span>sync=12m</span>
+    </div>
+
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 10.5px; letter-spacing: 0.1em; color: #5E5E6C; padding: 0 4px 7px; border-bottom: 1px solid #35353F;">
+      <span>#</span><span>JUGADOR</span><span style="text-align: right;">SP</span><span style="text-align: right;">Δ24H</span><span style="text-align: right;">CH</span>
+    </div>
+
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #F0B429;">001</span><span>Cerebro = No Hands</span><span style="text-align: right;">10169</span><span style="text-align: right; color: #5CD9A6;">+37</span><span style="text-align: right; color: #5E5E6C;">t</span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">002</span><span>Sizer <span style="color: #F0B429;">✦</span></span><span style="text-align: right;">9987</span><span style="text-align: right; color: #5CD9A6;">+112</span><span style="text-align: right; color: #5E5E6C;">t y</span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">003</span><span>아이엠어닥터</span><span style="text-align: right;">9753</span><span style="text-align: right; color: #FF7B6B;">−24</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">004</span><span>Holic</span><span style="text-align: right;">9700</span><span style="text-align: right; color: #5CD9A6;">+8</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">005</span><span>Butt</span><span style="text-align: right;">9667</span><span style="text-align: right; color: #FF7B6B;">−51</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">006</span><span>Black Coffee</span><span style="text-align: right;">9652</span><span style="text-align: right; color: #5CD9A6;">+64</span><span style="text-align: right; color: #5E5E6C;">y</span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">007</span><span>HELIXRD04</span><span style="text-align: right;">9587</span><span style="text-align: right; color: #5CD9A6;">+19</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">008</span><span>Derek <span style="color: #F0B429;">✦</span></span><span style="text-align: right;">9579</span><span style="text-align: right; color: #FF7B6B;">−33</span><span style="text-align: right; color: #5E5E6C;">t</span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">009</span><span>코난</span><span style="text-align: right;">9478</span><span style="text-align: right; color: #5CD9A6;">+71</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">010</span><span>ACP</span><span style="text-align: right;">9435</span><span style="text-align: right; color: #5CD9A6;">+5</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">011</span><span>kgp_cefal</span><span style="text-align: right;">9422</span><span style="text-align: right; color: #FF7B6B;">−12</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">012</span><span>Brazilian Arishem</span><span style="text-align: right;">9358</span><span style="text-align: right; color: #5CD9A6;">+88</span><span style="text-align: right; color: #5E5E6C;">u</span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">013</span><span>Unhlpfulyoda727</span><span style="text-align: right;">9349</span><span style="text-align: right; color: #FF7B6B;">−7</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">014</span><span>MajesticBurger</span><span style="text-align: right;">9326</span><span style="text-align: right; color: #5CD9A6;">+23</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">015</span><span>Jam</span><span style="text-align: right;">9282</span><span style="text-align: right; color: #5CD9A6;">+41</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">016</span><span>burs</span><span style="text-align: right;">9230</span><span style="text-align: right; color: #FF7B6B;">−16</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid #14141A;"><span style="color: #9797A6;">017</span><span>Braude</span><span style="text-align: right;">9205</span><span style="text-align: right; color: #5CD9A6;">+2</span><span style="text-align: right;"></span></div>
+    <div class="m" style="display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 70px 60px; gap: 14px; font-size: 13px; padding: 7px 4px; color: #5E5E6C;"><span>018</span><span>Heart Of The Cards</span><span style="text-align: right;">9186</span><span style="text-align: right;">—</span><span style="text-align: right;"></span></div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

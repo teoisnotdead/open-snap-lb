@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #08080B; }
+    a { color: #F0B429; text-decoration: none; }
+    a:hover { color: #FFCB55; }
+    .num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; background: #08080B; color: #ECECF2; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <!-- ============ TOP BAR ============ -->
+  <header style="height: 68px; flex-shrink: 0; border-bottom: 1px solid #1B1B24; display: flex; align-items: center; gap: 40px; padding: 0 32px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M11 1.5 L20.5 11 L11 20.5 L1.5 11 Z" stroke="{{accent}}" stroke-width="1.8" stroke-linejoin="round"></path>
+        <path d="M11 6.5 L15.5 11 L11 15.5 L6.5 11 Z" fill="{{accent}}"></path>
+      </svg>
+      <span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.02em;">OPENSNAP</span>
+      <span class="num" style="font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: #5E5E6C; border: 1px solid #26262F; border-radius: 3px; padding: 2px 5px;">LB</span>
+    </div>
+    <nav style="display: flex; align-items: center; gap: 28px; font-size: 14px;">
+      <span style="color: #9797A6;">Leaderboard</span>
+      <span style="font-weight: 600; color: #ECECF2; padding-bottom: 3px; border-bottom: 2px solid {{accent}};">Vincular cuenta</span>
+      <span style="color: #9797A6;">Cómo funciona</span>
+    </nav>
+  </header>
+
+  <div style="flex-grow: 1; padding: 34px 32px 0; display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 40px; min-height: 0;">
+
+    <!-- ============ LEFT: FLOW ============ -->
+    <div style="display: flex; flex-direction: column; gap: 24px; min-width: 0;">
+
+      <div>
+        <h1 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 34px; letter-spacing: -0.03em; line-height: 1.1;">Vinculá tu cuenta</h1>
+        <p style="margin: 0; font-size: 14.5px; color: #9797A6; max-width: 640px; line-height: 1.55;">Demostrás que la cuenta es tuya poniendo un código en tu nombre de perfil dentro del juego. Nadie más puede cambiarlo, así que con eso alcanza. No pedimos contraseña ni acceso a nada.</p>
+      </div>
+
+      <!-- stepper -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: {{accent}};">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.6" stroke="#08080B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </span>
+          <span style="font-size: 13.5px; font-weight: 500; color: #ECECF2;">Buscá tu cuenta</span>
+        </div>
+        <span style="flex-grow: 1; height: 1px; background: #26262F;"></span>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span class="num" style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: {{accent}}; color: #08080B; font-size: 12px; font-weight: 600;">2</span>
+          <span style="font-size: 13.5px; font-weight: 600; color: #ECECF2;">Pegá el código</span>
+        </div>
+        <span style="flex-grow: 1; height: 1px; background: #26262F;"></span>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span class="num" style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid #35353F; color: #5E5E6C; font-size: 12px; font-weight: 600;">3</span>
+          <span style="font-size: 13.5px; color: #5E5E6C;">Sumá tus redes</span>
+        </div>
+      </div>
+
+      <!-- step 1 done -->
+      <div style="background: #0D0D12; border: 1px solid #1B1B24; border-radius: 10px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="8" stroke="#5CD9A6" stroke-width="1.5"></circle><path d="M5.4 9.2 L7.8 11.6 L12.6 6.4" stroke="#5CD9A6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span style="font-size: 14.5px;">Encontramos <span style="font-weight: 600;">Sizer</span> en el puesto <span class="num" style="font-weight: 600;">#2</span> del ladder</span>
+        </div>
+        <span style="font-size: 13px; color: #9797A6;">Cambiar</span>
+      </div>
+
+      <!-- step 2 active -->
+      <div style="background: #0D0D12; border: 1px solid #2E2618; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+          <div>
+            <h2 style="margin: 0 0 5px; font-size: 16px; font-weight: 600;">Cambiá tu nombre en Marvel Snap</h2>
+            <p style="margin: 0; font-size: 13.5px; color: #9797A6;">Dejá parte de tu nombre real: lo usamos para confirmar que sos vos.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px; flex-shrink: 0;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5.6" stroke="#9797A6" stroke-width="1.4"></circle><path d="M7 4.2 V7.2 L9 8.6" stroke="#9797A6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <span class="num" style="font-size: 12.5px; color: #9797A6;">vence en 58 min</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; align-items: stretch;">
+          <div style="background: #08080B; border: 1px solid #2E2618; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px;">
+            <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C;">TU CÓDIGO</span>
+            <span class="num" style="font-size: 40px; font-weight: 600; letter-spacing: 0.14em; color: {{accent}}; line-height: 1;">M8MH8</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px; justify-content: center;">
+            <div>
+              <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; color: #5E5E6C; margin-bottom: 8px;">TU NOMBRE TIENE QUE QUEDAR ASÍ</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #08080B; border: 1px solid #26262F; border-radius: 9px; padding: 13px 15px;">
+                <span class="num" style="font-size: 19px; font-weight: 500;">Sizer <span style="color: {{accent}};">M8MH8</span></span>
+                <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: #ECECF2; border: 1px solid #35353F; border-radius: 6px; padding: 7px 11px;">
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.6" y="4.6" width="7.8" height="7.8" rx="1.8" stroke="#ECECF2" stroke-width="1.4"></rect><path d="M9.6 4.6V3.4a1.8 1.8 0 0 0-1.8-1.8H3.4a1.8 1.8 0 0 0-1.8 1.8v4.4a1.8 1.8 0 0 0 1.8 1.8h1.2" stroke="#ECECF2" stroke-width="1.4" stroke-linecap="round"></path></svg>
+                  Copiar
+                </span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #5CD9A6;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3.2 7.2 L5.8 9.8 L10.8 4.4" stroke="#5CD9A6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <span>Entra completo: <span class="num">11</span> de <span class="num">20</span> caracteres. No hace falta recortar nada.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 18px; border-top: 1px solid #1B1B24;">
+          <p style="margin: 0; font-size: 12.5px; color: #5E5E6C; max-width: 560px; line-height: 1.5;">El leaderboard oficial tarda unos minutos en reflejar el cambio de nombre. Si todavía no lo vemos, esperá un momento y probá de nuevo — no perdés el código.</p>
+          <span style="font-size: 13.5px; font-weight: 600; color: #08080B; background: {{accent}}; border-radius: 7px; padding: 11px 20px; flex-shrink: 0;">Ya lo cambié, buscar</span>
+        </div>
+      </div>
+
+      <!-- step 3 pending -->
+      <div style="background: #0B0B0F; border: 1px solid #1B1B24; border-radius: 12px; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; opacity: 0.62;">
+        <div>
+          <h2 style="margin: 0 0 5px; font-size: 16px; font-weight: 600;">Sumá tus redes</h2>
+          <p style="margin: 0; font-size: 13.5px; color: #9797A6;">Al menos una. Cada canal lo puede reclamar una sola cuenta.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: #5E5E6C; margin-bottom: 7px;">TWITCH</div>
+            <div style="display: flex; align-items: center; gap: 9px; background: #08080B; border: 1px solid #26262F; border-radius: 8px; padding: 0 13px; height: 42px;">
+              <span class="num" style="font-size: 13.5px; color: #5E5E6C;">twitch.tv/</span>
+              <span style="font-size: 14px; color: #5E5E6C;">tuhandle</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: #5E5E6C; margin-bottom: 7px;">YOUTUBE</div>
+            <div style="display: flex; align-items: center; gap: 9px; background: #08080B; border: 1px solid #26262F; border-radius: 8px; padding: 0 13px; height: 42px;">
+              <span class="num" style="font-size: 13.5px; color: #5E5E6C;">youtube.com/@</span>
+              <span style="font-size: 14px; color: #5E5E6C;">tuhandle</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: #5E5E6C; margin-bottom: 7px;">UNTAPPED</div>
+            <div style="display: flex; align-items: center; gap: 9px; background: #08080B; border: 1px solid #26262F; border-radius: 8px; padding: 0 13px; height: 42px;">
+              <span style="font-size: 14px; color: #5E5E6C;">Pegá el link de tu perfil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ RIGHT: SIDEBAR ============ -->
+    <aside style="display: flex; flex-direction: column; gap: 14px;">
+
+      <div style="background: #0D0D12; border: 1px solid #1B1B24; border-radius: 12px; padding: 20px;">
+        <h3 style="margin: 0 0 12px; font-size: 13.5px; font-weight: 600;">Por qué esto prueba que sos vos</h3>
+        <p style="margin: 0 0 14px; font-size: 13px; color: #9797A6; line-height: 1.6;">Tu nombre de perfil aparece en el leaderboard público en vivo. Si el código aparece ahí, es porque tenés acceso a la cuenta — nadie más puede cambiarlo.</p>
+        <p style="margin: 0; font-size: 13px; color: #9797A6; line-height: 1.6;">También verificamos que el nombre que queda coincida con el que reclamaste, así nadie puede pegar tu código en <em>su</em> cuenta.</p>
+      </div>
+
+      <div style="background: #0D0D12; border: 1px solid #1B1B24; border-radius: 12px; padding: 20px;">
+        <h3 style="margin: 0 0 12px; font-size: 13.5px; font-weight: 600;">El límite de 20 caracteres</h3>
+        <p style="margin: 0; font-size: 13px; color: #9797A6; line-height: 1.6;">El juego corta los nombres en <span class="num" style="color: #ECECF2;">20</span> caracteres. Si el tuyo ya está al tope, te decimos exactamente cuántos hay que recortar para que el código entre — y te armamos el nombre sugerido.</p>
+      </div>
+
+      <div style="background: #0D0D12; border: 1px solid #1B1B24; border-radius: 12px; padding: 20px;">
+        <h3 style="margin: 0 0 12px; font-size: 13.5px; font-weight: 600;">Después de verificar</h3>
+        <ul style="margin: 0; padding-left: 17px; font-size: 13px; color: #9797A6; line-height: 1.75;">
+          <li>Volvé a tu nombre de siempre cuando quieras.</li>
+          <li>Tus links aparecen junto a tu fila en la tabla.</li>
+          <li>Empezamos a guardar tu historial para la gráfica.</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 10px; padding: 15px 17px; border: 1px solid #1B1B24; border-radius: 10px;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex-shrink: 0; margin-top: 1px;" aria-hidden="true"><path d="M8 2 L14.4 13.4 H1.6 Z" stroke="#5E5E6C" stroke-width="1.4" stroke-linejoin="round"></path><path d="M8 6.6v3" stroke="#5E5E6C" stroke-width="1.4" stroke-linecap="round"></path><circle cx="8" cy="11.6" r="0.75" fill="#5E5E6C"></circle></svg>
+        <p style="margin: 0; font-size: 12.5px; color: #5E5E6C; line-height: 1.55;">Solo se pueden vincular cuentas que estén en el top <span class="num">1 000</span> del ladder, que es lo máximo que devuelve la API oficial.</p>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#F0B429","options":["#F0B429","#B4F04A","#5AD7F0","#F06AA8"],"section":"Tema"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#F0B429' };
+  }
+}
+</script>
+</body>
+</html>

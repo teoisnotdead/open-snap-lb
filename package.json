@@ -6,12 +6,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "db:indexes": "tsx --env-file=.env scripts/ensure-indexes.ts",
+    "db:smoke": "tsx --env-file=.env scripts/smoke.ts",
+    "test:socials": "tsx scripts/test-socials.ts",
+    "db:delete-player": "tsx --env-file=.env scripts/delete-player.ts",
+    "test:verification": "tsx scripts/test-verification.ts",
+    "db:seed-demo": "tsx --env-file=.env scripts/seed-demo.ts"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "mongodb": "^7.5.0",
     "next": "16.3.2",
+    "postcss": "^8.5.26",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -19,6 +31,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

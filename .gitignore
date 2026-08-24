@@ -32,6 +32,17 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Ojo: ".env*" solo matchea lo que EMPIEZA con .env. Un archivo como
+# "atlas-credentials.env" no queda cubierto, así que va esta segunda regla.
+*.env
+
+# La plantilla sin secretos SÍ se versiona: el README dice copiarla.
+!.env.example
+
+# Canvas de diseño: el .html sembrado pesa ~2 MB y se regenera desde los
+# .dc.html, que sí se versionan.
+design/*.html
+!design/*.dc.html
 
 # vercel
 .vercel
