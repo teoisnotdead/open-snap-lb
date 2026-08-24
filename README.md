@@ -6,11 +6,29 @@ el sitio oficial y le agrega dos cosas que ese sitio no tiene:
 - **Historial de progreso.** La API oficial solo sirve el mes actual y el
   anterior, así que el histórico lo construimos nosotros guardando una medición
   por hora.
-- **Links verificados.** Los jugadores vinculan su cuenta poniendo un código en
-  su nombre de perfil dentro del juego. Sin Discord, sin trámite manual.
+- **Links de jugadores.** Cada quien pide su ficha desde un formulario y un
+  admin la aprueba. Opcionalmente puede comprobar que la cuenta es suya poniendo
+  un código en su nombre de perfil dentro del juego, y eso le da el tick.
 
 Inspirado en [bettersnaplb](https://github.com/JaydenScottL/bettersnaplb), que
-mantiene esos datos a mano. Acá el flujo es self-service.
+mantiene esos datos a mano vía Discord. Acá la petición entra sola por el sitio
+y la revisión ocurre en un panel.
+
+### Por qué la revisión es manual
+
+Casi nada de lo que se muestra junto a un jugador existe en la API oficial: ni
+canales, ni alianzas, ni contacto. No hay contra qué contrastarlo, así que el
+único filtro posible es el ojo humano — y además permite decir que no.
+
+Lo único verificable es el control de la cuenta, y para eso está el código en el
+nombre. Por eso el modelo tiene **dos estados independientes**:
+
+| | Qué significa | Dónde se ve |
+|---|---|---|
+| **Aprobado** | Un admin revisó la petición | La fila muestra links y alianza |
+| **Verificado** | Probó que controla la cuenta | El tick ✓ junto al nombre |
+
+Fusionarlos degradaría el tick a "alguien le creyó".
 
 ---
 
@@ -37,16 +55,33 @@ para una serie temporal no alcanza.
 | `MONGODB_URI` | sí | Connection string de Atlas |
 | `MONGODB_DB` | no | Nombre de la base (default `opensnaplb`) |
 | `CRON_SECRET` | sí | Secreto compartido con el GitHub Action |
+| `ADMIN_USER` | no | Usuario del panel (default `admin`) |
+| `ADMIN_PASSWORD_HASH` | sí | Hash scrypt de la clave del panel |
+| `ADMIN_SESSION_SECRET` | sí | Firma la cookie de sesión del panel |
 | `DNS_SERVERS` | no | Escape hatch para DNS roto en local (ver abajo) |
 
-Generá el secreto con:
+Generá el secreto del cron con:
 
 ```bash
 openssl rand -hex 32
 ```
 
-Sin `CRON_SECRET` configurado, `/api/cron/sync` devuelve **503**: queda cerrada,
-nunca abierta.
+Y los dos del panel de una sola vez con:
+
+```bash
+npm run admin:hash -- "tu clave de al menos 12 caracteres"
+```
+
+La clave **no se guarda**: lo que va al entorno es un hash scrypt, irreversible.
+Una captura de las variables de Vercel no entrega el acceso.
+
+> ⚠️ El hash usa `:` como separador, **no `$`**. Next expande variables al leer
+> `.env`, así que un `$` en el valor se interpreta como referencia y el hash
+> llega mutilado — el login falla con «clave incorrecta» sin ninguna pista de
+> por qué. `npm run build` avisa si detecta un `$` ahí.
+
+Sin `CRON_SECRET`, `/api/cron/sync` devuelve **503**. Sin las variables del
+panel, `/admin` devuelve **503**. Las dos quedan cerradas, nunca abiertas.
 
 ---
 
@@ -173,14 +208,54 @@ está verificado con GET y POST seguidos.
 | `npm run lint` | ESLint |
 | `npm run db:indexes` | Crea/actualiza los índices. Idempotente |
 | `npm run db:smoke` | 10 checks del modelo contra Atlas. Se autolimpia |
+| `npm run admin:hash -- "clave"` | Genera `ADMIN_PASSWORD_HASH` y `ADMIN_SESSION_SECRET` |
 | `npm run test:socials` | 18 casos de parseo de handles y normalización |
-| `npm run test:verification` | 24 casos de la lógica de verificación |
+| `npm run test:verification` | 45 casos de verificación y tokens de seguimiento |
+| `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run db:seed-demo` | Siembra un jugador con historial sintético |
 | `npm run db:seed-demo -- --clean` | Lo borra |
 | `npm run db:delete-player -- "Nombre"` | Borra un jugador y su historial |
 
 > ⚠️ `db:seed-demo` escribe datos **inventados** en la base a la que apunte
 > `MONGODB_URI`. Nunca contra producción.
+
+---
+
+## El panel
+
+Vive en `/admin`, fuera del segmento de idioma: no es contenido público y no se
+traduce. Lleva `noindex` para que `/admin/login` no termine en Google.
+
+La cola tiene tres pestañas — pendientes, aprobadas, rechazadas. Cada petición
+muestra el rank actual del jugador, lo que pidió publicar, y el contacto que
+dejó. **El contacto es privado**: solo se ve acá, nunca sale por la API pública
+ni por la página de estado.
+
+Aprobar es lo único que escribe en `players`, o sea lo único que publica algo.
+Rechazar exige un motivo, que el solicitante ve en su página de estado.
+
+### Seguimiento de una petición
+
+Al enviar, cada petición entrega un **código de seguimiento** de 12 caracteres
+(`RYNG-XNWG-VENT`). Con eso el solicitante consulta su estado en `/{lang}/request`
+o directo en `/{lang}/request/{código}`. Es lo único que tiene: no hay cuentas ni
+avisos, así que si lo pierde hay que buscarlo por el contacto que dejó.
+
+Es un token **aleatorio** y no el id de Mongo porque los ObjectId llevan un
+contador incremental: desde uno conocido se adivinan los vecinos, y cualquiera
+que mandara una petición podría leer las de al lado. También es distinto del
+código de verificación, que va en el nombre del perfil y por lo tanto se publica
+en el leaderboard.
+
+### Lo que el panel todavía no tiene
+
+- **Límite de intentos de login.** En serverless no hay memoria compartida entre
+  invocaciones, así que un contador honesto necesita ir a Mongo. Por ahora la
+  defensa es scrypt (lento a propósito) y el mínimo de 12 caracteres.
+- **Editar antes de aprobar.** Hoy es aprobar o rechazar tal cual vino.
+- **Aviso de peticiones nuevas.** Hay que entrar a mirar. Cuando moleste, un
+  webhook de Discord es una env var y tres líneas — mucho más barato que montar
+  envío de correo.
 
 ---
 
@@ -204,8 +279,13 @@ Son del endpoint oficial, no nuestras — el detalle está en
 - **Solo el top 1 000** de un ladder de más de 50 000 jugadores.
 - **La identidad es el nombre.** No hay ID de jugador. Dos jugadores homónimos
   son indistinguibles: se marcan y no se les asignan links.
-- **No hay región, cardback, título ni alianza.** La alianza la declara cada
-  jugador al vincularse, así que la columna queda vacía para quien no lo hizo.
+- **No hay región, cardback, título ni alianza.** La alianza (tag y nombre) la
+  declara cada jugador al pedir su ficha, así que la columna queda vacía para
+  quien no lo hizo, y nadie puede comprobarla.
+- **El nombre es la identidad.** Si un jugador aprobado se cambia el nombre en
+  el juego, deja de ser encontrado y su historial deja de crecer, en silencio.
+  Y si además abandona el nombre, otro puede pedirlo: sin IDs de jugador,
+  controlar el nombre *es* la identidad.
 - **El Δ 24 h solo existe para cuentas vinculadas**, porque solo de ellas
   guardamos historial. Para el resto se muestra un guión: *no sabemos* y *no se
   movió* son cosas distintas.

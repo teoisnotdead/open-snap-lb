@@ -2,6 +2,11 @@
 import {
   generateCode,
   checkClaim,
+  findSquatConflict,
+  generateStatusToken,
+  formatStatusToken,
+  parseStatusToken,
+  STATUS_TOKEN_LENGTH,
   stripCode,
   buildInstructions,
   CODE_LENGTH,
@@ -63,6 +68,67 @@ c("RECHAZA reclamar un nombre más corto que el encontrado",
 // --- unicode y rarezas reales del ladder ---
 c("funciona con nombre coreano", checkClaim("아이엠어닥터 K7M2Q", CODE, toNameKey("아이엠어닥터")).ok, true);
 c("tolera espacios de más al recortar", stripCode("Sizer  K7M2Q  ", CODE), "sizer");
+
+// --- ocupación de nombre ---
+// El ladder trae una fila por cuenta, así que el nombre pelado y el nombre con
+// código NO pueden ser la misma persona coexistiendo.
+const row = (playerName: string) => ({ playerName, nameKey: toNameKey(playerName) });
+
+c("deja pasar al dueño que se renombró (no queda fila pelada)",
+  findSquatConflict([row("730 K7M2Q"), row("Sizer")], toNameKey("730")), null);
+
+c("BLOQUEA al ocupante: el nombre pelado sigue en el ladder",
+  findSquatConflict([row("730"), row("730 K7M2Q")], toNameKey("730"))?.playerName, "730");
+
+c("bloquea aunque el ocupante aparezca primero",
+  findSquatConflict([row("730 K7M2Q"), row("730")], toNameKey("730"))?.playerName, "730");
+
+// Hace match pese a que el texto crudo trae mayúsculas y espacios de sobra.
+c("compara por nameKey, no por texto crudo",
+  findSquatConflict([row("  SiZeR  ")], toNameKey("sizer"))?.nameKey, "sizer");
+
+c("un nombre que solo contiene al reclamado no es conflicto",
+  findSquatConflict([row("730 Pro"), row("Not730")], toNameKey("730")), null);
+
+c("ladder vacío no es conflicto", findSquatConflict([], toNameKey("730")), null);
+
+// --- token de consulta ---
+const tokens = Array.from({ length: 500 }, generateStatusToken);
+
+c("largo del token", tokens.every((x) => x.length === STATUS_TOKEN_LENGTH), true);
+c("token usa el mismo alfabeto sin ambiguos",
+  tokens.every((x) => [...x].every((ch) => ALPHABET.includes(ch))), true);
+
+/**
+ * Con 30^12 la probabilidad de una colisión en 500 muestras es ~1e-13. Acá sí
+ * se puede exigir unicidad estricta, a diferencia del código de verificación
+ * (30^5), donde hacerlo daba un test flaky.
+ */
+c("500 tokens son todos distintos", new Set(tokens).size, 500);
+
+/**
+ * El token de consulta NO puede ser el código de verificación: ese va en el
+ * nombre del perfil, o sea que se publica en el leaderboard.
+ */
+c("el token es mucho más largo que el código de verificación",
+  STATUS_TOKEN_LENGTH > CODE_LENGTH * 2, true);
+
+c("formato en grupos de 4", formatStatusToken("K7M2QW9X4RTF"), "K7M2-QW9X-4RTF");
+
+c("acepta el token tal cual", parseStatusToken("K7M2QW9X4RTF"), "K7M2QW9X4RTF");
+c("acepta con guiones", parseStatusToken("K7M2-QW9X-4RTF"), "K7M2QW9X4RTF");
+c("acepta en minúscula", parseStatusToken("k7m2qw9x4rtf"), "K7M2QW9X4RTF");
+c("acepta con espacios de copiar y pegar",
+  parseStatusToken("  K7M2 QW9X 4RTF  "), "K7M2QW9X4RTF");
+c("el ida y vuelta formato/parseo se conserva",
+  parseStatusToken(formatStatusToken(tokens[0])), tokens[0]);
+
+c("RECHAZA token corto", parseStatusToken("K7M2QW9X"), null);
+c("RECHAZA token largo", parseStatusToken("K7M2QW9X4RTFX"), null);
+c("RECHAZA caracteres fuera del alfabeto", parseStatusToken("K7M2QW9X4RT0"), null);
+c("RECHAZA vacío", parseStatusToken(""), null);
+// Un ObjectId de Mongo no debe pasar por token: es la llave vieja.
+c("RECHAZA un ObjectId", parseStatusToken("6a8c87b91ed4229a0382f006"), null);
 
 // --- instrucciones ---
 const short = buildInstructions("Sizer", CODE);

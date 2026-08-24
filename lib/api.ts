@@ -44,6 +44,27 @@ export function requireCronAuth(req: Request): NextResponse | null {
   return null;
 }
 
+/**
+ * Exige una sesión de admin válida.
+ * Devuelve una respuesta de error si falla, o null si está todo bien.
+ *
+ * Mismo contrato que `requireCronAuth` a propósito: sin configuración devuelve
+ * 503 (cerrado), no 200 (abierto).
+ */
+export async function requireAdminAuth(): Promise<NextResponse | null> {
+  const { getAdminSession, isAdminConfigured } = await import("./admin-auth");
+
+  if (!isAdminConfigured()) {
+    console.error("El panel de admin no está configurado; se rechaza el request.");
+    return apiError("El panel de admin no está configurado.", 503);
+  }
+
+  const session = await getAdminSession();
+  if (!session) return apiError("No autorizado.", 401);
+
+  return null;
+}
+
 /** Parsea el body JSON sin que un body inválido tire un 500. */
 export async function readJson<T>(req: Request): Promise<T | null> {
   try {

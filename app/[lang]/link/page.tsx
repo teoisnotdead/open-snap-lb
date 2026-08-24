@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
-import { LinkAccountFlow } from "@/components/LinkAccountFlow";
+import { RequestAccountFlow } from "@/components/RequestAccountFlow";
 import { WarningIcon } from "@/components/icons";
 import { getDictionary, isLang, type Lang } from "@/lib/i18n";
 
@@ -41,7 +41,7 @@ export default async function LinkPage({
             </p>
           </div>
 
-          <LinkAccountFlow lang={lang} t={t} />
+          <RequestAccountFlow lang={lang} t={t} />
         </div>
 
         <aside className="flex flex-col gap-3.5">

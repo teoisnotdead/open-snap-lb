@@ -155,8 +155,85 @@ export function parseAlliance(input: string): SocialParseResult {
   return { ok: true, value: raw.toUpperCase() };
 }
 
+/**
+ * Nombre largo de la alianza. Se conserva tal cual lo escribieron —solo se
+ * colapsan los espacios— porque es un nombre propio: pasarlo a mayúsculas o
+ * minúsculas lo arruinaría. Sin índice único, igual que el tag.
+ */
+export function parseAllianceName(input: string): SocialParseResult {
+  const raw = input.trim().replace(/\s+/g, " ");
+  if (!raw) return { ok: false, error: "Vacío" };
+
+  if (raw.length > 40) {
+    return { ok: false, error: "El nombre de la alianza no puede pasar de 40 caracteres" };
+  }
+
+  // Sin caracteres de control: terminan en el HTML del panel y de la tabla.
+  const hasControlChar = [...raw].some((ch) => {
+    const cp = ch.codePointAt(0)!;
+    return cp < 0x20 || cp === 0x7f;
+  });
+  if (hasControlChar) {
+    return { ok: false, error: "El nombre tiene caracteres no imprimibles" };
+  }
+
+  return { ok: true, value: raw };
+}
+
+/**
+ * Usuario de Discord. Acepta el formato moderno (`nombre`, 2-32 chars en
+ * minúscula con punto y guión bajo) y el viejo con discriminador
+ * (`nombre#1234`), que todavía se ve escrito por ahí.
+ *
+ * Es dato de CONTACTO, no una red para mostrar: nunca sale por una ruta
+ * pública. Ver SubmissionDoc.
+ */
+export function parseDiscord(input: string): SocialParseResult {
+  const raw = input.trim().replace(/^@/, "");
+  if (!raw) return { ok: false, error: "Vacío" };
+
+  const legacy = raw.match(/^(.{2,32})#(\d{4})$/);
+  if (legacy) return { ok: true, value: `${legacy[1]}#${legacy[2]}` };
+
+  if (!/^[a-z0-9._]{2,32}$/i.test(raw)) {
+    return {
+      ok: false,
+      error: "Usuario de Discord inválido (2-32 caracteres, letras/números/./_)",
+    };
+  }
+
+  return { ok: true, value: raw.toLowerCase() };
+}
+
+/**
+ * Email de contacto.
+ *
+ * La validación es deliberadamente laxa: la única prueba real de que un mail
+ * existe es mandarle algo, y no mandamos nada. Un regex estricto solo sirve
+ * para rechazar direcciones válidas y raras. Con que tenga forma de mail y no
+ * traiga basura alcanza — el dato lo usa un humano, no un servidor SMTP.
+ */
+export function parseEmail(input: string): SocialParseResult {
+  const raw = input.trim();
+  if (!raw) return { ok: false, error: "Vacío" };
+
+  if (raw.length > 254) return { ok: false, error: "Email demasiado largo" };
+
+  if (!/^[^\s@,;]+@[^\s@,;.]+(\.[^\s@,;.]+)+$/.test(raw)) {
+    return { ok: false, error: "Eso no parece un email" };
+  }
+
+  return { ok: true, value: raw.toLowerCase() };
+}
+
 export const SOCIAL_PARSERS = {
   twitch: parseTwitch,
   youtube: parseYouTube,
   untapped: parseUntapped,
+} as const;
+
+/** Campos de contacto. Privados: solo se ven en el panel de admin. */
+export const CONTACT_PARSERS = {
+  discord: parseDiscord,
+  email: parseEmail,
 } as const;

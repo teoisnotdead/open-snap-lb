@@ -55,11 +55,12 @@ export function LeaderboardTable({
         return false;
       }
       if (!q) return true;
-      // Buscamos sobre el nombre mostrado, el original y el tag de alianza.
+      // Buscamos sobre el nombre mostrado, el original y la alianza (tag y nombre).
       return (
         r.displayName.toLowerCase().includes(q) ||
         r.playerName.toLowerCase().includes(q) ||
-        (r.alliance?.toLowerCase().includes(q) ?? false)
+        (r.alliance?.toLowerCase().includes(q) ?? false) ||
+        (r.allianceName?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [rows, query, filter]);
@@ -236,7 +237,14 @@ function Row({
 
       <div>
         {row.alliance ? (
-          <span className="num rounded border border-line-strong px-1.5 py-0.5 text-[11px] font-semibold tracking-[0.06em] text-ink-3">
+          <span
+            /* El nombre largo va de tooltip: la columna es angosta y el tag es
+               lo que la gente reconoce. Sin nombre, no hay title vacío. */
+            title={row.allianceName}
+            className={`num rounded border border-line-strong px-1.5 py-0.5 text-[11px] font-semibold tracking-[0.06em] text-ink-3 ${
+              row.allianceName ? "cursor-help" : ""
+            }`}
+          >
             {row.alliance}
           </span>
         ) : (

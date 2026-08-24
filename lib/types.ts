@@ -65,12 +65,19 @@ export interface PlayerDoc {
    */
   alliance?: string;
 
+  /** Nombre largo de la alianza. Tan indemostrable como el tag. */
+  allianceName?: string;
+
+  /**
+   * Propiedad de la cuenta comprobada con el código en el nombre.
+   *
+   * OJO con la semántica: estar en `players` significa "aprobado por un admin";
+   * `verified` significa "probó que controla la cuenta". Son cosas distintas y
+   * el tick de la tabla representa SOLO la segunda. Fusionarlas degradaría el
+   * tick a "alguien le creyó".
+   */
   verified: boolean;
   verifiedAt?: Date;
-
-  /** Código pendiente de verificación (corto: entra en los 20 chars del nombre). */
-  verificationCode?: string;
-  verificationExpiresAt?: Date;
 
   /**
    * Denormalizado desde el último sync. Sirve para dos cosas:
@@ -86,6 +93,100 @@ export interface PlayerDoc {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Estados de una petición en la cola de revisión. */
+export type SubmissionStatus = "pending" | "approved" | "rejected";
+
+/**
+ * Una petición para aparecer en la tabla con links, alianza y demás.
+ *
+ * El modelo es de PETICIÓN, no de reclamo: entrar acá no publica nada. Un admin
+ * revisa y recién entonces se escribe en `players`. El motivo es que casi nada
+ * de lo que se pide acá es verificable — la API oficial no expone alianzas, ni
+ * canales, ni forma de contacto — así que el único filtro posible es el ojo
+ * humano.
+ *
+ * El código en el nombre sigue existiendo, pero cambió de rol: ya no es el
+ * portón que publica, es un SELLO opcional (`proofVerified`) que le dice al
+ * admin "esta persona probó que controla la cuenta". Con él, aprobar es
+ * trámite; sin él, hay que mirar con cuidado.
+ */
+export interface SubmissionDoc {
+  _id?: ObjectId;
+
+  /**
+   * Token de consulta. Aleatorio y único: es la ÚNICA llave con la que el
+   * público toca esta petición.
+   *
+   * No se usa el `_id` para eso porque los ObjectId llevan un contador
+   * incremental, así que son adivinables desde uno conocido. Ver
+   * `generateStatusToken`. El `_id` queda para el panel, que ya está detrás de
+   * sesión.
+   */
+  statusToken: string;
+
+  /** Cuenta reclamada, normalizada. No es único: puede haber histórico. */
+  nameKey: string;
+  /** Nombre exacto tal como figuraba en el ladder al momento de pedir. */
+  playerName: string;
+
+  twitch?: string;
+  youtube?: string;
+  untapped?: string;
+
+  /** Tag corto, en mayúsculas (ej. "JOB"). */
+  allianceTag?: string;
+  /** Nombre largo de la alianza. */
+  allianceName?: string;
+
+  /**
+   * DATOS DE CONTACTO — PRIVADOS.
+   *
+   * Nunca pueden salir por una ruta pública: son datos personales de terceros.
+   * Existen para que el admin pueda repreguntar o avisar un rechazo, y viven
+   * solo en `submissions`; al aprobar NO se copian a `players`, que es la
+   * colección que sí se sirve en público.
+   */
+  discord?: string;
+  email?: string;
+
+  /** Texto libre del solicitante. Se muestra solo en el panel. */
+  note?: string;
+
+  /** ¿Completó el flujo del código? Es el sello, no el permiso. */
+  proofVerified: boolean;
+  proofVerifiedAt?: Date;
+  /**
+   * Rank de la fila que probó control. Semilla de desambiguación para el sync
+   * (ver docs/data-model.md): sin esto, un homónimo queda trabado para siempre.
+   */
+  proofRank?: number;
+
+  /** Código pendiente (corto: tiene que entrar en los 20 chars del nombre). */
+  verificationCode?: string;
+  verificationExpiresAt?: Date;
+
+  status: SubmissionStatus;
+  /** Se le muestra al solicitante si vuelve a consultar; obligatorio al rechazar. */
+  rejectionReason?: string;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Lo que el panel de admin manda al navegador. Sin `_id` crudo. */
+export interface SubmissionView
+  extends Omit<SubmissionDoc, "_id" | "createdAt" | "updatedAt" | "proofVerifiedAt" | "reviewedAt" | "verificationExpiresAt"> {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  proofVerifiedAt?: string;
+  reviewedAt?: string;
+  /** Rank actual en el ladder, resuelto al vuelo para que el admin lo vea. */
+  currentRank?: number;
 }
 
 /**
@@ -117,6 +218,8 @@ export interface MergedLeaderboardRow extends LeaderboardRow {
   untapped?: string;
   /** Tag declarado por el jugador; vacío para la mayoría. */
   alliance?: string;
+  /** Nombre largo de la alianza. Se muestra como tooltip del tag. */
+  allianceName?: string;
   verified: boolean;
   /** true si el ladder tiene más de una fila con este mismo nameKey. */
   ambiguous: boolean;

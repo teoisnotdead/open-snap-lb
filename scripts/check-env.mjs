@@ -69,6 +69,36 @@ if (!secret) {
   );
 }
 
+// --- panel de admin ---
+const adminHash = process.env.ADMIN_PASSWORD_HASH;
+const adminSecret = process.env.ADMIN_SESSION_SECRET;
+
+if (!adminHash || !adminSecret) {
+  warn(
+    "El panel de admin no está configurado (ADMIN_PASSWORD_HASH / ADMIN_SESSION_SECRET).",
+    "El sitio anda, pero /admin devuelve 503 y no vas a poder aprobar peticiones. Generalas: npm run admin:hash -- \"tu clave\""
+  );
+} else if (adminHash.includes("$")) {
+  // Next expande variables al leer .env: un "$" convierte el hash en otra cosa.
+  problems.push({
+    level: "GRAVE",
+    msg: "ADMIN_PASSWORD_HASH contiene '$'.",
+    hint: "El formato usa ':' como separador. Con '$' el valor se expande y el login falla siempre. Regeneralo: npm run admin:hash -- \"tu clave\"",
+  });
+} else if (!/^scrypt:[0-9a-f]{32}:[0-9a-f]{128}$/.test(adminHash)) {
+  warn(
+    "ADMIN_PASSWORD_HASH no tiene el formato esperado.",
+    "Debería ser scrypt:<32 hex>:<128 hex>. Regeneralo: npm run admin:hash -- \"tu clave\""
+  );
+}
+
+if (adminSecret && adminSecret.length < 24) {
+  warn(
+    `ADMIN_SESSION_SECRET tiene solo ${adminSecret.length} caracteres.`,
+    "Firma la cookie de sesión del panel. Usá 32 bytes: openssl rand -hex 32"
+  );
+}
+
 if (problems.length === 0) {
   console.log(`${DIM}[check-env] Variables de entorno OK.${RESET}`);
   process.exit(0);

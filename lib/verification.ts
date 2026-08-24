@@ -39,6 +39,52 @@ export function codeExpiry(from: Date = new Date()): Date {
   return new Date(from.getTime() + CODE_TTL_MINUTES * 60_000);
 }
 
+/**
+ * Longitud del token de consulta. 30^12 ≈ 5.3 × 10^17 combinaciones: probar
+ * tokens al azar no es una estrategia.
+ */
+export const STATUS_TOKEN_LENGTH = 12;
+
+/** Se muestra en grupos de 4 para que se pueda dictar o copiar sin perderse. */
+const STATUS_TOKEN_GROUP = 4;
+
+/**
+ * Token para consultar el estado de una petición.
+ *
+ * Tiene que ser DISTINTO del código de verificación, y la razón es importante:
+ * ese código va en el nombre del perfil, o sea que aparece en el leaderboard
+ * público. Es secreto para nadie. Usarlo también para consultar el estado
+ * regalaría el acceso a cualquiera que mire la tabla.
+ *
+ * Y tiene que ser aleatorio en vez del ObjectId de Mongo, que es
+ * timestamp + valor por proceso + CONTADOR INCREMENTAL: dos peticiones seguidas
+ * difieren en el último dígito, así que quien manda una puede leer las de al
+ * lado probando ids vecinos.
+ */
+export function generateStatusToken(): string {
+  let out = "";
+  for (let i = 0; i < STATUS_TOKEN_LENGTH; i++) {
+    out += ALPHABET[randomInt(ALPHABET.length)];
+  }
+  return out;
+}
+
+/** Formato para mostrar: `K7M2-QW9X-4RTF`. Los guiones no se guardan. */
+export function formatStatusToken(token: string): string {
+  return (token.match(new RegExp(`.{1,${STATUS_TOKEN_GROUP}}`, "g")) ?? []).join("-");
+}
+
+/**
+ * Normaliza lo que el usuario pega: acepta guiones, espacios y minúscula.
+ * Devuelve null si no puede ser un token, para no ir a la base al pedo.
+ */
+export function parseStatusToken(input: string): string | null {
+  const cleaned = input.trim().toUpperCase().replace(/[\s-]/g, "");
+  if (cleaned.length !== STATUS_TOKEN_LENGTH) return null;
+  if (![...cleaned].every((ch) => ALPHABET.includes(ch))) return null;
+  return cleaned;
+}
+
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -98,6 +144,35 @@ export function checkClaim(
     ok: false,
     reason: `El código apareció en "${foundName}", que no coincide con el jugador que estás reclamando.`,
   };
+}
+
+/**
+ * ¿Hay otra cuenta ocupando el nombre reclamado en este mismo momento?
+ *
+ * `checkClaim` prueba que quien puso el código controla una cuenta cuyo nombre,
+ * sin el código, es el reclamado. Lo que NO puede probar es que sea la MISMA
+ * cuenta de siempre: alguien que se renombra "730" pasa ese chequeo igual de
+ * bien que el dueño, y confirmando se lleva puestas las redes del otro.
+ *
+ * El delator es que el ladder siga mostrando una fila con el nombre pelado.
+ * Cuando el dueño legítimo se renombra, su fila deja de decir "730" y pasa a
+ * decir "730 FR5AD": las dos formas no pueden coexistir, porque son la misma
+ * cuenta y el ladder trae una fila por cuenta. Verlas a la vez significa que hay
+ * dos cuentas distintas en juego, y no tenemos con qué distinguir cuál es la
+ * buena.
+ *
+ * El falso negativo posible es un homónimo genuino: dos personas llamadas "730"
+ * y una queriendo verificarse. Preferimos rechazarla antes que arriesgarnos a
+ * entregarle la fila —y las redes— a la persona equivocada, el mismo criterio
+ * que usa el sync con los nombres repetidos.
+ *
+ * Devuelve la fila en conflicto, o null si el camino está limpio.
+ */
+export function findSquatConflict<T extends { nameKey: string }>(
+  rows: T[],
+  claimedNameKey: string
+): T | null {
+  return rows.find((r) => r.nameKey === claimedNameKey) ?? null;
 }
 
 /**

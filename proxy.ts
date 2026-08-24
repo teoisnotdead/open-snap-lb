@@ -34,6 +34,12 @@ function preferredLang(req: NextRequest): string {
 }
 
 export const config = {
-  // Todo menos las rutas de API, los internos de Next y los archivos estáticos.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  /**
+   * Todo menos las rutas de API, el panel, los internos de Next y los estáticos.
+   *
+   * `admin` va excluido porque el panel NO se traduce: vive fuera de `[lang]` y
+   * sin esta exclusión `/admin` terminaría redirigido a `/en/admin`, que no
+   * existe.
+   */
+  matcher: ["/((?!api|admin|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

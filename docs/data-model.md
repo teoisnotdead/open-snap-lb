@@ -1,7 +1,7 @@
-# Modelo de datos (Fase 1)
+# Modelo de datos
 
 Base: `opensnaplb` en el cluster `snap-lb` (Atlas M0, 512 MB).
-Dos colecciones: `players` y `snapshots`.
+Tres colecciones: `players`, `snapshots` y `submissions`.
 
 > Jerarquía de Atlas, que confunde: **proyecto** `open-snap-lb` → **cluster**
 > `snap-lb` → **base** `opensnaplb` → colecciones. La base no se crea desde la
@@ -29,9 +29,20 @@ Implementado en `lib/names.ts`.
    eso `players` guarda `lastRank`: cuando hay ambigüedad, el merge elige la
    fila cuyo rank esté más cerca del último conocido, y si no hay histórico
    marca la fila como `ambiguous` y no le pega los links.
-2. **El nombre es mutable.** Si un jugador verificado se cambia el nombre,
-   su `nameKey` deja de aparecer en el ladder. Es detectable (`lastSeenAt` se
-   queda viejo) y se resuelve re-verificando.
+
+   > `lastRank` lo siembra la aprobación del panel, con `proofRank`: la fila que
+   > probó control de la cuenta. Antes lo escribía solo el sync, y eso era un bloqueo
+   > circular: el sync saltea a los homónimos sin `lastRank` para no adivinar,
+   > así que un homónimo se verificaba bien y después no volvía a pasar nada
+   > nunca — cada corrida lo salteaba por falta del dato que solo esa corrida
+   > podía escribir, sin ningún error visible. `lastScore` sigue siendo
+   > exclusivo del sync: sembrarlo le robaría al jugador su primer snapshot,
+   > porque el sync omite el punto cuando el score no cambió.
+2. **El nombre es mutable.** Si un jugador aprobado se cambia el nombre, su
+   `nameKey` deja de aparecer en el ladder y su historial deja de crecer, en
+   silencio. Es detectable (`lastSeenAt` se queda viejo) y se resuelve con una
+   petición nueva. Peor: si además abandona el nombre, otro puede pedirlo —
+   sin IDs de jugador, controlar el nombre *es* la identidad.
 3. **Lowercase colapsa `Leaf` y `leaf`**, que en el juego son cuentas
    distintas. Se acepta a propósito: la ambigüedad hay que manejarla igual por
    el punto 1, y a cambio el formulario perdona errores de mayúsculas.
@@ -40,7 +51,7 @@ Implementado en `lib/names.ts`.
 
 ## `players`
 
-Un doc por jugador que se vinculó o al que le pusimos un nombre patcheado.
+Un doc por jugador **aprobado**, o al que le pusimos un nombre patcheado.
 **No** hay un doc por cada jugador del top 1000.
 
 | Campo | Tipo | Notas |
@@ -51,10 +62,10 @@ Un doc por jugador que se vinculó o al que le pusimos un nombre patcheado.
 | `twitch?` | string | Handle pelado, minúscula. |
 | `youtube?` | string | Handle sin `@`, minúscula. |
 | `untapped?` | string | URL completa: los UUIDs no se pueden derivar de la API. |
-| `verified` | boolean | |
+| `alliance?` | string | Tag, en mayúsculas. Declarado, indemostrable. |
+| `allianceName?` | string | Nombre largo. Tooltip del tag en la tabla. |
+| `verified` | boolean | Probó control de la cuenta. **No** significa "aprobado". |
 | `verifiedAt?` | Date | |
-| `verificationCode?` | string | Código corto pendiente. |
-| `verificationExpiresAt?` | Date | |
 | `lastSeenAt?` | Date | Última vez visto en el ladder. |
 | `lastRank?` `lastScore?` | number | Denormalizado del último sync. |
 | `peakRank?` `peakScore?` | number | Se mantienen con `$min`/`$max`. |
@@ -73,7 +84,6 @@ UI seis semanas después.
 | `uniq_youtube_verified` | `{youtube:1}` | unique **parcial** |
 | `uniq_untapped_verified` | `{untapped:1}` | unique **parcial** |
 | `verified_rank` | `{verified:1,lastRank:1}` | |
-| `verification_code` | `{verificationCode:1}` | sparse |
 
 El filtro parcial es `{ verified: true, <campo>: { $type: "string" } }`.
 
@@ -83,13 +93,84 @@ El filtro parcial es `{ verified: true, <campo>: { $type: "string" } }`.
 > `$type`, los docs sin el campo quedan fuera del índice.
 
 Verificado con 7 casos contra un `mongod` real (incluyendo que promover a
-`verified: true` con un handle ya tomado tira `E11000`, que es la garantía en
-la que se apoya `/api/verify/confirm` de la Fase 2).
+`verified: true` con un handle ya tomado tira `E11000`).
+
+> **Ojo con el alcance del índice.** El filtro parcial `verified: true` significa
+> que dos jugadores **aprobados sin prueba** pueden declarar el mismo Twitch sin
+> que Mongo diga nada. Por eso la ruta de aprobación lo chequea explícitamente
+> antes de escribir.
+
+### Un doc en `players` significa "aprobado"
+
+Ya no se crea uno al pedir un código: la única ruta que escribe acá es la
+aprobación del panel. `verified` es un eje **independiente** — vale lo que valga
+`proofVerified` en la petición, no la aprobación. Estar en la tabla y tener el
+tick son cosas distintas.
+
+`verificationCode` se mudó a `submissions`, que es donde vive el flujo del
+código ahora.
+
+---
+
+## `submissions`
+
+La cola de revisión. Una petición por lo que alguien quiere mostrar junto a su
+nombre.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `statusToken` | string | **La llave pública.** Aleatorio, único, 12 chars |
+| `nameKey` / `playerName` | string | Cuenta reclamada |
+| `twitch` / `youtube` / `untapped` | string? | Ya normalizados al entrar |
+| `allianceTag` / `allianceName` | string? | Indemostrables: no están en la API |
+| `discord` / `email` | string? | **PRIVADOS.** Nunca salen por una ruta pública |
+| `note` | string? | Texto libre del solicitante |
+| `proofVerified` | boolean | El sello, no el permiso |
+| `proofRank` | number? | Rank de la fila que probó control. Semilla de desambiguación |
+| `verificationCode` / `verificationExpiresAt` | — | Código pendiente |
+| `status` | `pending`/`approved`/`rejected` | |
+| `rejectionReason` | string? | Obligatorio al rechazar |
+| `reviewedAt` / `reviewedBy` | | |
+
+### El público entra por `statusToken`, no por `_id`
+
+Los ObjectId de Mongo son timestamp + valor por proceso + **contador
+incremental**: dos peticiones seguidas difieren en el último dígito. Usarlos
+como llave pública dejaría que quien manda una petición lea las de al lado
+probando ids vecinos.
+
+Por eso hay dos llaves con alcances distintos: **`statusToken` para lo público**
+(aleatorio, 30^12) y **`_id` solo para el panel**, que ya está detrás de sesión.
+
+Y el token es distinto del código de verificación a propósito: ese va en el
+nombre del perfil, o sea que aparece en el leaderboard público.
+
+### Los datos de contacto no se copian a `players`
+
+`players` es la colección que se sirve en público. El contacto vive **solo** acá
+y solo se ve en el panel. Un email de un tercero filtrado por la API pública es
+un problema distinto y peor que cualquier otro de este proyecto.
+
+### Índices
+
+```js
+{ statusToken: 1 } unique                       // la llave pública
+{ status: 1, createdAt: 1 }                    // la cola del panel
+{ nameKey: 1, createdAt: -1 }                  // historial por jugador
+{ nameKey: 1 } unique, partial: {status:"pending"}
+{ verificationCode: 1 } sparse
+```
+
+El tercero es el que importa: **una sola petición pendiente por nombre.** Sin él,
+cualquiera puede mandar cien peticiones del mismo jugador y dejar el panel
+inusable. El filtro parcial es lo que permite que sí convivan varias
+aprobadas/rechazadas históricas del mismo nombre — solo las pendientes compiten.
 
 ### Sobre el TTL que *no* pusimos
-`verificationCode` no lleva índice TTL: un TTL borra el **documento entero**,
-no el campo, así que borraría al jugador. El vencimiento se chequea en la ruta
-de confirm contra `verificationExpiresAt`.
+
+`verificationCode` no lleva índice TTL: un TTL borra el **documento entero**, no
+el campo, así que se llevaría puesta la petición. El vencimiento se chequea en la
+ruta contra `verificationExpiresAt`.
 
 ---
 
@@ -151,7 +232,7 @@ el plan.
 
 ---
 
-## Archivos de la Fase 1
+## Archivos
 
 | Archivo | Qué hace |
 |---|---|

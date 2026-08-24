@@ -1,6 +1,6 @@
-# API (Fase 2)
+# API
 
-Cinco rutas. Todas devuelven JSON; los errores tienen la forma
+Las rutas propias del proyecto. Todas devuelven JSON; los errores tienen la forma
 `{ "error": "mensaje" }`.
 
 ---
@@ -79,82 +79,175 @@ almacenamiento en `data-model.md`).
 
 ---
 
-## `POST /api/verify/request`
+## `POST /api/submissions`
+
+Crea una petición. **No publica nada**: deja un documento `pending`.
 
 ```jsonc
-// request
-{ "playerName": "Sizer" }
-
-// response
+// entrada
 {
-  "ok": true,
-  "playerName": "Sizer",
-  "nameKey": "sizer",
-  "code": "M8MH8",
-  "suggestedName": "Sizer M8MH8",
-  "charsToTrim": 0,        // cuántos chars hay que sacrificar por el tope de 20
-  "maxNameLength": 20,
-  "expiresInMinutes": 60,
-  "expiresAt": "2026-08-24T04:00:19.623Z",
-  "alreadyVerified": false,
-  "ambiguous": false,
-  "steps": ["...", "...", "...", "..."]
+  "playerName": "730",
+  "twitch": "https://twitch.tv/Handle",   // se normaliza a "handle"
+  "youtube": "@handle", "untapped": "https://snap.untapped.gg/...",
+  "allianceTag": "job",                   // se normaliza a "JOB"
+  "allianceName": "Job Enjoyers",
+  "discord": "teo.dev", "email": "teo@ejemplo.com",  // PRIVADOS
+  "note": "texto libre para quien revise"
 }
+
+// salida 201
+{ "ok": true, "token": "RYNGXNWGVENT", "nameKey": "730", "playerName": "730",
+  "status": "pending", "ambiguous": false }
 ```
 
-- Se exige que el jugador **exista en el ladder actual**, si no cualquiera
-  podría llenar `players` de basura → **404**.
-- Si ya hay un código vigente **se devuelve el mismo**, no se rota. Rotarlo
-  invalidaría el nombre que el jugador quizá ya se cambió.
-- Código de 5 caracteres, alfabeto tipo Crockford base32 (sin `0`, `1`, `I`,
-  `L`, `O`, `U`) porque hay que tipearlo a mano en el cliente del juego.
+**El `token` es la única llave pública de la petición.** No se devuelve el `_id`:
+los ObjectId de Mongo son timestamp + valor por proceso + **contador
+incremental**, así que desde uno conocido se adivinan los vecinos y cualquiera
+que mande una petición podría leer las de al lado. El token son 12 caracteres
+aleatorios del mismo alfabeto Crockford del código de verificación — 30^12 ≈
+5.3 × 10^17.
+
+> Tiene que ser **distinto** del código de verificación, y no por longitud: ese
+> código va en el nombre del perfil, o sea que se publica en el leaderboard.
+> Reusarlo para consultar el estado regalaría el acceso a cualquiera que mire la
+> tabla.
+
+El insert distingue los dos índices únicos que pueden chocar: `uniq_status_token`
+es mala suerte y se reintenta con otro token, `uniq_pending_per_player` es un
+error del usuario. Sin mirar el nombre del índice le diríamos «ya pediste» a
+alguien que no pidió.
+
+Reglas de entrada:
+
+| Regla | Por qué |
+|---|---|
+| El jugador tiene que estar en el ladder | Si no, cualquiera llena la cola de basura |
+| Al menos una red **o** el tag de alianza | Tiene que haber algo que publicar |
+| Al menos un contacto (Discord o email) | Sin cuentas ni notificaciones, es el único canal para rechazar o repreguntar |
+| `allianceName` exige `allianceTag` | La tabla muestra el tag; el nombre solo sería dato huérfano |
+| Una sola pendiente por nombre (409) | Índice `uniq_pending_per_player`. Sin esto, cien peticiones del mismo jugador dejan el panel inusable |
 
 ---
 
-## `POST /api/verify/confirm`
+## `POST /api/submissions/[token]/code`
 
-```jsonc
-// request — al menos una red
-{ "playerName": "Sizer", "twitch": "sizer", "youtube": "@sizer",
-  "untapped": "https://snap.untapped.gg/en/profile/<uuid>/<uuid>" }
+Emite —o reutiliza— el código de prueba de propiedad.
 
-// response
-{ "ok": true, "verified": true, "nameKey": "sizer", "playerName": "Sizer",
-  "twitch": "sizer", "message": "¡Listo! Ya podés volver a tu nombre de siempre." }
-```
+Se emite acá y no al crear la petición porque el que nunca va a probar nada no
+necesita un código colgando. Si ya hay uno vigente devuelve **el mismo**:
+rotarlo dejaría inservible el nombre que el jugador quizá ya se cambió.
 
-Códigos de error:
+---
 
-| Código | Significado |
-|---|---|
-| 400 | Red mal formada, o no mandaste ninguna |
-| 404 | No hay código pendiente para ese jugador |
-| 404 + `retryable: true` | El código todavía no aparece en el ladder — hay que reintentar |
-| 410 | El código venció |
-| 403 | El código apareció, pero en una cuenta distinta de la reclamada |
-| 409 | Ese canal ya lo reclamó otra cuenta verificada |
+## `POST /api/submissions/[token]/proof`
 
-### Las dos decisiones que importan acá
+Busca el código en el ladder en vivo y, si aparece en la cuenta reclamada, marca
+la petición como `proofVerified`. **Sigue sin publicar nada**: solo agrega el
+sello para quien revisa.
+
+### Las tres decisiones que importan acá
 
 **1. Se busca por código, no por nombre.** Al agregarse el código al nombre, el
-`nameKey` del jugador cambió y ya no coincide con el que reclamó. Buscar por
-`nameKey` no encontraría nunca nada.
+`nameKey` cambió y ya no coincide con el reclamado.
 
 **2. Encontrar el código NO alcanza.** Prueba control de *alguna* cuenta, no de
-la reclamada. Sin un chequeo extra, un atacante podría pedir un código para
-"Sizer", pegarlo en el nombre de **su propia** cuenta y confirmar — y nosotros
-marcaríamos a "Sizer" como verificado con las redes del atacante. Por eso
-`checkClaim()` saca el código del nombre encontrado y exige que lo que queda
-sea prefijo del nombre reclamado. La comparación es por prefijo y no por
-igualdad justamente por el tope de 20 caracteres: quien tiene el nombre al
-límite necesita recortarlo para que le entre el código.
+la reclamada. Sin el chequeo extra, alguien podría pedir un código para "Sizer",
+pegarlo en el nombre de **su propia** cuenta y quedar marcado como Sizer. Por eso
+`checkClaim()` saca el código del nombre encontrado y exige que lo que queda sea
+prefijo del reclamado — por prefijo y no por igualdad, porque quien tiene el
+nombre al tope de 20 caracteres necesita recortarlo para que el código entre.
 
-Además se revisan **todas** las filas que contengan el código, no solo la
-primera: los códigos no son únicos a nivel global y 5 caracteres pueden
-aparecer por casualidad en el nombre de otro.
+Se revisan **todas** las filas que contengan el código, no solo la primera: 5
+caracteres pueden aparecer por casualidad en el nombre de otro.
 
-El fetch al ladder va con `cache: no-store`. Con la respuesta cacheada
-podríamos estar mirando el nombre viejo y rechazar una verificación legítima.
+**3. `checkClaim()` tampoco alcanza: falta descartar la ocupación de nombre.**
+Un atacante que se renombra `730` pasa ese chequeo igual de bien que el dueño.
+Lo cierra `findSquatConflict()`: si el ladder **todavía muestra una fila con el
+nombre pelado** mientras aparece otra con el código, hay dos cuentas distintas
+en juego. El ladder trae una fila por cuenta, así que las dos formas del nombre
+no pueden coexistir siendo la misma persona — cuando el dueño se renombra, su
+fila deja de decir `730`. Ver las dos a la vez es la señal.
+
+El falso negativo es un homónimo genuino queriendo verificarse: lo rechazamos,
+mismo criterio que usa el sync con los nombres repetidos.
+
+**Riesgo residual, sin arreglo posible con identidad por nombre:** si el dueño
+abandona el nombre o se cae del top 1000, no queda fila pelada que delate nada.
+Con la API oficial sin IDs de jugador, control del nombre *es* la identidad.
+
+El fetch al ladder va con `cache: no-store`. Con la respuesta cacheada podríamos
+estar mirando el nombre viejo y rechazar una prueba legítima.
+
+---
+
+## `GET /api/submissions/[token]`
+
+Estado de una petición, para el solicitante. Sin cuentas ni notificaciones, es la
+única forma que tiene de saber cómo quedó.
+
+Devuelve el estado, la prueba, **lo que pidió publicar** y el motivo si fue
+rechazada. Eso último se puede mostrar justamente porque la llave es un token
+aleatorio: con el `_id` adivinable había que dejar la vista casi vacía.
+
+**El contacto sigue afuera.** No porque el token sea débil, sino porque un token
+termina en historiales, chats y capturas, y no hay razón para que un email viaje
+en esa vista — ya lo tiene quien lo escribió.
+
+El token se acepta con guiones, espacios y en minúscula (`parseStatusToken`).
+Un token mal formado y uno inexistente dan el mismo 404: distinguirlos
+confirmaría cuáles existen.
+
+### `/{lang}/request` y `/{lang}/request/[token]`
+
+La página de estado, y un buscador donde pegar el código para quien cerró la
+pestaña. Las dos llevan `noindex`: la URL **contiene** el token.
+
+---
+
+## Panel de admin
+
+Todas exigen una sesión válida (cookie `osl_admin`, firmada con HMAC). Sin las
+env vars del panel devuelven **503**: cerradas, nunca abiertas.
+
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/admin/login` | Valida usuario y clave, setea la cookie |
+| `POST /api/admin/logout` | Borra la cookie |
+| `GET /api/admin/submissions?status=` | La cola, con el rank actual resuelto al vuelo |
+| `POST /api/admin/submissions/[id]` | `{action:"approve"\|"reject", reason?}` |
+
+**Aprobar es lo único que escribe en `players`**, o sea lo único que publica
+algo. Al aprobar:
+
+- `verified` toma el valor de `proofVerified`, no de la aprobación. El tick
+  refleja la prueba de propiedad; estar en la tabla refleja la aprobación.
+- `lastRank` se siembra con `proofRank` **solo si todavía no hay uno**. Si el
+  jugador ya venía trackeado, el sync tiene un valor más fresco.
+- El contacto (Discord, email) **no se copia** a `players`: esa colección se
+  sirve en público.
+- Se chequea que ningún otro jugador tenga ya ese canal. El índice único de las
+  redes solo aplica a `verified: true`, así que no frena a dos aprobados sin
+  prueba que declaren el mismo Twitch.
+
+Rechazar exige motivo: sin él, el solicitante se queda sin nada que hacer con la
+respuesta y vos sin memoria de por qué lo rechazaste.
+
+### Sobre la autenticación
+
+La clave se guarda como hash **scrypt**, no en texto plano ni SHA pelado: SHA
+está diseñado para ser rápido, que es justo lo que no querés en un hash de
+contraseña. Las comparaciones son en tiempo constante (`timingSafeEqual`), y la
+clave se verifica **siempre**, incluso con usuario incorrecto — cortar antes
+haría que un usuario inexistente responda más rápido y eso regala la lista de
+usuarios válidos.
+
+> El hash usa `:` como separador, **no `$`**. Next expande variables al leer
+> `.env`, así que un `$` en el valor lo mutila en silencio: el login falla con
+> «clave incorrecta» sin ninguna pista. `npm run build` avisa si lo detecta.
+
+**Lo que no tiene:** límite de intentos. En serverless no hay memoria compartida
+entre invocaciones, así que un contador honesto necesita ir a Mongo. Si el panel
+se vuelve un objetivo real, es lo primero que hay que agregar.
 
 ---
 
@@ -187,13 +280,16 @@ verificar esa cuenta. Hay un test que lo cubre.
 
 ## Estado de las pruebas
 
-`scripts/` tiene tres suites, todas pasando:
+`scripts/` tiene cuatro suites, todas pasando:
 
 | Comando | Qué cubre |
 |---|---|
 | `npm run test:socials` | 18 casos de parseo de handles y normalización de nombres |
-| `npm run test:verification` | 24 casos de la lógica de verificación, incluido el ataque de secuestro |
+| `npm run test:verification` | 30 casos de la lógica de verificación, incluidos el secuestro y la ocupación de nombre |
+| `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run db:smoke` | 10 casos del modelo contra Atlas real; se autolimpia |
 
-Y una suite end-to-end de 19 checks contra el server levantado que cubre auth
-del cron, idempotencia, los errores de verificación y la no-fuga del código.
+Y verificación end-to-end contra el server levantado del ciclo completo:
+validación de entrada, la petición duplicada, la no-fuga de contacto por la ruta
+pública, las rutas de admin cerradas sin sesión, login, cola y aprobación —
+comprobando que aprobar **sin** prueba publica los links pero **no** el tick.
