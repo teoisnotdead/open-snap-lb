@@ -40,7 +40,8 @@ export default async function LeaderboardPage({
         syncedAt={board.fetchedAt}
       />
 
-      <section className="grid shrink-0 grid-cols-4 gap-px border-b border-line bg-line">
+      {/* 2x2 en móvil: cuatro columnas en 390 px cortaban los números por la mitad. */}
+      <section className="grid shrink-0 grid-cols-2 gap-px border-b border-line bg-line sm:grid-cols-4">
         <Stat label={t.stats.playersInLadder} value={formatScore(board.total)} />
         <Stat
           label={t.stats.visibleInTable}
@@ -52,7 +53,7 @@ export default async function LeaderboardPage({
       </section>
 
       {!board.enriched && (
-        <p className="mx-8 mt-5 flex items-start gap-2.5 rounded-[10px] border border-line-strong bg-surface px-4 py-3 text-[13px] leading-relaxed text-ink-3">
+        <p className="mx-4 mt-5 sm:mx-8 flex items-start gap-2.5 rounded-[10px] border border-line-strong bg-surface px-4 py-3 text-[13px] leading-relaxed text-ink-3">
           <WarningIcon size={15} className="mt-0.5 shrink-0 text-ink-4" />
           <span>{t.error.degraded}</span>
         </p>
@@ -60,7 +61,7 @@ export default async function LeaderboardPage({
 
       <LeaderboardTable rows={board.rows} lang={lang} t={t} />
 
-      <footer className="mt-auto flex items-center justify-between gap-8 px-8 pb-[22px] pt-[18px]">
+      <footer className="mt-auto flex flex-col gap-3 px-4 pb-[22px] pt-[18px] sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:px-8">
         <p className="flex items-center gap-2 text-xs text-ink-4">
           <WarningIcon size={13} className="shrink-0" />
           <span>{t.footer.ambiguity}</span>
@@ -81,12 +82,12 @@ function Stat({
   note?: string;
 }) {
   return (
-    <div className="bg-bg px-8 py-5">
+    <div className="bg-bg px-4 py-4 sm:px-8 sm:py-5">
       <div className="mb-[7px] text-[10.5px] font-semibold tracking-[0.13em] text-ink-4">
         {label}
       </div>
       <div className="flex items-baseline gap-2.5">
-        <span className="num text-[26px] font-medium tracking-[-0.02em]">{value}</span>
+        <span className="num text-[21px] font-medium tracking-[-0.02em] sm:text-[26px]">{value}</span>
         {note && <span className="text-[11.5px] text-ink-4">{note}</span>}
       </div>
     </div>
@@ -112,7 +113,7 @@ function BoardUnavailable({
   return (
     <main className="flex min-h-screen flex-col">
       <SiteHeader lang={lang} t={t} active="leaderboard" />
-      <div className="flex grow items-center justify-center px-8">
+      <div className="flex grow items-center justify-center px-4 sm:px-8">
         <div className="max-w-[520px] text-center">
           <h1 className="mb-3 font-display text-2xl font-bold tracking-[-0.02em]">
             {t.error.boardTitle}

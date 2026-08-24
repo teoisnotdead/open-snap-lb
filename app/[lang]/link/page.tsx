@@ -30,10 +30,12 @@ export default async function LinkPage({
     <main className="flex min-h-screen flex-col">
       <SiteHeader lang={lang} t={t} active="link" currentPath="/link" />
 
-      <div className="grid grid-cols-[minmax(0,1fr)_372px] gap-10 px-8 pb-16 pt-[34px]">
+      {/* Una sola columna en móvil: la barra lateral de 372 px fijos no entra, y
+          su contenido es contexto, así que baja debajo del formulario. */}
+      <div className="grid grid-cols-1 gap-8 px-4 pb-16 pt-6 lg:grid-cols-[minmax(0,1fr)_372px] lg:gap-10 lg:px-8 lg:pt-[34px]">
         <div className="flex min-w-0 flex-col gap-6">
           <div>
-            <h1 className="mb-2 font-display text-[34px] font-bold leading-[1.1] tracking-[-0.03em]">
+            <h1 className="mb-2 font-display text-[27px] sm:text-[34px] font-bold leading-[1.1] tracking-[-0.03em]">
               {t.link.title}
             </h1>
             <p className="max-w-[640px] text-[14.5px] leading-relaxed text-ink-3">

@@ -116,7 +116,7 @@ export default async function PlayerPage({
         currentPath={`/player/${encodeURIComponent(nameKey)}`}
       />
 
-      <div className="flex flex-col gap-5 px-8 pb-10 pt-[22px]">
+      <div className="flex flex-col gap-5 px-4 pb-10 pt-5 sm:px-8 sm:pt-[22px]">
         <Link
           href={`/${lang}`}
           className="flex w-fit items-center gap-[7px] text-[13px] text-ink-3 hover:text-ink"
@@ -125,10 +125,10 @@ export default async function PlayerPage({
           {t.player.back}
         </Link>
 
-        <section className="flex items-end justify-between gap-8 border-b border-line pb-[22px]">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <h1 className="font-display text-[42px] font-bold leading-none tracking-[-0.03em]">
+        <section className="flex flex-col gap-5 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between sm:gap-8 sm:pb-[22px]">
+          <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="min-w-0 break-words font-display text-[28px] font-bold leading-none tracking-[-0.03em] sm:text-[42px]">
                 {displayName}
               </h1>
               {player?.verified && (
@@ -146,7 +146,7 @@ export default async function PlayerPage({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-4 text-[13px] text-ink-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-3">
               {player?.lastSeenAt && (
                 <span>
                   {t.player.lastSeen} {formatRelative(player.lastSeenAt, lang)}
@@ -161,7 +161,7 @@ export default async function PlayerPage({
           </div>
 
           {player && (player.twitch || player.youtube || player.untapped) && (
-            <div className="flex shrink-0 items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5 sm:shrink-0">
               {player.twitch && (
                 <SocialLink href={`https://twitch.tv/${player.twitch}`}>
                   <TwitchIcon size={16} />
@@ -184,7 +184,9 @@ export default async function PlayerPage({
           )}
         </section>
 
-        <section className="grid grid-cols-5 gap-3">
+        {/* Cinco métricas en fila no entran en 390 px: 2 columnas en móvil, 3 en
+            tablet. */}
+        <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
           <Stat label={t.player.snapPoints} value={currentScore} />
           <Stat label={t.player.currentRank} value={currentRank} isRank />
           <Stat label={t.player.peakSp} value={player?.peakScore} accent />

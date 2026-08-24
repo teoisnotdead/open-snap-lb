@@ -29,7 +29,7 @@ export default async function HowPage({
     <main className="flex min-h-screen flex-col">
       <SiteHeader lang={lang} t={t} active="how" currentPath="/how-it-works" />
 
-      <article className="mx-auto w-full max-w-[720px] px-8 pb-20 pt-12">
+      <article className="mx-auto w-full max-w-[720px] px-4 pb-20 pt-8 sm:px-8 sm:pt-12">
         <h1 className="mb-3 font-display text-[34px] font-bold leading-[1.1] tracking-[-0.03em]">
           {t.how.title}
         </h1>

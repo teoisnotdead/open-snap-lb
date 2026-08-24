@@ -23,9 +23,20 @@ type Filter = "all" | "creators" | "verified";
  */
 const PAGE = 100;
 
-/** Grilla compartida por el encabezado y las filas, para que no se desalineen. */
+/**
+ * Grilla compartida por el encabezado y las filas, para que no se desalineen.
+ *
+ * En móvil son TRES columnas, no seis: puesto, jugador y SP — que es lo que la
+ * gente viene a mirar. Alianza, Δ 24 h y canales se ocultan con `hidden`, que
+ * las saca del flujo de la grilla, así que las tres visibles caen justo en las
+ * tres columnas.
+ *
+ * La alternativa era scroll horizontal, pero un leaderboard se recorre con el
+ * pulgar hacia abajo; obligar a barrer de costado para ver el puntaje lo
+ * vuelve incómodo justo en lo que importa.
+ */
 const GRID =
-  "grid grid-cols-[86px_minmax(0,1fr)_104px_148px_122px_128px] items-center gap-4 pl-3 pr-5";
+  "grid grid-cols-[46px_minmax(0,1fr)_auto] sm:grid-cols-[86px_minmax(0,1fr)_104px_148px_122px_128px] items-center gap-3 pl-2 pr-3 sm:gap-4 sm:pl-3 sm:pr-5";
 
 export function LeaderboardTable({
   rows,
@@ -74,9 +85,10 @@ export function LeaderboardTable({
 
   return (
     <>
-      <section className="flex items-center justify-between gap-6 px-8 py-[22px]">
-        <div className="flex grow items-center gap-3.5">
-          <label className="flex h-[42px] w-[380px] items-center gap-2.5 rounded-lg border border-line-strong bg-surface-2 px-3.5 focus-within:border-accent">
+      <section className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-8 sm:py-[22px]">
+        <div className="flex grow flex-col gap-3 sm:flex-row sm:items-center sm:gap-3.5">
+          {/* `w-full` con `sm:w-[380px]`: el ancho fijo desbordaba la pantalla. */}
+          <label className="flex h-[42px] w-full items-center gap-2.5 rounded-lg border border-line-strong bg-surface-2 px-3.5 focus-within:border-accent sm:w-[380px]">
             <SearchIcon className="shrink-0 text-ink-4" />
             <input
               type="search"
@@ -88,7 +100,7 @@ export function LeaderboardTable({
             />
           </label>
 
-          <div className="flex items-center gap-[7px]">
+          <div className="flex shrink-0 items-center gap-[7px]">
             {filters.map((f) => (
               <button
                 key={f.key}
@@ -106,30 +118,30 @@ export function LeaderboardTable({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center justify-between gap-4">
           <span className="num text-[12.5px] text-ink-4">
             {formatScore(filtered.length)} {t.table.results}
           </span>
           <Link
             href={`/${lang}/link`}
-            className="rounded-[7px] bg-accent px-[18px] py-2.5 text-[13.5px] font-semibold text-bg hover:bg-accent-bright"
+            className="shrink-0 rounded-[7px] bg-accent px-[18px] py-2.5 text-[13.5px] font-semibold text-bg hover:bg-accent-bright"
           >
             {t.table.linkCta}
           </Link>
         </div>
       </section>
 
-      <section className="px-8 pb-6">
+      <section className="px-4 pb-6 sm:px-8">
         <div className="overflow-hidden rounded-[10px] border border-line bg-[#0b0b0f]">
           <div
             className={`${GRID} h-10 border-b border-line bg-surface-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-4`}
           >
-            <div className="pl-2">{t.table.rank}</div>
+            <div className="pl-1 sm:pl-2">{t.table.rank}</div>
             <div>{t.table.player}</div>
-            <div>{t.table.alliance}</div>
+            <div className="hidden sm:block">{t.table.alliance}</div>
             <div className="text-right">{t.table.snapPoints}</div>
-            <div className="text-right">{t.table.delta}</div>
-            <div className="text-right">{t.table.channels}</div>
+            <div className="hidden text-right sm:block">{t.table.delta}</div>
+            <div className="hidden text-right sm:block">{t.table.channels}</div>
           </div>
 
           {visible.length === 0 ? (
@@ -207,7 +219,7 @@ function Row({
         podium ? `${podium.bar} ${podium.row}` : ""
       }`}
     >
-      <div className={`num pl-2 ${podium ? podium.num : "text-[15px] text-ink-3"}`}>
+      <div className={`num pl-1 sm:pl-2 ${podium ? podium.num : "text-[15px] text-ink-3"}`}>
         {formatRank(row.rank)}
       </div>
 
@@ -235,21 +247,8 @@ function Row({
         )}
       </div>
 
-      <div>
-        {row.alliance ? (
-          <span
-            /* El nombre largo va de tooltip: la columna es angosta y el tag es
-               lo que la gente reconoce. Sin nombre, no hay title vacío. */
-            title={row.allianceName}
-            className={`num rounded border border-line-strong px-1.5 py-0.5 text-[11px] font-semibold tracking-[0.06em] text-ink-3 ${
-              row.allianceName ? "cursor-help" : ""
-            }`}
-          >
-            {row.alliance}
-          </span>
-        ) : (
-          <span className="text-[13px] text-ink-4">—</span>
-        )}
+      <div className="hidden sm:block">
+        {row.alliance ? <AllianceTag row={row} /> : <span className="text-[13px] text-ink-4">—</span>}
       </div>
 
       <div className="num text-right text-[15px] font-medium">
@@ -257,25 +256,39 @@ function Row({
       </div>
 
       <div
-        className={`num text-right text-[13.5px] ${
-          row.delta24h === undefined
-            ? "text-ink-4"
-            : row.delta24h > 0
-              ? "text-pos"
-              : row.delta24h < 0
-                ? "text-neg"
-                : "text-ink-3"
-        }`}
+        className={`num hidden text-right text-[13.5px] sm:block ${deltaColor(row.delta24h)}`}
         title={row.delta24h === undefined ? t.table.unknownDelta : undefined}
       >
         {row.delta24h === undefined ? "—" : formatDelta(row.delta24h)}
       </div>
 
-      <div className="flex items-center justify-end gap-2.5 text-ink-3">
+      <div className="hidden items-center justify-end gap-2.5 text-ink-3 sm:flex">
         {row.twitch && <TwitchIcon />}
         {row.youtube && <YouTubeIcon />}
         {row.untapped && <UntappedIcon />}
       </div>
     </Link>
+  );
+}
+
+function deltaColor(delta: number | undefined): string {
+  if (delta === undefined) return "text-ink-4";
+  if (delta > 0) return "text-pos";
+  if (delta < 0) return "text-neg";
+  return "text-ink-3";
+}
+
+function AllianceTag({ row }: { row: MergedLeaderboardRow }) {
+  return (
+    <span
+      /* El nombre largo va de tooltip: la columna es angosta y el tag es lo que
+         la gente reconoce. Sin nombre, no hay title vacío. */
+      title={row.allianceName}
+      className={`num shrink-0 rounded border border-line-strong px-1.5 py-0.5 text-[11px] font-semibold tracking-[0.06em] text-ink-3 ${
+        row.allianceName ? "cursor-help" : ""
+      }`}
+    >
+      {row.alliance}
+    </span>
   );
 }

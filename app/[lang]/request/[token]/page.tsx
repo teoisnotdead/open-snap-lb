@@ -44,8 +44,8 @@ export default async function RequestStatusPage({
     <main className="flex min-h-screen flex-col">
       <SiteHeader lang={lang} t={t} active="link" currentPath="/request" />
 
-      <div className="mx-auto w-full max-w-[680px] px-8 pb-16 pt-[34px]">
-        <h1 className="mb-6 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.03em]">
+      <div className="mx-auto w-full max-w-[680px] px-4 pb-16 pt-6 sm:px-8 sm:pt-[34px]">
+        <h1 className="mb-6 font-display text-[25px] sm:text-[30px] font-bold leading-[1.1] tracking-[-0.03em]">
           {t.request.title}
         </h1>
 
@@ -66,7 +66,7 @@ export default async function RequestStatusPage({
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <section className="rounded-xl border border-line bg-surface p-6">
+            <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h2 className="font-display text-[19px] font-bold">{doc.playerName}</h2>
                 <StatusPill t={t} status={doc.status} />
@@ -89,7 +89,7 @@ export default async function RequestStatusPage({
                 </div>
               )}
 
-              <dl className="mt-5 grid grid-cols-[150px_minmax(0,1fr)] gap-y-2 border-t border-line-soft pt-4 text-[13px]">
+              <dl className="mt-5 grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)] gap-y-2 border-t border-line-soft pt-4 text-[13px]">
                 <dt className="text-ink-4">{t.request.sentAt}</dt>
                 <dd className="text-ink-2">{formatDateTime(doc.createdAt, lang)}</dd>
 
@@ -121,9 +121,9 @@ export default async function RequestStatusPage({
 
             {/* Lo que pidió. Se puede mostrar porque la llave es un token
                 aleatorio, no un id adivinable. El contacto sigue afuera. */}
-            <section className="rounded-xl border border-line bg-surface p-6">
+            <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
               <h2 className="mb-4 text-[15px] font-semibold">{t.request.whatYouAsked}</h2>
-              <dl className="grid grid-cols-[150px_minmax(0,1fr)] gap-y-2 text-[13px]">
+              <dl className="grid grid-cols-[110px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)] gap-y-2 text-[13px]">
                 <Row label="Twitch" value={doc.twitch} />
                 <Row label="YouTube" value={doc.youtube} />
                 <Row label="Untapped" value={doc.untapped} />

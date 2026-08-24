@@ -134,15 +134,15 @@ export function ProgressChart({
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-xl border border-line bg-surface px-6 pb-3.5 pt-[22px]">
-        <div className="mb-1.5 flex items-start justify-between gap-6">
+      <section className="rounded-xl border border-line bg-surface px-3 pb-3.5 pt-4 sm:px-6 sm:pt-[22px]">
+        <div className="mb-1.5 flex flex-col gap-3 px-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-0">
           <div>
             <h2 className="mb-1 text-[15px] font-semibold tracking-[-0.01em]">
               {fill(t.chart.spTitle, { name: playerName })}
             </h2>
             <p className="text-[12.5px] text-ink-4">{t.chart.spSubtitle}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5 self-start">
             {ranges(t).map((r) => (
               <button
                 key={r.key}
@@ -222,8 +222,10 @@ export function ProgressChart({
         </ResponsiveContainer>
       </section>
 
-      <section className="rounded-xl border border-line bg-surface px-6 pb-3 pt-5">
-        <div className="mb-1 flex items-baseline justify-between">
+      <section className="rounded-xl border border-line bg-surface px-3 pb-3 pt-4 sm:px-6 sm:pt-5">
+        {/* Apilado en móvil: lado a lado, el título se partía en dos líneas y
+            la nota le quedaba encimada al costado. */}
+        <div className="mb-1 flex flex-col gap-0.5 px-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 sm:px-0">
           <h2 className="text-[15px] font-semibold tracking-[-0.01em]">
             {t.chart.rankTitle}
           </h2>
@@ -316,7 +318,7 @@ function RankTooltip({ active, payload, lang, t }: TooltipProps & { lang: Lang; 
  */
 export function NotEnoughData({ points, t }: { points: number; t: Dictionary }) {
   return (
-    <section className="rounded-xl border border-line bg-surface px-6 py-14 text-center">
+    <section className="rounded-xl border border-line bg-surface px-4 py-12 text-center sm:px-6 sm:py-14">
       <h2 className="mb-2 text-[15px] font-semibold">{t.chart.emptyTitle}</h2>
       <p className="mx-auto max-w-[440px] text-[13px] leading-relaxed text-ink-4">
         {points === 0 ? t.chart.emptyNone : t.chart.emptyOne}

@@ -42,7 +42,7 @@ export function LoginForm() {
   return (
     <form
       onSubmit={submit}
-      className="w-full max-w-[380px] rounded-xl border border-line bg-surface p-7"
+      className="w-full max-w-[380px] rounded-xl border border-line bg-surface p-5 sm:p-7"
     >
       <h1 className="mb-1 font-display text-[22px] font-bold tracking-[-0.02em]">Panel</h1>
       <p className="mb-6 text-[13px] text-ink-4">Revisión de peticiones</p>

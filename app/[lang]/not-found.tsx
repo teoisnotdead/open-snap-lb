@@ -10,7 +10,7 @@ export default function NotFound() {
   const t = getDictionary(lang);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-8 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center px-4 text-center sm:px-8">
       <p className="num mb-4 text-[13px] tracking-[0.2em] text-ink-4">404</p>
       <h1 className="mb-3 font-display text-[32px] font-bold tracking-[-0.02em]">
         {t.error.notFoundTitle}

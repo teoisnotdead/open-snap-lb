@@ -27,8 +27,8 @@ export default async function RequestLookupPage({
     <main className="flex min-h-screen flex-col">
       <SiteHeader lang={lang} t={t} active="link" currentPath="/request" />
 
-      <div className="mx-auto w-full max-w-[560px] px-8 pb-16 pt-[48px]">
-        <h1 className="mb-2 font-display text-[30px] font-bold leading-[1.1] tracking-[-0.03em]">
+      <div className="mx-auto w-full max-w-[560px] px-4 pb-16 pt-8 sm:px-8 sm:pt-[48px]">
+        <h1 className="mb-2 font-display text-[25px] sm:text-[30px] font-bold leading-[1.1] tracking-[-0.03em]">
           {t.request.lookupTitle}
         </h1>
         <p className="mb-7 text-[14px] leading-relaxed text-ink-3">

@@ -128,10 +128,13 @@ function Steps({ t, stage }: { t: Dictionary; stage: Stage }) {
             >
               {item.state === "done" ? <CheckIcon size={12} /> : i + 1}
             </span>
+            {/* En móvil solo se lee la etiqueta del paso actual: las tres
+                juntas no entran y se pisaban entre sí. Los círculos numerados
+                quedan siempre, que es lo que da la noción de avance. */}
             <span
               className={`text-[13px] ${
-                item.state === "next" ? "text-ink-4" : "font-medium text-ink"
-              }`}
+                item.state === "now" ? "inline" : "hidden sm:inline"
+              } ${item.state === "next" ? "text-ink-4" : "font-medium text-ink"}`}
             >
               {item.label}
             </span>
@@ -185,7 +188,7 @@ function FindStep({ t, onFound }: { t: Dictionary; onFound: (f: Found) => void }
   }
 
   return (
-    <form onSubmit={find} className="rounded-xl border border-line bg-surface p-6">
+    <form onSubmit={find} className="rounded-xl border border-line bg-surface p-4 sm:p-6">
       <h2 className="mb-1 text-[15px] font-semibold">{t.link.findTitle}</h2>
       <p className="mb-4 text-[13px] text-ink-3">{t.link.findSubtitle}</p>
 
@@ -306,11 +309,11 @@ function FormStep({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
-      <section className="rounded-xl border border-line bg-surface p-6">
+      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
         <h2 className="mb-1 text-[15px] font-semibold">{t.link.detailsTitle}</h2>
         <p className="mb-5 text-[13px] text-ink-3">{t.link.detailsSubtitle}</p>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label={t.link.twitch} prefix="twitch.tv/">
             <input
               value={values.twitch}
@@ -337,7 +340,7 @@ function FormStep({
           </Field>
         </div>
 
-        <div className="mt-4 grid grid-cols-[160px_minmax(0,1fr)] gap-4">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[160px_minmax(0,1fr)]">
           <Field label={t.link.allianceLabel}>
             <input
               value={values.allianceTag}
@@ -360,11 +363,11 @@ function FormStep({
         <p className="mt-2.5 text-[12px] text-ink-4">{t.link.allianceHelp}</p>
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-6">
+      <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
         <h2 className="mb-1 text-[15px] font-semibold">{t.link.contactTitle}</h2>
         <p className="mb-5 text-[13px] text-ink-3">{t.link.contactSubtitle}</p>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t.link.discordLabel}>
             <input
               value={values.discord}
@@ -468,7 +471,7 @@ function SentPanel({
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-xl border border-pos/25 bg-pos/[0.06] p-6">
+      <section className="rounded-xl border border-pos/25 bg-pos/[0.06] p-4 sm:p-6">
         <h2 className="mb-1.5 flex items-center gap-2.5 font-display text-[19px] font-bold">
           <CheckIcon size={17} className="text-pos" />
           {t.link.sentTitle}
@@ -507,7 +510,7 @@ function SentPanel({
       </section>
 
       {stage === "proved" ? (
-        <section className="rounded-xl border border-line bg-surface p-6">
+        <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
           <h2 className="mb-1.5 flex items-center gap-2.5 text-[15px] font-semibold">
             <CheckIcon size={15} className="text-pos" />
             {t.link.proofDoneTitle}
@@ -515,7 +518,7 @@ function SentPanel({
           <p className="text-[13px] leading-relaxed text-ink-3">{t.link.proofDoneBody}</p>
         </section>
       ) : (
-        <section className="rounded-xl border border-line bg-surface p-6">
+        <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
           <h2 className="mb-1.5 text-[15px] font-semibold">{t.link.proofTitle}</h2>
           <p className="mb-5 max-w-[600px] text-[13px] leading-relaxed text-ink-3">
             {t.link.proofIntro}
@@ -541,7 +544,7 @@ function SentPanel({
                 </span>
               </div>
 
-              <div className="grid grid-cols-[240px_minmax(0,1fr)] gap-5">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-[240px_minmax(0,1fr)]">
                 <div className="grid place-items-center rounded-xl border border-line-strong bg-bg py-7">
                   <p className="mb-2 text-[10.5px] font-semibold tracking-[0.1em] text-ink-4">
                     {t.link.yourCode}
@@ -599,7 +602,7 @@ function SentPanel({
 
               {error && <ErrorNote>{error}</ErrorNote>}
 
-              <div className="mt-5 flex items-end justify-between gap-6 border-t border-line-soft pt-5">
+              <div className="mt-5 flex flex-col items-stretch gap-4 border-t border-line-soft pt-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                 <p className="max-w-[420px] text-[12px] leading-relaxed text-ink-4">
                   {t.link.cacheNote}
                 </p>

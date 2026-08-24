@@ -32,7 +32,7 @@ export function AdminQueue({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[1040px] flex-col px-8 py-10">
+    <main className="mx-auto flex min-h-screen w-full max-w-[1040px] flex-col px-4 py-6 sm:px-8 sm:py-10">
       <header className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-display text-[26px] font-bold tracking-[-0.02em]">
@@ -48,7 +48,7 @@ export function AdminQueue({
         </button>
       </header>
 
-      <nav className="mb-6 flex gap-1.5">
+      <nav className="mb-6 flex gap-1.5 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -120,11 +120,11 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
   const pending = s.status === "pending";
 
   return (
-    <article className="rounded-xl border border-line bg-surface p-5">
+    <article className="rounded-xl border border-line bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h2 className="font-display text-[17px] font-bold">{s.playerName}</h2>
+            <h2 className="min-w-0 break-words font-display text-[17px] font-bold">{s.playerName}</h2>
 
             {s.currentRank !== undefined && (
               <span className="font-mono text-[12px] text-ink-4">#{s.currentRank}</span>
@@ -159,7 +159,7 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
         )}
       </div>
 
-      <dl className="mb-4 grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-2 text-[13px]">
+      <dl className="mb-4 grid grid-cols-[92px_minmax(0,1fr)] gap-x-3 gap-y-2 text-[13px] sm:grid-cols-[110px_minmax(0,1fr)] sm:gap-x-4">
         <Field label="Twitch" value={s.twitch} />
         <Field label="YouTube" value={s.youtube} />
         <Field label="Untapped" value={s.untapped} />
@@ -197,7 +197,7 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
             />
           )}
 
-          <div className="flex gap-2.5">
+          <div className="flex flex-wrap gap-2.5">
             <button
               onClick={() => review("approve")}
               disabled={busy !== null || rejecting}
