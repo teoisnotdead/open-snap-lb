@@ -11,12 +11,28 @@ import { ensureDnsServers } from "./dns-bootstrap";
  * concurrentes durante el arranque en frío compartan un único handshake.
  */
 
-const uri = process.env.MONGODB_URI;
-
-if (!uri) {
-  throw new Error(
-    "Falta la env var MONGODB_URI. Copiá .env.example a .env y completala."
-  );
+/**
+ * El chequeo de MONGODB_URI va DENTRO de `connect()`, no en el scope del
+ * módulo.
+ *
+ * `next build` importa las route handlers para recolectar datos de página, así
+ * que un throw al cargar el módulo rompe el build entero — antes de que exista
+ * ningún request. Eso convierte "falta una variable de entorno" en "el deploy
+ * no compila", que es un síntoma mucho peor de diagnosticar.
+ *
+ * Difiriéndolo, el build pasa siempre y la falta de configuración se manifiesta
+ * donde corresponde: en el request, con un mensaje claro y, gracias a la
+ * degradación de `getMergedLeaderboard`, con el ranking igual funcionando.
+ */
+function requireUri(): string {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error(
+      "Falta la env var MONGODB_URI. En local: copiá .env.example a .env. " +
+        "En Vercel: Settings → Environment Variables."
+    );
+  }
+  return uri;
 }
 
 // Nombre de la base. Si el URI ya trae una, la respetamos.
@@ -53,7 +69,7 @@ function connect(): Promise<MongoClient> {
   // la consulta SRV. Es no-op si DNS_SERVERS no está definida.
   ensureDnsServers();
 
-  const promise = new MongoClient(uri!, options).connect();
+  const promise = new MongoClient(requireUri(), options).connect();
 
   /**
    * Sin esto, un connect fallido queda cacheado como promesa rechazada y

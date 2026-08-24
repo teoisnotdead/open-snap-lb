@@ -13,7 +13,8 @@
     "test:socials": "tsx scripts/test-socials.ts",
     "db:delete-player": "tsx --env-file=.env scripts/delete-player.ts",
     "test:verification": "tsx scripts/test-verification.ts",
-    "db:seed-demo": "tsx --env-file=.env scripts/seed-demo.ts"
+    "db:seed-demo": "tsx --env-file=.env scripts/seed-demo.ts",
+    "prebuild": "node scripts/check-env.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.3",
