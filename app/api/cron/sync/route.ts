@@ -25,15 +25,22 @@ function currentSyncId(now: Date): string {
 }
 
 /**
- * POST /api/cron/sync
+ * POST /api/cron/sync — disparador principal, el workflow de GitHub Actions.
+ * GET  /api/cron/sync — mismo trabajo, para Vercel Cron.
  *
- * Protegida con `Authorization: Bearer $CRON_SECRET`. La dispara el workflow de
- * GitHub Actions (Vercel Cron en Hobby solo permite 1 corrida diaria).
+ * Ambos protegidos con `Authorization: Bearer $CRON_SECRET`.
+ *
+ * Que un GET escriba en la base incomoda, y con razón: no es idempotente en el
+ * sentido de HTTP y un prefetch podría dispararlo. Se acepta porque **Vercel
+ * Cron solo emite GET**, y las dos defensas que importan siguen en pie: el
+ * bearer token (nadie lo dispara sin el secreto) y el índice único
+ * {nameKey, syncId}, que hace que repetir la llamada dentro de la misma hora
+ * no duplique nada.
  *
  * Alcance: solo los jugadores que ya están en `players`, no el top 1000 entero
  * — así el volumen crece con la gente que efectivamente se vinculó.
  */
-export async function POST(req: Request) {
+async function runSync(req: Request) {
   const unauthorized = requireCronAuth(req);
   if (unauthorized) return unauthorized;
 
@@ -167,7 +174,18 @@ export async function POST(req: Request) {
     if (err instanceof LeaderboardError) {
       return apiError(err.message, err.status);
     }
-    console.error("POST /api/cron/sync falló:", err);
+    console.error("/api/cron/sync falló:", err);
     return apiError("El sync falló.", 500);
   }
 }
+
+/** GitHub Actions. */
+export const POST = runSync;
+
+/**
+ * Vercel Cron, que solo emite GET. Vercel agrega el header
+ * `Authorization: Bearer $CRON_SECRET` por su cuenta cuando esa variable
+ * existe en el proyecto, así que la misma protección aplica sin configurar
+ * nada extra.
+ */
+export const GET = runSync;

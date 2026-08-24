@@ -126,6 +126,32 @@ Probalo a mano desde la pestaña **Actions → Sync leaderboard snapshots → Ru
 workflow**. Si anda, el resumen de la corrida muestra una tabla con cuántos
 snapshots entraron.
 
+### Respaldo: Vercel Cron
+
+`vercel.json` declara además un cron **diario** a las 06:00 UTC. Es una red de
+seguridad, no el mecanismo principal:
+
+| | GitHub Actions | Vercel Cron (Hobby) |
+|---|---|---|
+| Frecuencia | Cada hora | **1 vez por día** |
+| Puntualidad | Retrasos de minutos | Dentro de la hora indicada |
+| Costo | Gratis (repo público) | Incluido en Hobby |
+| Límite | — | 2 cron jobs |
+
+Un punto por día hace una gráfica pobre, así que el objetivo es que el
+disparador real sea el workflow. El cron de Vercel existe para que el proyecto
+siga juntando *algo* de historial si Actions queda fuera de servicio — el
+historial es el único dato que no se puede recuperar hacia atrás.
+
+**Los dos pueden convivir.** El índice único `{nameKey, syncId}` y el `syncId`
+truncado a la hora hacen que dos disparos en la misma franja no dupliquen nada;
+está verificado con GET y POST seguidos.
+
+> Vercel Cron **solo emite `GET`**, por eso la ruta expone `GET` además de
+> `POST`. Vercel agrega el header `Authorization: Bearer $CRON_SECRET` por su
+> cuenta cuando esa variable existe en el proyecto, así que no hay que
+> configurar nada extra.
+
 ### Dos cosas que conviene saber
 
 - **GitHub deshabilita los workflows programados** después de 60 días sin
