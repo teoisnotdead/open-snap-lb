@@ -96,6 +96,18 @@ export function RequestAccountFlow({ lang, t }: { lang: Lang; t: Dictionary }) {
           onProved={() => setStage("proved")}
         />
       )}
+
+      {/* La puerta para el que vuelve. Solo antes de enviar: después el panel
+          ya trae el link directo a SU petición, y ofrecer el buscador al lado
+          sería mandarlo a pegar el código que tiene en pantalla. */}
+      {!sent && (
+        <p className="text-[12.5px] text-ink-4">
+          {t.link.haveCode}{" "}
+          <Link href={`/${lang}/request`} className="text-accent hover:underline">
+            {t.link.haveCodeLink}
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

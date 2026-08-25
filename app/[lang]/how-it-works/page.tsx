@@ -61,7 +61,20 @@ export default async function HowPage({
         <Section title={t.how.s6Title}>
           <p>{t.how.s6a}</p>
           <p>
-            {t.how.s6b} <Link href={`/${lang}/link`}>{t.how.s6link}</Link> {t.how.s6c}
+            {t.how.s6b} <Link href={`/${lang}/link`} className={LINK}>
+              {t.how.s6link}
+            </Link>{" "}
+            {t.how.s6c}
+          </p>
+        </Section>
+
+        <Section title={t.how.s7Title}>
+          <p>{t.how.s7a}</p>
+          <p>
+            <Link href={`/${lang}/request`} className={LINK}>
+              {t.how.s7link}
+            </Link>{" "}
+            {t.how.s7b}
           </p>
         </Section>
 
@@ -72,6 +85,10 @@ export default async function HowPage({
     </main>
   );
 }
+
+/* Preflight de Tailwind deja los <a> con el color y el subrayado heredados:
+   sin esto un link dentro del texto es indistinguible del párrafo. */
+const LINK = "text-accent hover:underline";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
