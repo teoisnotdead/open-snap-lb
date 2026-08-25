@@ -149,12 +149,14 @@ const en = {
     submitButton: "Send request",
     submitting: "Sending…",
     connError: "We couldn't connect. Check your connection and try again.",
+    haveCode: "Already sent a request?",
+    haveCodeLink: "Check it with your code →",
     sentTitle: "Request sent",
     sentBody:
       "It's in the queue. We review by hand, so it isn't instant — nothing shows on the table until it's approved.",
     sentIdLabel: "YOUR TRACKING CODE",
     sentKeep:
-      "Save it. It's the only way to check how your request ended up — we have no way to reach you if you lose it.",
+      "Save it. Pasting it on the status page — linked from Link account — is the only way to see how your request ended up, and we have no way to reach you if you lose it.",
     sentOpenStatus: "Open the status page →",
     proofTitle: "Optional: prove the account is yours",
     proofIntro:
@@ -247,6 +249,10 @@ const en = {
     s6b: "We never ask for a password or access to your Twitch or YouTube account. The optional ownership check works because only you can change your profile name inside the game.",
     s6link: "Link your account",
     s6c: "if you're in the top 1 000.",
+    s7Title: "Requests are reviewed by hand",
+    s7a: "Nothing you send shows up on the table until a person approves it, so it isn't instant. When you send a request we give you a 12-character tracking code — that code is the only way to look it up later, because we don't write to you when it's decided.",
+    s7link: "Check a request",
+    s7b: "with the code you saved.",
     legal:
       "Unofficial project, not affiliated with Second Dinner or Nuverse. Marvel Snap and its marks belong to their respective owners.",
   },
@@ -394,12 +400,14 @@ const es: Dictionary = {
     submitButton: "Enviar petición",
     submitting: "Enviando…",
     connError: "No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.",
+    haveCode: "¿Ya enviaste una petición?",
+    haveCodeLink: "Consúltala con tu código →",
     sentTitle: "Petición enviada",
     sentBody:
       "Quedó en la cola. Revisamos a mano, así que no es inmediato — nada aparece en la tabla hasta que se apruebe.",
     sentIdLabel: "TU CÓDIGO DE SEGUIMIENTO",
     sentKeep:
-      "Guárdalo. Es la única forma de saber cómo quedó tu petición — si lo pierdes no tenemos cómo avisarte.",
+      "Guárdalo. Pegarlo en la página de estado —hay un enlace en Vincular cuenta— es la única forma de saber cómo quedó tu petición, y si lo pierdes no tenemos cómo avisarte.",
     sentOpenStatus: "Abrir la página de estado →",
     proofTitle: "Opcional: comprueba que la cuenta es tuya",
     proofIntro:
@@ -492,6 +500,10 @@ const es: Dictionary = {
     s6b: "Nunca pedimos contraseña ni acceso a tu cuenta de Twitch o YouTube. La comprobación opcional de propiedad funciona porque solo tú puedes cambiar tu nombre de perfil dentro del juego.",
     s6link: "Vincula tu cuenta",
     s6c: "si estás en el top 1 000.",
+    s7Title: "Las peticiones se revisan a mano",
+    s7a: "Nada de lo que envías aparece en la tabla hasta que una persona lo aprueba, así que no es inmediato. Al enviar una petición te damos un código de seguimiento de 12 caracteres: ese código es la única forma de consultarla después, porque no te escribimos cuando se decide.",
+    s7link: "Consulta una petición",
+    s7b: "con el código que guardaste.",
     legal:
       "Proyecto no oficial, sin afiliación con Second Dinner ni Nuverse. Marvel Snap y sus marcas pertenecen a sus respectivos dueños.",
   },
