@@ -146,6 +146,68 @@ export async function fetchLeaderboard(
   );
 }
 
+/** "2026-07" -> { year: 2026, month: 7 }. Devuelve null si no tiene esa forma. */
+export function parseSeason(season: string): { year: number; month: number } | null {
+  const m = season.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return null;
+
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  if (month < 1 || month > 12) return null;
+
+  return { year, month };
+}
+
+/** "2026-01" -> "2025-12". */
+export function previousSeason(season: string): string | null {
+  const parsed = parseSeason(season);
+  if (!parsed) return null;
+
+  const d = new Date(Date.UTC(parsed.year, parsed.month - 2, 1));
+  return seasonLabel(d.getUTCFullYear(), d.getUTCMonth() + 1);
+}
+
+/** Temporada del mes corriente, según el reloj. */
+export function currentSeason(): string {
+  const { year, month } = monthWithOffset(0);
+  return seasonLabel(year, month);
+}
+
+/**
+ * Trae un mes CONCRETO, sin el fallback al anterior.
+ *
+ * `fetchLeaderboard` existe para "dame el ladder vivo" y por eso cae al mes
+ * previo cuando el corriente todavía está vacío. Para archivar hace falta lo
+ * contrario: pedir exactamente el mes que se quiere y que falle si no está,
+ * porque guardar el mes equivocado bajo la etiqueta de otro corrompe el archivo
+ * de forma silenciosa y para siempre.
+ */
+export async function fetchSeason(
+  season: string,
+  opts: FetchOpts = {}
+): Promise<LeaderboardFetchResult> {
+  const parsed = parseSeason(season);
+  if (!parsed) throw new LeaderboardError(`Temporada inválida: "${season}"`, 400);
+
+  const data = await fetchMonth(parsed.year, parsed.month, {
+    revalidate: opts.revalidate ?? false,
+  });
+
+  if (data.results.length === 0) {
+    throw new LeaderboardError(
+      `La API no devolvió filas para ${season}. Puede que ya no la sirva.`,
+      404
+    );
+  }
+
+  return {
+    rows: data.results.map(normalizeRow),
+    season,
+    total: data.total,
+    fetchedAt: new Date(),
+  };
+}
+
 /**
  * Índice nameKey -> filas. Puede haber más de una: hoy mismo el top 1000 tiene
  * nombres repetidos ("Leaf", "Jay", "I AM"), así que esto NO es un Map 1:1.

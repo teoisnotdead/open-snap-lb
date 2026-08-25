@@ -1,11 +1,12 @@
 import type { Collection, IndexDescription } from "mongodb";
 import { getDb } from "./mongodb";
-import type { PlayerDoc, SnapshotDoc, SubmissionDoc } from "./types";
+import type { PlayerDoc, SnapshotDoc, SubmissionDoc, SeasonResultDoc } from "./types";
 
 export const COLLECTIONS = {
   players: "players",
   snapshots: "snapshots",
   submissions: "submissions",
+  seasonResults: "seasonResults",
 } as const;
 
 export async function playersCollection(): Promise<Collection<PlayerDoc>> {
@@ -16,6 +17,11 @@ export async function playersCollection(): Promise<Collection<PlayerDoc>> {
 export async function snapshotsCollection(): Promise<Collection<SnapshotDoc>> {
   const db = await getDb();
   return db.collection<SnapshotDoc>(COLLECTIONS.snapshots);
+}
+
+export async function seasonResultsCollection(): Promise<Collection<SeasonResultDoc>> {
+  const db = await getDb();
+  return db.collection<SeasonResultDoc>(COLLECTIONS.seasonResults);
 }
 
 export async function submissionsCollection(): Promise<Collection<SubmissionDoc>> {
@@ -54,6 +60,21 @@ export const PLAYER_INDEXES: IndexDescription[] = [
 
   // Para listar creators / filtrar la tabla por verificados.
   { key: { verified: 1, lastRank: 1 }, name: "verified_rank" },
+];
+
+export const SEASON_RESULT_INDEXES: IndexDescription[] = [
+  /**
+   * La tabla de una temporada, y la clave de idempotencia.
+   *
+   * El único por temporada es el PUESTO, no el nombre: dentro de un mismo mes
+   * hay nombres repetidos —hoy "Leaf" aparece dos veces en el top 1000— y un
+   * único sobre {season, nameKey} rechazaría al segundo, dejando el archivo
+   * incompleto justo en el caso ambiguo. El puesto sí es único.
+   */
+  { key: { season: 1, rank: 1 }, name: "uniq_season_rank", unique: true },
+
+  // El historial de temporadas de un jugador, para su ficha.
+  { key: { nameKey: 1, season: -1 }, name: "player_seasons" },
 ];
 
 export const SUBMISSION_INDEXES: IndexDescription[] = [
@@ -109,8 +130,10 @@ export async function ensureIndexes(): Promise<void> {
   const players = await playersCollection();
   const snapshots = await snapshotsCollection();
   const submissions = await submissionsCollection();
+  const seasonResults = await seasonResultsCollection();
 
   await players.createIndexes(PLAYER_INDEXES);
   await snapshots.createIndexes(SNAPSHOT_INDEXES);
   await submissions.createIndexes(SUBMISSION_INDEXES);
+  await seasonResults.createIndexes(SEASON_RESULT_INDEXES);
 }

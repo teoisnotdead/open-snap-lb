@@ -209,6 +209,31 @@ export interface SnapshotDoc {
   syncId: string;
 }
 
+/**
+ * Cierre de una temporada: una fila por jugador del top 1000, congelada.
+ *
+ * Existe porque la API oficial solo sirve el mes corriente y el anterior. Sin
+ * esto, cuando una temporada sale de esa ventana **desaparece para siempre** —
+ * ni nosotros ni nadie puede reconstruir quién terminó dónde. Es el único dato
+ * del proyecto que no admite recuperarse después.
+ *
+ * A diferencia de `snapshots`, que solo cubre a los jugadores vinculados, acá
+ * quedan los 1000, hayan pedido su ficha o no.
+ */
+export interface SeasonResultDoc {
+  _id?: ObjectId;
+  /** "YYYY-MM". */
+  season: string;
+  /** 1-indexed. Único dentro de la temporada: es la clave de idempotencia. */
+  rank: number;
+  playerName: string;
+  nameKey: string;
+  score: number;
+  /** Jugadores en TODO el ladder de esa temporada, no solo los 1000 visibles. */
+  total: number;
+  capturedAt: Date;
+}
+
 /** Lo que devuelve GET /api/leaderboard: fila viva + merge con `players`. */
 export interface MergedLeaderboardRow extends LeaderboardRow {
   /** `patchedName` si existe, si no `playerName`. */

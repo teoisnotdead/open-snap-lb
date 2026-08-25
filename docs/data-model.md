@@ -1,7 +1,7 @@
 # Modelo de datos
 
 Base: `opensnaplb` en el cluster `snap-lb` (Atlas M0, 512 MB).
-Tres colecciones: `players`, `snapshots` y `submissions`.
+Cuatro colecciones: `players`, `snapshots`, `submissions` y `seasonResults`.
 
 > Jerarquía de Atlas, que confunde: **proyecto** `open-snap-lb` → **cluster**
 > `snap-lb` → **base** `opensnaplb` → colecciones. La base no se crea desde la
@@ -171,6 +171,59 @@ aprobadas/rechazadas históricas del mismo nombre — solo las pendientes compit
 `verificationCode` no lleva índice TTL: un TTL borra el **documento entero**, no
 el campo, así que se llevaría puesta la petición. El vencimiento se chequea en la
 ruta contra `verificationExpiresAt`.
+
+---
+
+## `seasonResults`
+
+El cierre de cada temporada: una fila por jugador del top 1000, congelada.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `season` | string | "YYYY-MM" |
+| `rank` | number | 1-indexed. **Único dentro de la temporada** |
+| `playerName` / `nameKey` | string | |
+| `score` | number | SP con los que terminó |
+| `total` | number | Jugadores en TODO el ladder esa temporada |
+| `capturedAt` | Date | |
+
+### Por qué existe
+
+La API oficial solo sirve el mes corriente y el anterior — junio 2026 ya
+devuelve `invalid_month`. Cuando una temporada sale de esa ventana **desaparece
+para siempre**: ni nosotros ni nadie puede reconstruir quién terminó dónde.
+
+Es el único dato del proyecto que no admite recuperarse después, y por eso el
+archivado va enganchado al cron y no a una tarea que alguien tenga que acordarse
+de correr.
+
+A diferencia de `snapshots`, que solo cubre a los jugadores aprobados, acá
+quedan los 1000 — hayan pedido su ficha o no.
+
+> **Hoy no se muestra en ningún lado.** Por decisión de producto el sitio
+> expone solo el mes corriente y el anterior. Se archiva igual porque el dato
+> no admite recuperarse después: es la diferencia entre "no lo mostramos" —
+> reversible— y "no lo tenemos" —definitivo.
+
+### Índices
+
+```js
+{ season: 1, rank: 1 } unique   // la tabla de la temporada, e idempotencia
+{ nameKey: 1, season: -1 }      // las temporadas de un jugador
+```
+
+> **El único es por PUESTO, no por nombre.** Dentro de una misma temporada hay
+> nombres repetidos —en julio "Leaf" aparece en el #139 y en el #161— y un
+> único sobre `{season, nameKey}` habría rechazado al segundo, dejando el
+> archivo incompleto justo en el caso ambiguo. El puesto sí es único.
+
+La consulta por jugador devuelve **las dos filas** cuando el nombre está
+repetido. Es lo honesto: no sabemos cuál es cuál, y elegir una sería inventar.
+
+### Cuánto ocupa
+
+236 KB por temporada, índices incluidos — unas 4 temporadas por MB. En el M0 de
+512 MB entran más de un siglo.
 
 ---
 

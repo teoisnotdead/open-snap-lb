@@ -4,8 +4,10 @@ import {
   fetchLeaderboard,
   indexByNameKey,
   disambiguate,
+  previousSeason,
   LeaderboardError,
 } from "@/lib/leaderboard";
+import { archiveSeason, isSeasonArchived } from "@/lib/seasons";
 import { apiError, json, requireCronAuth } from "@/lib/api";
 import type { PlayerDoc, SnapshotDoc } from "@/lib/types";
 
@@ -22,6 +24,35 @@ export const maxDuration = 60;
  */
 function currentSyncId(now: Date): string {
   return now.toISOString().slice(0, 13); // "2026-08-24T02"
+}
+
+/**
+ * Congela la temporada anterior la primera vez que se ve una nueva.
+ *
+ * La API oficial solo sirve el mes corriente y el anterior: en cuanto arranca
+ * octubre, agosto deja de existir para siempre. Esta es la única ventana para
+ * guardarlo, y por eso va enganchado al cron y no a una tarea que alguien tenga
+ * que acordarse de correr.
+ *
+ * NUNCA tira: archivar es un extra, y que falle no puede llevarse puesta la
+ * corrida de sync, que es lo que sostiene el historial de todos los días.
+ */
+async function archivePreviousSeason(liveSeason: string) {
+  try {
+    const previous = previousSeason(liveSeason);
+    if (!previous) return null;
+
+    // Una lectura contra el índice; en la enorme mayoría de las corridas
+    // termina acá.
+    if (await isSeasonArchived(previous)) return null;
+
+    const res = await archiveSeason(previous);
+    console.log(`Temporada ${previous} archivada: ${res.inserted} filas.`);
+    return res;
+  } catch (err) {
+    console.error("No se pudo archivar la temporada anterior:", err);
+    return null;
+  }
 }
 
 /**
@@ -57,19 +88,30 @@ async function runSync(req: Request) {
       )
       .toArray();
 
+    // Sin cache: un snapshot tiene que reflejar el momento de la corrida.
+    const board = await fetchLeaderboard({ revalidate: false });
+    const rowsByKey = indexByNameKey(board.rows);
+
+    /**
+     * El archivado va ANTES del corte por "no hay trackeados", y no después.
+     *
+     * Congelar una temporada no tiene nada que ver con cuánta gente se vinculó:
+     * son los 1000 del ladder. Con este chequeo abajo, un mes sin nadie
+     * vinculado perdía la temporada entera — y eso no se recupera.
+     */
+    const archived = await archivePreviousSeason(board.season);
+
     if (tracked.length === 0) {
       return json({
         ok: true,
         syncId,
+        season: board.season,
         message: "No hay jugadores en `players` todavía; nada para sincronizar.",
         tracked: 0,
         inserted: 0,
+        ...(archived ? { archived } : {}),
       });
     }
-
-    // Sin cache: un snapshot tiene que reflejar el momento de la corrida.
-    const board = await fetchLeaderboard({ revalidate: false });
-    const rowsByKey = indexByNameKey(board.rows);
 
     const snapshots: SnapshotDoc[] = [];
     const playerOps: AnyBulkWriteOperation<PlayerDoc>[] = [];
@@ -162,6 +204,7 @@ async function runSync(req: Request) {
       ok: true,
       syncId,
       season: board.season,
+      ...(archived ? { archived } : {}),
       tracked: tracked.length,
       inserted,
       unchanged,

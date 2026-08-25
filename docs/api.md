@@ -73,6 +73,14 @@ de la misma franja choca contra el índice único `{nameKey, syncId}` y no
 duplica puntos en la gráfica. Verificado: dos corridas seguidas dan
 `inserted: 1` y después `inserted: 0, unchanged: 1`.
 
+**Archivo de temporadas.** Cada corrida chequea si la temporada anterior a la
+viva ya está congelada; si no, la guarda entera. Es una lectura contra el índice
+en la enorme mayoría de las corridas. Va **antes** del corte por "no hay
+trackeados": congelar una temporada no depende de cuánta gente se vinculó, y con
+el chequeo abajo un mes sin nadie vinculado perdía la temporada completa. Si
+falla, se loguea y el sync sigue — archivar es un extra y no puede llevarse
+puesta la corrida.
+
 **Alcance.** Solo los jugadores de `players`, no el top 1000 entero. Y solo se
 escribe snapshot si cambió el rank o el score (ver el presupuesto de
 almacenamiento en `data-model.md`).

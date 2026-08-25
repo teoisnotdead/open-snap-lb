@@ -12,6 +12,7 @@ import {
   playersCollection,
   snapshotsCollection,
   submissionsCollection,
+  seasonResultsCollection,
 } from "../lib/db";
 
 /**
@@ -48,6 +49,7 @@ async function main() {
     players: (await playersCollection()) as unknown as Collection<Document>,
     snapshots: (await snapshotsCollection()) as unknown as Collection<Document>,
     submissions: (await submissionsCollection()) as unknown as Collection<Document>,
+    seasonResults: (await seasonResultsCollection()) as unknown as Collection<Document>,
   };
 
   for (const { collection, index } of OBSOLETE) {

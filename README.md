@@ -6,6 +6,15 @@ el sitio oficial y le agrega dos cosas que ese sitio no tiene:
 - **Historial de progreso.** La API oficial solo sirve el mes actual y el
   anterior, así que el histórico lo construimos nosotros guardando una medición
   por hora.
+- **Archivo de temporadas.** Cuando una temporada sale de esa ventana de dos
+  meses desaparece para siempre. Al detectar el cambio de mes, el cron congela
+  la anterior completa: los 1000, con ficha o sin ella.
+
+  > El sitio **no lo muestra**: en pantalla se ve solo el mes corriente y el
+  > anterior, que es lo que da la API oficial. El archivo se junta igual porque
+  > una temporada que no se guarda hoy no se puede recuperar mañana, y son
+  > 236 KB por mes. La lectura (`findPlayerSeasons`) está escrita y sin uso,
+  > lista para el día que se quiera exponer.
 - **Links de jugadores.** Cada quien pide su ficha desde un formulario y un
   admin la aprueba. Opcionalmente puede comprobar que la cuenta es suya poniendo
   un código en su nombre de perfil dentro del juego, y eso le da el tick.
@@ -212,6 +221,7 @@ está verificado con GET y POST seguidos.
 | `npm run test:socials` | 18 casos de parseo de handles y normalización |
 | `npm run test:verification` | 45 casos de verificación y tokens de seguimiento |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
+| `npm run db:archive-season -- 2026-07` | Congela una temporada antes de que la API la suelte |
 | `npm run db:seed-demo` | Siembra un jugador con historial sintético |
 | `npm run db:seed-demo -- --clean` | Lo borra |
 | `npm run db:delete-player -- "Nombre"` | Borra un jugador y su historial |
