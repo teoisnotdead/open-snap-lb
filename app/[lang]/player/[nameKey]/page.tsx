@@ -32,7 +32,7 @@ async function findPlayer(nameKey: string) {
 async function findHistory(nameKey: string) {
   const snapshots = await snapshotsCollection();
   return snapshots
-    .find({ nameKey }, { projection: { _id: 0, timestamp: 1, rank: 1, score: 1 } })
+    .find({ nameKey }, { projection: { _id: 0, timestamp: 1, rank: 1, score: 1, season: 1 } })
     .sort({ timestamp: 1 })
     .limit(MAX_POINTS)
     .toArray();
@@ -85,6 +85,7 @@ export default async function PlayerPage({
     timestamp: h.timestamp.toISOString(),
     rank: h.rank,
     score: h.score,
+    season: h.season,
   }));
 
   const displayName =

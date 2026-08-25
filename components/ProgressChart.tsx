@@ -38,16 +38,20 @@ export interface HistoryPoint {
   timestamp: string;
   rank: number;
   score: number;
+  /** "YYYY-MM". Marca a qué ladder pertenece la medición. */
+  season: string;
 }
 
-type Range = 7 | 30 | 0;
+/** 7 y 30 son días; "season" es la temporada actual; "all" es todo. */
+type Range = 7 | 30 | "season" | "all";
 
 /** Etiquetas del selector de rango, tomadas del diccionario activo. */
 function ranges(t: Dictionary): { key: Range; label: string }[] {
   return [
     { key: 7, label: t.chart.range7 },
     { key: 30, label: t.chart.range30 },
-    { key: 0, label: t.chart.rangeSeason },
+    { key: "season", label: t.chart.rangeSeason },
+    { key: "all", label: t.chart.rangeAll },
   ];
 }
 
@@ -87,6 +91,43 @@ function niceAxis(min: number, max: number, floor?: number) {
   return { domain: [lo, hi] as [number, number], ticks };
 }
 
+/**
+ * `Omit` antes de redefinir: una intersección no reemplaza un campo, lo
+ * intersecta — `number & (number | null)` sigue siendo `number`, y los cortes
+ * de temporada no compilarían.
+ */
+type Plotted = Omit<HistoryPoint, "score" | "rank"> & {
+  t: number;
+  score: number | null;
+  rank: number | null;
+};
+
+/**
+ * Corta la línea entre temporadas.
+ *
+ * El ladder resetea cada mes: los SP arrancan de cero. Sin esto, un tramo que
+ * cruza el cambio de temporada dibuja una caída vertical desde el pico del mes
+ * anterior hasta el arranque del nuevo — que parece un derrumbe y es solo el
+ * reset. Insertando un punto nulo, recharts levanta el lápiz y quedan dos
+ * curvas separadas, que es lo que realmente pasó.
+ *
+ * El punto nulo va un milisegundo antes del primero de la temporada nueva para
+ * no desplazar el eje de tiempo.
+ */
+function breakOnSeasonChange(points: (HistoryPoint & { t: number })[]): Plotted[] {
+  const out: Plotted[] = [];
+
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    if (i > 0 && points[i - 1].season !== p.season) {
+      out.push({ ...p, t: p.t - 1, score: null, rank: null });
+    }
+    out.push(p);
+  }
+
+  return out;
+}
+
 export function ProgressChart({
   history,
   playerName,
@@ -102,7 +143,22 @@ export function ProgressChart({
 
   const data = useMemo(() => {
     const points = history.map((h) => ({ ...h, t: new Date(h.timestamp).getTime() }));
-    if (range === 0 || points.length === 0) return points;
+    if (points.length === 0) return points;
+
+    if (range === "all") return breakOnSeasonChange(points);
+
+    /**
+     * "Temporada" es la del ÚLTIMO punto que tenemos, no la del calendario.
+     *
+     * Arrancado septiembre, alguien sin mediciones nuevas todavía vería una
+     * gráfica vacía si filtráramos por el mes corriente. Anclando a la última
+     * medición siempre queda algo que mostrar, y además es lo que la persona
+     * quiere ver: su última temporada jugada.
+     */
+    if (range === "season") {
+      const current = points[points.length - 1].season;
+      return points.filter((p) => p.season === current);
+    }
 
     // El corte se ancla a la última medición, no al reloj de pared. Además de
     // ser puro (el reloj no lo es, y serviría distinto en servidor y cliente),
@@ -110,22 +166,38 @@ export function ProgressChart({
     // debe mostrar los últimos 7 días CON DATOS, no una franja medio vacía.
     const last = points[points.length - 1].t;
     const cutoff = last - range * 24 * 60 * 60 * 1000;
-    return points.filter((p) => p.t >= cutoff);
+    return breakOnSeasonChange(points.filter((p) => p.t >= cutoff));
   }, [history, range]);
 
   if (history.length < 2) {
     return <NotEnoughData points={history.length} t={t} />;
   }
 
-  const peak = data.reduce((a, b) => (b.score > a.score ? b : a), data[0]);
+  /**
+   * Los cortes entre temporadas son puntos con `score: null`. Sirven para que
+   * recharts levante el lápiz, pero no son mediciones: incluirlos en el pico o
+   * en el dominio de los ejes daría un mínimo de 0 y aplastaría la curva.
+   */
+  const real = data.filter(
+    (d): d is HistoryPoint & { t: number } => d.score !== null && d.rank !== null
+  );
 
-  const scores = data.map((d) => d.score);
+  /**
+   * Red de seguridad, hoy inalcanzable: todos los rangos se anclan a la última
+   * medición, así que siempre sobrevive al menos una. Sin esto, un `data` vacío
+   * daría `Math.min()` de nada = Infinity y reventaría los ejes.
+   */
+  if (real.length === 0) return <NotEnoughData points={0} t={t} />;
+
+  const peak = real.reduce((a, b) => (b.score > a.score ? b : a), real[0]);
+
+  const scores = real.map((d) => d.score);
   const { domain: scoreDomain, ticks: scoreTicks } = niceAxis(
     Math.min(...scores),
     Math.max(...scores)
   );
 
-  const ranks = data.map((d) => d.rank);
+  const ranks = real.map((d) => d.rank);
   const { domain: rankDomain, ticks: rankTicks } = niceAxis(
     Math.min(...ranks),
     Math.max(...ranks),
