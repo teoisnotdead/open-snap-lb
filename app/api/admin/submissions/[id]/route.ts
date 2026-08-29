@@ -1,14 +1,15 @@
-import { ObjectId, type Filter } from "mongodb";
+import { ObjectId } from "mongodb";
 import { playersCollection, submissionsCollection } from "@/lib/db";
 import { apiError, json, readJson, requireAdminAuth } from "@/lib/api";
 import { getAdminSession } from "@/lib/admin-auth";
 import { fetchLeaderboard, indexByNameKey } from "@/lib/leaderboard";
+import { findSocialConflict } from "@/lib/players";
+import { SOCIAL_FIELDS } from "@/lib/profile-fields";
 import { findSubmissionById, toSubmissionView } from "@/lib/submissions";
-import type { LeaderboardRow, PlayerDoc, SocialField } from "@/lib/types";
+import type { LeaderboardRow, SocialField } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const SOCIAL_FIELDS: SocialField[] = ["twitch", "youtube", "untapped"];
 const MAX_REASON = 300;
 
 interface Body {
@@ -151,31 +152,19 @@ export async function POST(
 
     const players = await playersCollection();
 
-    /**
-     * El índice único de las redes ya cubre este caso —toda aprobación deja
-     * `verified: true`—, pero se chequea antes igual: así el admin lee "ese
-     * canal ya está asignado a X" en vez de un E11000, que no dice a quién.
-     */
-    const claimed = SOCIAL_FIELDS.filter((f) => doc[f]).map(
-      (f) => ({ [f]: doc[f] }) as Filter<PlayerDoc>
-    );
-
-    if (claimed.length > 0) {
-      const conflict = await players.findOne({
-        nameKey: { $ne: doc.nameKey },
-        $or: claimed,
-      });
-
-      if (conflict) {
-        return apiError(
-          `Ese canal ya está asignado a "${conflict.playerName}". Revisá cuál de los dos corresponde antes de aprobar.`,
-          409
-        );
-      }
-    }
-
     const socials: Partial<Record<SocialField, string>> = {};
     for (const f of SOCIAL_FIELDS) if (doc[f]) socials[f] = doc[f];
+
+    // El índice único ya cubre este caso, pero se pregunta antes para que el
+    // admin lea "ese canal ya está asignado a X" en vez de un E11000, que no
+    // dice a quién. Misma comprobación que hace la edición por código.
+    const conflict = await findSocialConflict(socials, doc.nameKey);
+    if (conflict) {
+      return apiError(
+        `Ese canal ya está asignado a "${conflict.playerName}". Revisá cuál de los dos corresponde antes de aprobar.`,
+        409
+      );
+    }
 
     try {
       await players.updateOne(

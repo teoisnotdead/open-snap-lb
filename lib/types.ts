@@ -162,17 +162,34 @@ export interface SubmissionDoc {
   reviewedAt?: Date;
   reviewedBy?: string;
 
+  /**
+   * Última vez que el propio jugador editó sus datos con el código, y cuántas
+   * veces lo hizo.
+   *
+   * Una petición aprobada se puede editar sola: el admin ya decidió que esta
+   * persona es esta cuenta, y esa decisión no se vuelve a tomar porque cambie
+   * un handle de Twitch o el nombre de la alianza. Lo que queda es el rastro —
+   * el panel muestra que los datos de arriba ya no son los que se revisaron, y
+   * un contador que sube solo es lo único que delata un código filtrado.
+   */
+  editedAt?: Date;
+  editCount?: number;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
 /** Lo que el panel de admin manda al navegador. Sin `_id` crudo. */
 export interface SubmissionView
-  extends Omit<SubmissionDoc, "_id" | "createdAt" | "updatedAt" | "reviewedAt"> {
+  extends Omit<
+    SubmissionDoc,
+    "_id" | "createdAt" | "updatedAt" | "reviewedAt" | "editedAt"
+  > {
   id: string;
   createdAt: string;
   updatedAt: string;
   reviewedAt?: string;
+  editedAt?: string;
   /**
    * Filas del ladder vivo que tienen este nombre, resueltas al vuelo.
    *

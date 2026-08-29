@@ -160,6 +160,17 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
           </div>
           <p className="mt-1 text-[12px] text-ink-4">
             {new Date(s.createdAt).toLocaleString("es")}
+            {/* Los datos de abajo ya no son los que se revisaron: el jugador
+                los cambió solo con su código. No hay nada que aprobar —esa
+                decisión ya está tomada—, pero conviene que se vea, porque un
+                contador que sube es lo único que delata un código filtrado. */}
+            {s.editedAt && (
+              <>
+                {" · editada por el jugador "}
+                {new Date(s.editedAt).toLocaleString("es")}
+                {s.editCount != null && s.editCount > 1 ? ` (${s.editCount} veces)` : null}
+              </>
+            )}
           </p>
         </div>
 

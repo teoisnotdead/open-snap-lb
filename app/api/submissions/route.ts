@@ -3,28 +3,18 @@ import { fetchLeaderboard, indexByNameKey, LeaderboardError } from "@/lib/leader
 import { apiError, json, readJson } from "@/lib/api";
 import { toNameKey, isValidNameKey } from "@/lib/names";
 import { generateStatusToken } from "@/lib/tokens";
-import {
-  SOCIAL_PARSERS,
-  CONTACT_PARSERS,
-  parseAlliance,
-  parseAllianceName,
-} from "@/lib/socials";
-import type { SocialField, SubmissionDoc } from "@/lib/types";
+import { CONTACT_PARSERS } from "@/lib/socials";
+import { parseProfileFields, type ProfileFieldsInput } from "@/lib/profile-fields";
+import type { SubmissionDoc } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const SOCIAL_FIELDS: SocialField[] = ["twitch", "youtube", "untapped"];
 const CONTACT_FIELDS = ["discord", "email"] as const;
 
 const MAX_NOTE = 500;
 
-interface Body {
+interface Body extends ProfileFieldsInput {
   playerName?: string;
-  twitch?: string;
-  youtube?: string;
-  untapped?: string;
-  allianceTag?: string;
-  allianceName?: string;
   discord?: string;
   email?: string;
   note?: string;
@@ -50,14 +40,15 @@ export async function POST(req: Request) {
   }
 
   // --- parseo de todo ANTES de tocar la base ---
-  const socials: Partial<Record<SocialField, string>> = {};
-  for (const field of SOCIAL_FIELDS) {
-    const value = body?.[field]?.trim();
-    if (!value) continue;
-    const parsed = SOCIAL_PARSERS[field](value);
-    if (!parsed.ok) return apiError(`${field}: ${parsed.error}`);
-    socials[field] = parsed.value!;
-  }
+
+  /**
+   * Los campos de perfil se validan con la misma función que la edición por
+   * código (`PATCH /api/submissions/[token]`), incluida la regla de "algo que
+   * publicar": lo que no se puede pedir tampoco se puede colar editando.
+   */
+  const profile = parseProfileFields(body);
+  if (!profile.ok) return apiError(profile.error);
+  const { socials, allianceTag, allianceName } = profile.fields;
 
   const contact: Partial<Record<(typeof CONTACT_FIELDS)[number], string>> = {};
   for (const field of CONTACT_FIELDS) {
@@ -68,37 +59,14 @@ export async function POST(req: Request) {
     contact[field] = parsed.value!;
   }
 
-  let allianceTag: string | undefined;
-  if (body?.allianceTag?.trim()) {
-    const parsed = parseAlliance(body.allianceTag.trim());
-    if (!parsed.ok) return apiError(`allianceTag: ${parsed.error}`);
-    allianceTag = parsed.value;
-  }
-
-  let allianceName: string | undefined;
-  if (body?.allianceName?.trim()) {
-    const parsed = parseAllianceName(body.allianceName.trim());
-    if (!parsed.ok) return apiError(`allianceName: ${parsed.error}`);
-    allianceName = parsed.value;
-  }
-
-  // Un nombre de alianza sin tag es dato huérfano: la tabla muestra el tag.
-  if (allianceName && !allianceTag) {
-    return apiError("Si indicás el nombre de la alianza, indicá también el tag.");
-  }
-
   const note = body?.note?.trim();
   if (note && note.length > MAX_NOTE) {
     return apiError(`La nota no puede pasar de ${MAX_NOTE} caracteres.`);
   }
 
-  // Tiene que haber algo que publicar...
-  if (Object.keys(socials).length === 0 && !allianceTag) {
-    return apiError("Indicá al menos una red o el tag de tu alianza.");
-  }
-
-  // ...y alguna forma de contactarte, porque si hay que rechazar o repreguntar
-  // no existe otro canal: no hay cuentas ni notificaciones en el sitio.
+  // Ya hay algo que publicar —lo garantiza `parseProfileFields`—, pero además
+  // hace falta alguna forma de contactarte: si hay que rechazar o repreguntar
+  // no existe otro canal, porque no hay cuentas ni notificaciones en el sitio.
   if (Object.keys(contact).length === 0) {
     return apiError("Dejá al menos un contacto (Discord o email) para poder responderte.");
   }

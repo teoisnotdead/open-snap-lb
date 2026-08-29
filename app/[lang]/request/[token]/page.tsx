@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SelfEditForm } from "@/components/SelfEditForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
 import { WarningIcon } from "@/components/icons";
@@ -100,6 +101,13 @@ export default async function RequestStatusPage({
                   </>
                 )}
 
+                {doc.editedAt && (
+                  <>
+                    <dt className="text-ink-4">{t.request.editedAt}</dt>
+                    <dd className="text-ink-2">{formatDateTime(doc.editedAt, lang)}</dd>
+                  </>
+                )}
+
                 <dt className="text-ink-4">{t.request.tokenLabel}</dt>
                 <dd className="font-mono tracking-[0.08em] text-ink-2">
                   {formatStatusToken(doc.statusToken)}
@@ -131,13 +139,30 @@ export default async function RequestStatusPage({
               </p>
             </section>
 
+            {/* La edición solo existe sobre una aprobada, que es la misma
+                condición que aplica `PATCH /api/submissions/[token]`. Si no,
+                no hay nada publicado que editar. */}
             {doc.status === "approved" && (
-              <Link
-                href={`/${lang}/player/${encodeURIComponent(doc.nameKey)}`}
-                className="self-start rounded-lg bg-accent px-5 py-2.5 text-[14px] font-semibold text-bg transition-colors hover:bg-accent-bright"
-              >
-                {t.request.seeProfile}
-              </Link>
+              <>
+                <SelfEditForm
+                  t={t}
+                  token={doc.statusToken}
+                  initial={{
+                    twitch: doc.twitch ?? "",
+                    youtube: doc.youtube ?? "",
+                    untapped: doc.untapped ?? "",
+                    allianceTag: doc.allianceTag ?? "",
+                    allianceName: doc.allianceName ?? "",
+                  }}
+                />
+
+                <Link
+                  href={`/${lang}/player/${encodeURIComponent(doc.nameKey)}`}
+                  className="self-start rounded-lg bg-accent px-5 py-2.5 text-[14px] font-semibold text-bg transition-colors hover:bg-accent-bright"
+                >
+                  {t.request.seeProfile}
+                </Link>
+              </>
             )}
 
             {doc.status === "rejected" && (

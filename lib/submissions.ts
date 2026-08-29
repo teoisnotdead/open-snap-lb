@@ -44,7 +44,7 @@ export function toSubmissionView(
   doc: SubmissionDoc,
   candidates?: SubmissionView["candidates"]
 ): SubmissionView {
-  const { _id, createdAt, updatedAt, reviewedAt, ...rest } = doc;
+  const { _id, createdAt, updatedAt, reviewedAt, editedAt, ...rest } = doc;
 
   return {
     ...rest,
@@ -52,6 +52,7 @@ export function toSubmissionView(
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
     ...(reviewedAt ? { reviewedAt: reviewedAt.toISOString() } : {}),
+    ...(editedAt ? { editedAt: editedAt.toISOString() } : {}),
     ...(candidates?.length ? { candidates } : {}),
   };
 }
@@ -81,5 +82,12 @@ export function toPublicStatus(doc: SubmissionDoc) {
     ...(doc.rejectionReason ? { rejectionReason: doc.rejectionReason } : {}),
     createdAt: doc.createdAt.toISOString(),
     ...(doc.reviewedAt ? { reviewedAt: doc.reviewedAt.toISOString() } : {}),
+    ...(doc.editedAt ? { editedAt: doc.editedAt.toISOString() } : {}),
+    /**
+     * Si esta petición se puede editar sola con el código. Lo decide el
+     * servidor y no la pantalla: es la misma condición que aplica `PATCH`, y
+     * duplicarla en el cliente es pedir que las dos se separen.
+     */
+    canEdit: doc.status === "approved",
   };
 }

@@ -167,6 +167,41 @@ pestaña. Las dos llevan `noindex`: la URL **contiene** el token.
 
 ---
 
+## `PATCH /api/submissions/[token]`
+
+El jugador corrige sus propios datos publicados. Es la **única escritura pública
+que publica algo sin pasar por el panel**.
+
+Se apoya entera en una decisión ya tomada: aprobar la petición fue el momento en
+que un humano dio por buena la identidad de quien la mandó. Nada de lo que se
+toca acá vuelve a poner eso en duda —un handle de Twitch y un nombre de alianza
+son datos declarados, tan indemostrables el día de la edición como el día de la
+aprobación—, así que mandarlos de nuevo a la cola agregaría espera sin agregar
+certeza. Mientras tanto los datos viejos siguen publicados: ese es el costo real
+de no tener esta ruta.
+
+Body: `{twitch?, youtube?, untapped?, allianceTag?, allianceName?}`.
+
+| Regla | Por qué |
+|---|---|
+| Hace falta el token | Es la misma llave con la que consulta el estado |
+| La petición tiene que estar `approved` (409 si no) | Sobre una pendiente o rechazada no hay nada publicado que editar |
+| Solo se tocan campos que ya eran públicos | El **contacto no se edita acá**: es la forma de llegar a la persona si hay que revertir algo, y un código puede terminar en una captura. Dejar que quien lo tenga cambie el Discord de destino convertiría una fuga en un secuestro silencioso de la ficha |
+| El body **reemplaza** el bloque entero | Lo que no venga se borra. Es lo que hace un formulario que abre con los valores actuales y se manda completo, y evita inventar una diferencia entre "no lo mandé" y "lo quiero vacío" — sobre un form HTML son el mismo request |
+| Mismas validaciones que `POST` (`parseProfileFields`) | Lo que no se puede pedir tampoco se puede colar editando |
+| Canal ya asignado a otra cuenta (409) | Se pregunta antes para nombrar al dueño; el índice único queda como red ante una carrera |
+| Sin `upsert` | Si la petición figura aprobada pero no hay `players`, algo se rompió antes: crear uno publicaría una ficha verificada que nadie revisó |
+
+Escribe en las **dos** colecciones: `players` (lo publicado) y `submissions`
+(lo que el jugador y el panel leen como "lo que pidió"). Si solo escribiera la
+primera, las dos pantallas mostrarían datos que ya no son los publicados.
+
+Deja rastro en `editedAt` y `editCount`, que el panel muestra sobre la petición.
+No hay nada que aprobar —esa decisión ya está tomada—, pero un contador que sube
+solo es lo único que delata un código filtrado.
+
+---
+
 ## Panel de admin
 
 Todas exigen una sesión válida (cookie `osl_admin`, firmada con HMAC). Sin las

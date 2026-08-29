@@ -78,6 +78,15 @@ export default async function HowPage({
           </p>
         </Section>
 
+        {/* Va después de la revisión a mano y no antes: la edición automática
+            solo se entiende como lo que SIGUE a esa revisión, no como una
+            alternativa a ella. */}
+        <Section title={t.how.s8Title}>
+          <p>{t.how.s8a}</p>
+          <p>{t.how.s8b}</p>
+          <p>{t.how.s8c}</p>
+        </Section>
+
         <p className="mt-12 border-t border-line pt-6 text-[12.5px] leading-relaxed text-ink-4">
           {t.how.legal}
         </p>

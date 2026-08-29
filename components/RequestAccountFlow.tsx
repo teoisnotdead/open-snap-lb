@@ -495,6 +495,12 @@ function SentPanel({ t, lang, sent }: { t: Dictionary; lang: Lang; sent: Sent })
       </div>
 
       <p className="mt-3 text-[12.5px] leading-relaxed text-ink-3">{t.link.sentKeep}</p>
+      {/* Segundo párrafo y no una frase más al primero: son dos motivos
+          distintos para guardar el código —volver a mirar, y editar— y el de
+          editar recién existe cuando la petición se aprueba. */}
+      <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">
+        {t.link.sentKeepEdit}
+      </p>
       <Link
         href={`/${lang}/request/${sent.token}`}
         className="mt-2 inline-block text-[12.5px] text-accent hover:underline"

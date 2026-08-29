@@ -224,6 +224,7 @@ está verificado con GET y POST seguidos.
 | `npm run test:socials` | 18 casos de parseo de handles y normalización |
 | `npm run test:tokens` | 17 casos del token de seguimiento |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
+| `npm run test:self-edit` | 27 casos de la edición con el código, contra la ruta viva (necesita `npm run dev`). Se autolimpia |
 | `npm run db:archive-season -- 2026-07` | Congela una temporada antes de que la API la suelte |
 | `npm run db:seed-demo` | Siembra un jugador con historial sintético |
 | `npm run db:seed-demo -- --clean` | Lo borra |
@@ -258,6 +259,27 @@ Es un token **aleatorio** y no el id de Mongo porque los ObjectId llevan un
 contador incremental: desde uno conocido se adivinan los vecinos, y cualquiera
 que mandara una petición podría leer las de al lado. El alfabeto no tiene 0, 1,
 I, L, O ni U, que son los caracteres que se confunden al dictarlo.
+
+### Editar con el código, sin volver a la cola
+
+Una vez **aprobada** la petición, ese mismo código deja al jugador cambiar sus
+canales, el tag de su alianza y su nombre desde la página de estado
+(`PATCH /api/submissions/[token]`). Se publica en el momento: no hay una segunda
+revisión.
+
+La revisión a mano decidió **quién es** esa persona, y cambiar un handle no
+vuelve a abrir esa pregunta — un canal de Twitch y un nombre de alianza son tan
+indemostrables el día de la edición como el día de la aprobación, así que
+mandarlos otra vez a la cola agregaría espera sin agregar certeza, y mientras
+tanto el dato viejo sigue publicado.
+
+El **contacto no se edita** por ahí, y el nombre de jugador tampoco. El contacto
+es la forma de llegar a la persona si hay que revertir algo, y un código puede
+terminar en una captura: dejar que quien lo tenga cambie el Discord de destino
+convertiría una fuga en un secuestro silencioso de la ficha. Cada edición queda
+fechada y contada (`editedAt`, `editCount`) y se ve en la cola — no hay nada que
+aprobar, pero un contador que sube solo es lo único que delata un código
+filtrado.
 
 ### Lo que el panel todavía no tiene
 

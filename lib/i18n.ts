@@ -156,6 +156,8 @@ const en = {
     sentIdLabel: "YOUR TRACKING CODE",
     sentKeep:
       "Save it. Pasting it on the status page — linked from Link account — is the only way to see how your request ended up, and we have no way to reach you if you lose it.",
+    sentKeepEdit:
+      "It's also your key to edit: once the request is approved, that same code lets you change your channels and your alliance yourself, from the status page and published straight away — no second review, no waiting for anyone.",
     sentOpenStatus: "Open the status page →",
     copy: "Copy",
     copied: "Copied",
@@ -198,6 +200,17 @@ const en = {
     lookupHelp: "12 characters. Dashes and lowercase are fine.",
     seeProfile: "See my profile",
     tryAgain: "Send a new request",
+    editTitle: "Edit your details",
+    editSubtitle:
+      "Your request is approved, so changes here go live straight away — no second review. Clear a field to remove it.",
+    editOpen: "Edit",
+    editCancel: "Cancel",
+    editSave: "Save changes",
+    editSaving: "Saving…",
+    editSaved: "Saved. The table shows the new details on its next load.",
+    editLocked:
+      "Your contact details and your player name can't be changed here — write to us if either needs to change. Everything else is yours to edit.",
+    editedAt: "Last edited",
     dbDown:
       "We can't reach the database right now, so we can't show the status of your request. It's still there — try again in a few minutes.",
   },
@@ -227,6 +240,10 @@ const en = {
     s7a: "Nothing you send shows up on the table until a person approves it, so it isn't instant. That review is also the verification: the tick next to a name means someone read the request and accepted it. When you send one we give you a 12-character tracking code — that code is the only way to look it up later, because we don't write to you when it's decided.",
     s7link: "Check a request",
     s7b: "with the code you saved.",
+    s8Title: "Editing later is automatic",
+    s8a: "That by-hand review happens once. After your request is approved, the same tracking code lets you change your channels, your alliance tag and its name from the status page — and the change is published on the spot. No second review, no queue, no waiting. Clearing a field removes it.",
+    s8b: "It works that way because none of those fields can be checked against the official API: a Twitch handle and an alliance name are just as unprovable the day you edit them as the day they were approved, so sending them back to the queue would add a wait without adding certainty — while the outdated data stays on the table. What approval settled was who you are, and changing a link doesn't reopen that.",
+    s8c: "Which is why the code is worth guarding: whoever holds it can change what shows next to your name. Every edit is stamped with a date and counted, and both the status page and the review panel show it. Your contact details and your player name are the exception — those aren't editable with the code, so write to us if either has to change.",
     legal:
       "Unofficial project, not affiliated with Second Dinner or Nuverse. Marvel Snap and its marks belong to their respective owners.",
   },
@@ -381,6 +398,8 @@ const es: Dictionary = {
     sentIdLabel: "TU CÓDIGO DE SEGUIMIENTO",
     sentKeep:
       "Guárdalo. Pegarlo en la página de estado —hay un enlace en Vincular cuenta— es la única forma de saber cómo quedó tu petición, y si lo pierdes no tenemos cómo avisarte.",
+    sentKeepEdit:
+      "También es tu llave para editar: una vez aprobada la petición, ese mismo código te deja cambiar tus canales y tu alianza por tu cuenta, desde la página de estado y publicándose en el momento — sin una segunda revisión y sin esperar a nadie.",
     sentOpenStatus: "Abrir la página de estado →",
     copy: "Copiar",
     copied: "Copiado",
@@ -423,6 +442,17 @@ const es: Dictionary = {
     lookupHelp: "12 caracteres. Los guiones y las minúsculas dan igual.",
     seeProfile: "Ver mi perfil",
     tryAgain: "Enviar una nueva petición",
+    editTitle: "Edita tus datos",
+    editSubtitle:
+      "Tu petición está aprobada, así que lo que cambies aquí se publica en el momento: no hay una segunda revisión. Deja un campo vacío para quitarlo.",
+    editOpen: "Editar",
+    editCancel: "Cancelar",
+    editSave: "Guardar cambios",
+    editSaving: "Guardando…",
+    editSaved: "Guardado. La tabla muestra los datos nuevos la próxima vez que cargue.",
+    editLocked:
+      "Tu contacto y tu nombre de jugador no se cambian aquí — escríbenos si alguno tiene que cambiar. Todo lo demás lo editas tú.",
+    editedAt: "Última edición",
     dbDown:
       "No podemos conectarnos a la base ahora mismo, así que no podemos mostrarte el estado de tu petición. Sigue ahí — intenta de nuevo en unos minutos.",
   },
@@ -452,6 +482,10 @@ const es: Dictionary = {
     s7a: "Nada de lo que envías aparece en la tabla hasta que una persona lo aprueba, así que no es inmediato. Esa revisión es también la verificación: el tick junto a un nombre significa que alguien leyó la petición y la aceptó. Al enviar una te damos un código de seguimiento de 12 caracteres: ese código es la única forma de consultarla después, porque no te escribimos cuando se decide.",
     s7link: "Consulta una petición",
     s7b: "con el código que guardaste.",
+    s8Title: "Editar después es automático",
+    s8a: "Esa revisión a mano ocurre una sola vez. Una vez aprobada tu petición, el mismo código de seguimiento te deja cambiar tus canales, el tag de tu alianza y su nombre desde la página de estado — y el cambio se publica en el momento. Sin una segunda revisión, sin cola y sin esperar. Dejar un campo vacío lo quita.",
+    s8b: "Funciona así porque nada de eso se puede comprobar contra la API oficial: un handle de Twitch y un nombre de alianza son tan indemostrables el día que los editas como el día que se aprobaron, así que mandarlos de vuelta a la cola agregaría espera sin agregar certeza — y mientras tanto el dato viejo sigue en la tabla. Lo que la aprobación decidió fue quién eres, y cambiar un link no vuelve a abrir esa pregunta.",
+    s8c: "Por eso vale la pena cuidar el código: quien lo tenga puede cambiar lo que se muestra junto a tu nombre. Cada edición queda fechada y contada, y se ve tanto en la página de estado como en el panel de revisión. La excepción es tu contacto y tu nombre de jugador: esos no se editan con el código, así que escríbenos si alguno tiene que cambiar.",
     legal:
       "Proyecto no oficial, sin afiliación con Second Dinner ni Nuverse. Marvel Snap y sus marcas pertenecen a sus respectivos dueños.",
   },
