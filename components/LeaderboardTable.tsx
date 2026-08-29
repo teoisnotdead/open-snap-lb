@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { AllianceTag } from "@/components/AllianceTag";
 import type { MergedLeaderboardRow } from "@/lib/types";
 import { fill, type Dictionary, type Lang } from "@/lib/i18n";
 import { formatDelta, formatRank, formatScore } from "@/lib/format";
@@ -256,7 +257,11 @@ function Row({
       </div>
 
       <div className="hidden sm:block">
-        {row.alliance ? <AllianceTag row={row} /> : <span className="text-[13px] text-ink-4">—</span>}
+        {row.alliance ? (
+          <AllianceTag tag={row.alliance} name={row.allianceName} nameDisplay="tooltip" />
+        ) : (
+          <span className="text-[13px] text-ink-4">—</span>
+        )}
       </div>
 
       <div className="num text-right text-[15px] font-medium">
@@ -284,19 +289,4 @@ function deltaColor(delta: number | undefined): string {
   if (delta > 0) return "text-pos";
   if (delta < 0) return "text-neg";
   return "text-ink-3";
-}
-
-function AllianceTag({ row }: { row: MergedLeaderboardRow }) {
-  return (
-    <span
-      /* El nombre largo va de tooltip: la columna es angosta y el tag es lo que
-         la gente reconoce. Sin nombre, no hay title vacío. */
-      title={row.allianceName}
-      className={`num shrink-0 rounded border border-line-strong px-1.5 py-0.5 text-[11px] font-semibold tracking-[0.06em] text-ink-3 ${
-        row.allianceName ? "cursor-help" : ""
-      }`}
-    >
-      {row.alliance}
-    </span>
-  );
 }

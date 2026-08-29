@@ -52,6 +52,11 @@ export async function GET(
             twitch: player.twitch,
             youtube: player.youtube,
             untapped: player.untapped,
+            /* Declarados por el jugador, no leídos del ladder: la API oficial
+               no expone alianzas. Faltaban acá aunque `/api/leaderboard` ya los
+               devolvía, así que la ficha pública decía menos que la tabla. */
+            alliance: player.alliance,
+            allianceName: player.allianceName,
             verified: player.verified,
             lastRank: player.lastRank,
             lastScore: player.lastScore,

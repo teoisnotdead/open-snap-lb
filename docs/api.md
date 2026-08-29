@@ -269,6 +269,7 @@ de dónde leer sin esto.
 {
   "player": {
     "nameKey": "sizer", "playerName": "Sizer", "displayName": "Sizer",
+    "alliance": "JOB", "allianceName": "Job Enjoyers",   // declarados, no leídos
     "verified": false, "lastRank": 2, "lastScore": 9987,
     "peakRank": 2, "peakScore": 9987, "lastSeenAt": "2026-08-24T03:00:21.279Z"
   },
@@ -290,13 +291,14 @@ solicitante nunca vivió en esta colección sino en `submissions`.
 
 ## Estado de las pruebas
 
-`scripts/` tiene cuatro suites, todas pasando:
+`scripts/` tiene cinco suites, todas pasando:
 
 | Comando | Qué cubre |
 |---|---|
 | `npm run test:socials` | 18 casos de parseo de handles y normalización de nombres |
 | `npm run test:tokens` | 17 casos del token de seguimiento: generación, formato y parseo |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
+| `npm run test:self-edit` | 27 casos de la edición con el código, contra la ruta viva; se autolimpia |
 | `npm run db:smoke` | 10 casos del modelo contra Atlas real; se autolimpia |
 
 Y verificación end-to-end contra el server levantado del ciclo completo:

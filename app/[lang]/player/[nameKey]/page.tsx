@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AllianceTag } from "@/components/AllianceTag";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProgressChart, type HistoryPoint } from "@/components/ProgressChart";
 import {
@@ -88,6 +89,11 @@ export default async function PlayerPage({
   const displayName =
     player?.patchedName ?? player?.playerName ?? live?.displayName ?? nameKey;
   const alliance = player?.alliance ?? live?.alliance;
+  /* Van juntos o no van: el nombre suelto, sin el tag al lado, no se
+     reconoce — es el tag lo que la gente ve en el juego. */
+  const allianceName = alliance
+    ? (player?.allianceName ?? live?.allianceName)
+    : undefined;
 
   // El ladder en vivo es más fresco que lo denormalizado del último sync.
   const currentScore = live?.score ?? player?.lastScore;
@@ -139,9 +145,12 @@ export default async function PlayerPage({
                 </span>
               )}
               {alliance && (
-                <span className="num rounded border border-line-strong px-2 py-1 text-[11px] font-semibold tracking-[0.08em] text-ink-3">
-                  {alliance}
-                </span>
+                <AllianceTag
+                  tag={alliance}
+                  name={allianceName}
+                  nameDisplay="inline"
+                  size="lg"
+                />
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-3">
