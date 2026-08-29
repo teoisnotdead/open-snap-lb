@@ -17,7 +17,8 @@
     "admin:hash": "tsx scripts/admin-hash.ts",
     "db:seed-demo": "tsx --env-file=.env scripts/seed-demo.ts",
     "prebuild": "node scripts/check-env.mjs",
-    "db:archive-season": "tsx --env-file=.env scripts/archive-season.ts"
+    "db:archive-season": "tsx --env-file=.env scripts/archive-season.ts",
+    "db:backfill-verified": "tsx --env-file=.env scripts/backfill-verified.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.3",
