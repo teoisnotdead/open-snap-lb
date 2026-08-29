@@ -52,10 +52,6 @@ export default async function LinkPage({
             <p>{t.link.why2}</p>
           </Card>
 
-          <Card title={t.link.limitTitle}>
-            <p>{t.link.limitBody}</p>
-          </Card>
-
           <Card title={t.link.afterTitle}>
             <ul className="list-disc pl-[17px] leading-[1.75]">
               <li>{t.link.after1}</li>

@@ -14,7 +14,14 @@ import {
   YouTubeIcon,
 } from "./icons";
 
-type Filter = "all" | "creators" | "verified";
+/**
+ * "Verificados" se fue cuando aprobar pasó a ser verificar: como toda ficha
+ * aprobada queda verificada, ese filtro era el conjunto de los creadores más
+ * los que solo declararon alianza — casi la misma lista, con un nombre que
+ * describe un trámite nuestro y no algo que alguien quiera buscar. El tick
+ * sigue en la tabla, que es donde dice algo.
+ */
+type Filter = "all" | "creators";
 
 /**
  * La API sirve 1000 filas. Renderizarlas todas de una hace un DOM enorme para
@@ -54,14 +61,12 @@ export function LeaderboardTable({
   const filters: { key: Filter; label: string }[] = [
     { key: "all", label: t.table.filterAll },
     { key: "creators", label: t.table.filterCreators },
-    { key: "verified", label: t.table.filterVerified },
   ];
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
     return rows.filter((r) => {
-      if (filter === "verified" && !r.verified) return false;
       if (filter === "creators" && !r.twitch && !r.youtube && !r.untapped) {
         return false;
       }
@@ -90,13 +95,16 @@ export function LeaderboardTable({
           {/* `w-full` con `sm:w-[380px]`: el ancho fijo desbordaba la pantalla. */}
           <label className="flex h-[42px] w-full items-center gap-2.5 rounded-lg border border-line-strong bg-surface-2 px-3.5 focus-within:border-accent sm:w-[380px]">
             <SearchIcon className="shrink-0 text-ink-4" />
+            {/* `focus-ring-none`: el borde ámbar del label YA es el indicador de
+                foco. Sin esto el outline global dibuja un segundo recuadro, y
+                encima recto, adentro del redondeado. Ver globals.css. */}
             <input
               type="search"
               value={query}
               onChange={(e) => reset(() => setQuery(e.target.value))}
               placeholder={t.table.searchPlaceholder}
               aria-label={t.table.searchPlaceholder}
-              className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
+              className="focus-ring-none w-full bg-transparent text-sm text-ink placeholder:text-ink-4"
             />
           </label>
 

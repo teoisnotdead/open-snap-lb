@@ -22,7 +22,7 @@ correcto, y mantenerlo en sync con `globals.css` es manual.
 |---|---|---|
 | `/` | dinámica | Leaderboard con buscador y filtros |
 | `/jugador/[nameKey]` | dinámica | Perfil + gráficas de progreso |
-| `/vincular` | estática | Flujo de verificación en 3 pasos |
+| `/vincular` | estática | Flujo de petición en 3 pasos |
 | `/como-funciona` | estática | De dónde salen los datos y qué guardamos |
 
 Las páginas server-side llaman a `getMergedLeaderboard()` y a Mongo
@@ -33,10 +33,19 @@ route handler, en vez de estar duplicado.
 
 ## Δ 24 h: por qué a veces es un guión
 
-`lib/merge.ts` calcula el delta con una agregación sobre `snapshots`: toma el
-snapshot más reciente anterior al corte de 24 h y lo compara con el score
-actual. Solo guardamos historial de los jugadores vinculados, así que la enorme
-mayoría de las 1000 filas no tiene delta.
+`lib/merge.ts` lee **un solo documento** de `boardBaselines` —la foto del ladder
+entero más reciente anterior al corte de 24 h— y compara contra el score actual.
+Es una lectura por render, no una consulta por jugador, y por eso el delta está
+para las 1000 filas y no solo para los vinculados.
+
+Queda en guión en tres casos:
+
+1. **Todavía no hay baseline** de hace un día. Pasa durante las primeras 24 h
+   después de un deploy nuevo, y si el cron estuvo caído más de 72 h.
+2. **El jugador no estaba en el top 1000** entonces. No es un cero: no sabemos
+   con cuántos SP entró.
+3. **El nombre está repetido.** Con dos "Leaf" en la tabla no hay forma de saber
+   cuál era cuál, y restar el score del otro daría un número inventado.
 
 La UI muestra **guión, no cero**: "no sabemos" y "no se movió" son cosas
 distintas y no se pueden dibujar igual sin mentir.

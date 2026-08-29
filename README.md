@@ -16,8 +16,8 @@ el sitio oficial y le agrega dos cosas que ese sitio no tiene:
   > 236 KB por mes. La lectura (`findPlayerSeasons`) está escrita y sin uso,
   > lista para el día que se quiera exponer.
 - **Links de jugadores.** Cada quien pide su ficha desde un formulario y un
-  admin la aprueba. Opcionalmente puede comprobar que la cuenta es suya poniendo
-  un código en su nombre de perfil dentro del juego, y eso le da el tick.
+  admin la aprueba. Esa aprobación es también la verificación: el tick ✓ junto a
+  un nombre significa que una persona leyó la petición y la aceptó.
 
 Inspirado en [bettersnaplb](https://github.com/JaydenScottL/bettersnaplb), que
 mantiene esos datos a mano vía Discord. Acá la petición entra sola por el sitio
@@ -29,15 +29,18 @@ Casi nada de lo que se muestra junto a un jugador existe en la API oficial: ni
 canales, ni alianzas, ni contacto. No hay contra qué contrastarlo, así que el
 único filtro posible es el ojo humano — y además permite decir que no.
 
-Lo único verificable es el control de la cuenta, y para eso está el código en el
-nombre. Por eso el modelo tiene **dos estados independientes**:
+Aprobar y verificar son **lo mismo**: una petición aceptada publica los links y
+se lleva el tick ✓.
 
-| | Qué significa | Dónde se ve |
-|---|---|---|
-| **Aprobado** | Un admin revisó la petición | La fila muestra links y alianza |
-| **Verificado** | Probó que controla la cuenta | El tick ✓ junto al nombre |
+Fueron dos estados separados. El segundo lo daba un código que el jugador pegaba
+en su nombre de perfil dentro del juego —lo único comprobable contra la API
+oficial— y podía haber aprobados sin tick. Se unificaron: si un humano ya
+decidió que la petición es legítima, la prueba automática no cambiaba la
+decisión, y era un trámite de varios pasos que la mayoría abandonaba a mitad.
 
-Fusionarlos degradaría el tick a "alguien le creyó".
+Lo único que quedó por cubrir fue la desambiguación de homónimos, que antes
+resolvía ese código. Ahora, cuando el nombre está repetido en el ladder, el
+panel obliga a elegir de qué fila se trata antes de aprobar.
 
 ---
 
@@ -219,7 +222,7 @@ está verificado con GET y POST seguidos.
 | `npm run db:smoke` | 10 checks del modelo contra Atlas. Se autolimpia |
 | `npm run admin:hash -- "clave"` | Genera `ADMIN_PASSWORD_HASH` y `ADMIN_SESSION_SECRET` |
 | `npm run test:socials` | 18 casos de parseo de handles y normalización |
-| `npm run test:verification` | 45 casos de verificación y tokens de seguimiento |
+| `npm run test:tokens` | 17 casos del token de seguimiento |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run db:archive-season -- 2026-07` | Congela una temporada antes de que la API la suelte |
 | `npm run db:seed-demo` | Siembra un jugador con historial sintético |
@@ -253,9 +256,8 @@ avisos, así que si lo pierde hay que buscarlo por el contacto que dejó.
 
 Es un token **aleatorio** y no el id de Mongo porque los ObjectId llevan un
 contador incremental: desde uno conocido se adivinan los vecinos, y cualquiera
-que mandara una petición podría leer las de al lado. También es distinto del
-código de verificación, que va en el nombre del perfil y por lo tanto se publica
-en el leaderboard.
+que mandara una petición podría leer las de al lado. El alfabeto no tiene 0, 1,
+I, L, O ni U, que son los caracteres que se confunden al dictarlo.
 
 ### Lo que el panel todavía no tiene
 
@@ -275,7 +277,7 @@ en el leaderboard.
 |---|---|
 | [`docs/leaderboard-api.md`](docs/leaderboard-api.md) | Contrato del endpoint oficial: qué devuelve, qué ignora, sus bugs |
 | [`docs/data-model.md`](docs/data-model.md) | Colecciones, índices y por qué la identidad es el nombre |
-| [`docs/api.md`](docs/api.md) | Las cinco rutas propias y las decisiones de seguridad de la verificación |
+| [`docs/api.md`](docs/api.md) | Las rutas propias, la cola de revisión y las decisiones de seguridad |
 | [`docs/frontend.md`](docs/frontend.md) | Rutas, i18n, gráficas y las trampas encontradas |
 | [`docs/troubleshooting-dns.md`](docs/troubleshooting-dns.md) | El problema de SRV/c-ares y cómo distinguirlo del de access list |
 
@@ -296,8 +298,10 @@ Son del endpoint oficial, no nuestras — el detalle está en
   el juego, deja de ser encontrado y su historial deja de crecer, en silencio.
   Y si además abandona el nombre, otro puede pedirlo: sin IDs de jugador,
   controlar el nombre *es* la identidad.
-- **El Δ 24 h solo existe para cuentas vinculadas**, porque solo de ellas
-  guardamos historial. Para el resto se muestra un guión: *no sabemos* y *no se
+- **El Δ 24 h no siempre se puede calcular.** Existe para las 1000 filas —cada
+  corrida guarda el ladder entero comprimido en un documento—, pero queda en
+  guión si todavía no hay una lectura de hace un día, si el jugador no estaba en
+  el top 1 000 entonces, o si su nombre está repetido. *No sabemos* y *no se
   movió* son cosas distintas.
 
 ---

@@ -1,11 +1,12 @@
 import type { AnyBulkWriteOperation } from "mongodb";
-import { playersCollection, snapshotsCollection } from "@/lib/db";
+import { boardBaselinesCollection, playersCollection, snapshotsCollection } from "@/lib/db";
 import {
   fetchLeaderboard,
   indexByNameKey,
   disambiguate,
   previousSeason,
   LeaderboardError,
+  type LeaderboardFetchResult,
 } from "@/lib/leaderboard";
 import { archiveSeason, isSeasonArchived } from "@/lib/seasons";
 import { apiError, json, requireCronAuth } from "@/lib/api";
@@ -56,6 +57,43 @@ async function archivePreviousSeason(liveSeason: string) {
 }
 
 /**
+ * Guarda el ladder entero comprimido, para que el Δ 24 h de la tabla exista
+ * para las 1000 filas y no solo para los jugadores vinculados.
+ *
+ * Es un documento por corrida (~35 KB) con un TTL de tres días, no un snapshot
+ * por jugador: la diferencia entre eso y esto es 2.2 GB al año contra menos de
+ * 3 MB constantes. Ver `BoardBaselineDoc`.
+ *
+ * NUNCA tira, por la misma razón que `archivePreviousSeason`: el delta es un
+ * extra de la tabla, y perderlo una hora no puede llevarse puesto el sync, que
+ * es lo que sostiene el historial de los jugadores vinculados.
+ */
+async function saveBaseline(
+  board: LeaderboardFetchResult,
+  syncId: string,
+  now: Date
+): Promise<boolean> {
+  try {
+    const col = await boardBaselinesCollection();
+    await col.insertOne({
+      syncId,
+      timestamp: now,
+      season: board.season,
+      total: board.total,
+      // Claves de una letra: ver la nota de tamaño en `BoardBaselineDoc`.
+      rows: board.rows.map((r) => ({ n: r.nameKey, s: r.score })),
+    });
+    return true;
+  } catch (err) {
+    // E11000 acá no es un fallo: es el único de `syncId` haciendo idempotente
+    // al reintento, igual que en los snapshots.
+    if ((err as { code?: number }).code === 11000) return false;
+    console.error("No se pudo guardar el baseline del ladder:", err);
+    return false;
+  }
+}
+
+/**
  * POST /api/cron/sync — disparador principal, el workflow de GitHub Actions.
  * GET  /api/cron/sync — mismo trabajo, para Vercel Cron.
  *
@@ -68,8 +106,10 @@ async function archivePreviousSeason(liveSeason: string) {
  * {nameKey, syncId}, que hace que repetir la llamada dentro de la misma hora
  * no duplique nada.
  *
- * Alcance: solo los jugadores que ya están en `players`, no el top 1000 entero
- * — así el volumen crece con la gente que efectivamente se vinculó.
+ * Alcance de los `snapshots`: solo los jugadores que ya están en `players`, no
+ * el top 1000 entero — así el volumen crece con la gente que efectivamente se
+ * vinculó. El baseline del ladder sí cubre las 1000 filas, pero es UN documento
+ * por corrida en vez de mil.
  */
 async function runSync(req: Request) {
   const unauthorized = requireCronAuth(req);
@@ -101,6 +141,15 @@ async function runSync(req: Request) {
      */
     const archived = await archivePreviousSeason(board.season);
 
+    /**
+     * También va ANTES del corte por "no hay trackeados", y por el mismo
+     * motivo que el archivado: el baseline es del ladder entero, así que no
+     * tiene nada que ver con cuánta gente se vinculó. Con esto abajo, un sitio
+     * sin nadie vinculado nunca acumularía el historial que necesita para
+     * mostrar el delta el día que alguien llegue.
+     */
+    const baselineSaved = await saveBaseline(board, syncId, now);
+
     if (tracked.length === 0) {
       return json({
         ok: true,
@@ -109,6 +158,8 @@ async function runSync(req: Request) {
         message: "No hay jugadores en `players` todavía; nada para sincronizar.",
         tracked: 0,
         inserted: 0,
+        baselineSaved,
+        baselineRows: board.rows.length,
         ...(archived ? { archived } : {}),
       });
     }
@@ -205,6 +256,8 @@ async function runSync(req: Request) {
       syncId,
       season: board.season,
       ...(archived ? { archived } : {}),
+      baselineSaved,
+      baselineRows: board.rows.length,
       tracked: tracked.length,
       inserted,
       unchanged,

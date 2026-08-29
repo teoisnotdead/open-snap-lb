@@ -13,6 +13,7 @@ import {
   snapshotsCollection,
   submissionsCollection,
   seasonResultsCollection,
+  boardBaselinesCollection,
 } from "../lib/db";
 
 /**
@@ -20,11 +21,13 @@ import {
  * ignora los que sobran, así que un índice de un modelo viejo se queda ahí
  * ocupando espacio y ralentizando cada escritura para siempre.
  *
- * `verificationCode` se mudó de `players` a `submissions` cuando la
- * verificación pasó a ser un paso opcional de la petición.
+ * El código de verificación existió primero en `players` y después en
+ * `submissions`. Ya no existe en ninguna: verifica el admin al aprobar, así que
+ * los dos índices sobran y hay que sacarlos de las bases que ya los tienen.
  */
 const OBSOLETE: { collection: string; index: string }[] = [
   { collection: "players", index: "verification_code" },
+  { collection: "submissions", index: "verification_code" },
 ];
 
 async function printIndexes(name: string, col: Collection<Document>) {
@@ -34,6 +37,7 @@ async function printIndexes(name: string, col: Collection<Document>) {
       ix.unique ? "unique" : null,
       ix.partialFilterExpression ? "partial" : null,
       ix.sparse ? "sparse" : null,
+      ix.expireAfterSeconds !== undefined ? `ttl ${ix.expireAfterSeconds}s` : null,
     ]
       .filter(Boolean)
       .join(", ");
@@ -50,6 +54,7 @@ async function main() {
     snapshots: (await snapshotsCollection()) as unknown as Collection<Document>,
     submissions: (await submissionsCollection()) as unknown as Collection<Document>,
     seasonResults: (await seasonResultsCollection()) as unknown as Collection<Document>,
+    boardBaselines: (await boardBaselinesCollection()) as unknown as Collection<Document>,
   };
 
   for (const { collection, index } of OBSOLETE) {

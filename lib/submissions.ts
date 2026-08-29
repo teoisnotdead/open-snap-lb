@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { submissionsCollection } from "./db";
-import { parseStatusToken } from "./verification";
+import { parseStatusToken } from "./tokens";
 import type { SubmissionDoc, SubmissionView } from "./types";
 
 /**
@@ -42,21 +42,17 @@ export async function findSubmissionByToken(
  */
 export function toSubmissionView(
   doc: SubmissionDoc,
-  currentRank?: number
+  candidates?: SubmissionView["candidates"]
 ): SubmissionView {
-  const { _id, createdAt, updatedAt, proofVerifiedAt, reviewedAt, verificationExpiresAt, ...rest } =
-    doc;
-
-  void verificationExpiresAt; // el panel no lo necesita
+  const { _id, createdAt, updatedAt, reviewedAt, ...rest } = doc;
 
   return {
     ...rest,
     id: _id!.toHexString(),
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
-    ...(proofVerifiedAt ? { proofVerifiedAt: proofVerifiedAt.toISOString() } : {}),
     ...(reviewedAt ? { reviewedAt: reviewedAt.toISOString() } : {}),
-    ...(currentRank !== undefined ? { currentRank } : {}),
+    ...(candidates?.length ? { candidates } : {}),
   };
 }
 
@@ -77,7 +73,6 @@ export function toPublicStatus(doc: SubmissionDoc) {
     token: doc.statusToken,
     playerName: doc.playerName,
     status: doc.status,
-    proofVerified: doc.proofVerified,
     ...(doc.twitch ? { twitch: doc.twitch } : {}),
     ...(doc.youtube ? { youtube: doc.youtube } : {}),
     ...(doc.untapped ? { untapped: doc.untapped } : {}),

@@ -1,29 +1,53 @@
-import { playersCollection, snapshotsCollection } from "./db";
+import { boardBaselinesCollection, playersCollection } from "./db";
 import { fetchLeaderboard, indexByNameKey, disambiguate } from "./leaderboard";
-import type { MergedLeaderboardRow, PlayerDoc } from "./types";
+import type { BoardBaselineDoc, MergedLeaderboardRow, PlayerDoc } from "./types";
+
+interface Baseline {
+  /** nameKey -> SP de hace un día. Sin los nombres repetidos: ver abajo. */
+  scores: Map<string, number>;
+  /** Cuándo se tomó. No es exactamente hace 24 h: es la corrida más cercana. */
+  takenAt: Date;
+}
 
 /**
- * SP de cada jugador hace ~24 h, para calcular el delta.
+ * SP de TODO el ladder hace ~24 h.
  *
- * Tomamos el snapshot más reciente ANTERIOR al corte. Si un jugador no tiene
- * ninguno (recién vinculado, o no se movió en más de un día) queda fuera del
- * mapa y su delta es `undefined` — que la UI muestra como guión.
+ * Un solo documento —el baseline más reciente anterior al corte— en vez de una
+ * consulta por jugador. Eso es lo que permite mostrar el delta de las 1000
+ * filas y no solo de las vinculadas: ver `BoardBaselineDoc`.
+ *
+ * Devuelve null cuando todavía no hay ninguno de hace un día, que es el estado
+ * normal durante las primeras 24 h de vida de la colección.
  */
-async function scoresADayAgo(nameKeys: string[]): Promise<Map<string, number>> {
-  if (nameKeys.length === 0) return new Map();
-
+async function loadBaseline(): Promise<Baseline | null> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const snapshots = await snapshotsCollection();
+  const col = await boardBaselinesCollection();
 
-  const rows = await snapshots
-    .aggregate<{ _id: string; score: number }>([
-      { $match: { nameKey: { $in: nameKeys }, timestamp: { $lte: cutoff } } },
-      { $sort: { nameKey: 1, timestamp: -1 } },
-      { $group: { _id: "$nameKey", score: { $first: "$score" } } },
-    ])
-    .toArray();
+  const doc = await col.findOne<Pick<BoardBaselineDoc, "rows" | "timestamp">>(
+    { timestamp: { $lte: cutoff } },
+    { sort: { timestamp: -1 }, projection: { rows: 1, timestamp: 1 } }
+  );
 
-  return new Map(rows.map((r) => [r._id, r.score]));
+  if (!doc) return null;
+
+  /**
+   * Los nombres repetidos se DESCARTAN, no se quedan con el primero.
+   *
+   * Si "Leaf" ocupaba el #139 y el #161, no sabemos cuál de los dos es el
+   * "Leaf" que hoy está en el #145, y restarle el score del que no era da un
+   * número inventado con pinta de dato. Mismo criterio que usa el sync con los
+   * homónimos: preferimos el guión.
+   */
+  const scores = new Map<string, number>();
+  const repeated = new Set<string>();
+
+  for (const row of doc.rows) {
+    if (scores.has(row.n)) repeated.add(row.n);
+    else scores.set(row.n, row.s);
+  }
+  for (const key of repeated) scores.delete(key);
+
+  return { scores, takenAt: doc.timestamp };
 }
 
 export interface MergedBoard {
@@ -32,6 +56,11 @@ export interface MergedBoard {
   /** Jugadores en TODO el ladder, no solo los visibles. */
   total: number;
   rows: MergedLeaderboardRow[];
+  /**
+   * Contra qué momento se calcularon los `delta24h`. `undefined` si todavía no
+   * hay baseline: en ese caso ninguna fila tiene delta.
+   */
+  deltaSince?: Date;
   /**
    * false cuando Mongo no respondió y las filas van "peladas" (sin links,
    * alianzas, verificados ni delta). El ranking sigue siendo correcto.
@@ -59,7 +88,7 @@ export async function getMergedLeaderboard(
    * está caído" cuando el problema es solo nuestro enriquecimiento.
    */
   let docs: PlayerDoc[] = [];
-  let yesterday = new Map<string, number>();
+  let baseline: Baseline | null = null;
   let enriched = true;
 
   try {
@@ -86,8 +115,12 @@ export async function getMergedLeaderboard(
       )
       .toArray();
 
-    // Solo pedimos historial de los jugadores que efectivamente trackeamos.
-    yesterday = await scoresADayAgo(docs.map((d) => d.nameKey));
+    /**
+     * El baseline NO se filtra por `docs`: cubre el ladder entero, que es
+     * justamente el punto. El delta dejó de ser un privilegio de los
+     * vinculados.
+     */
+    baseline = await loadBaseline();
   } catch (err) {
     console.error("Mongo no respondió; sirvo el ladder sin enriquecer:", err);
     enriched = false;
@@ -105,7 +138,15 @@ export async function getMergedLeaderboard(
       doc !== undefined &&
       disambiguate(candidates, doc.lastRank)?.rank === row.rank;
 
-    const before = owned ? yesterday.get(row.nameKey) : undefined;
+    /**
+     * El delta no pasa por `owned`: no necesita saber quién es esta persona ni
+     * que haya pedido su ficha, solo cuántos SP tenía esta misma fila ayer.
+     *
+     * Sí se corta con `ambiguous`, y por la misma razón que el baseline
+     * descarta los repetidos: con dos "Leaf" en la tabla no hay forma de saber
+     * cuál era cuál.
+     */
+    const before = ambiguous ? undefined : baseline?.scores.get(row.nameKey);
 
     return {
       ...row,
@@ -126,6 +167,7 @@ export async function getMergedLeaderboard(
     fetchedAt: board.fetchedAt,
     total: board.total,
     rows,
+    ...(baseline ? { deltaSince: baseline.takenAt } : {}),
     enriched,
   };
 }

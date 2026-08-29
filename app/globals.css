@@ -58,8 +58,26 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* El foco por defecto del navegador se pierde sobre un fondo casi negro. */
+/**
+ * El foco por defecto del navegador se pierde sobre un fondo casi negro.
+ *
+ * Va sin `@layer`, así que **gana sobre las utilidades de Tailwind**: un
+ * `outline-none` en el elemento no lo apaga. Es a propósito —que nadie deje sin
+ * foco visible algo enfocable por descuido— pero obliga a que el opt-out sea
+ * explícito, que es para lo que está la clase de abajo.
+ */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/**
+ * Para los controles cuyo CONTENEDOR ya se ilumina al enfocarse.
+ *
+ * Sin esto se dibujan dos bordes ámbar, uno dentro del otro: el redondeado del
+ * contenedor y el recto del outline. No se pierde accesibilidad — el foco sigue
+ * siendo visible, lo pinta el borde de al lado.
+ */
+.focus-ring-none:focus-visible {
+  outline: none;
 }

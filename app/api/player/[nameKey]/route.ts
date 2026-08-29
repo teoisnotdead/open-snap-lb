@@ -25,13 +25,12 @@ export async function GET(
 
   try {
     const players = await playersCollection();
-    const player = await players.findOne(
-      { nameKey },
-      {
-        // Nunca filtramos el código de verificación por una ruta pública.
-        projection: { verificationCode: 0, verificationExpiresAt: 0 },
-      }
-    );
+    /**
+     * Sin proyección: `players` ya es la colección pública. Acá se excluía el
+     * código de verificación, que dejó de existir; el contacto del solicitante
+     * nunca vivió acá sino en `submissions`.
+     */
+    const player = await players.findOne({ nameKey });
 
     const snapshots = await snapshotsCollection();
     const history = await snapshots

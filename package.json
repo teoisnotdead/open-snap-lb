@@ -12,7 +12,7 @@
     "db:smoke": "tsx --env-file=.env scripts/smoke.ts",
     "test:socials": "tsx scripts/test-socials.ts",
     "db:delete-player": "tsx --env-file=.env scripts/delete-player.ts",
-    "test:verification": "tsx scripts/test-verification.ts",
+    "test:tokens": "tsx scripts/test-tokens.ts",
     "test:admin-auth": "tsx scripts/test-admin-auth.ts",
     "admin:hash": "tsx scripts/admin-hash.ts",
     "db:seed-demo": "tsx --env-file=.env scripts/seed-demo.ts",

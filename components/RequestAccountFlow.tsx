@@ -9,10 +9,10 @@ import { fill, type Dictionary, type Lang } from "@/lib/i18n";
 /**
  * Flujo de PETICIÓN, no de reclamo.
  *
- * Enviar el formulario no publica nada: deja un documento pendiente. La prueba
- * de propiedad (el código en el nombre) es un paso OPCIONAL al final, y su
- * único efecto es que la petición llegue marcada al panel. Ese cambio de orden
- * es todo el cambio de modelo — antes el código era el portón.
+ * Enviar el formulario no publica nada: deja un documento pendiente que revisa
+ * un admin. Hubo un cuarto paso —pegar un código en el nombre de perfil para
+ * probar la cuenta— y se sacó: la aprobación del admin ya es la verificación,
+ * así que el código solo agregaba un trámite que la mayoría abandonaba a mitad.
  */
 
 interface Found {
@@ -26,21 +26,12 @@ interface Sent {
   playerName: string;
 }
 
-interface Instructions {
-  code: string;
-  suggestedName: string;
-  charsToTrim: number;
-  maxNameLength: number;
-  expiresInMinutes: number;
-}
-
-type Stage = "find" | "form" | "sent" | "proof" | "proved";
+type Stage = "find" | "form" | "sent";
 
 export function RequestAccountFlow({ lang, t }: { lang: Lang; t: Dictionary }) {
   const [stage, setStage] = useState<Stage>("find");
   const [found, setFound] = useState<Found | null>(null);
   const [sent, setSent] = useState<Sent | null>(null);
-  const [instructions, setInstructions] = useState<Instructions | null>(null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -82,20 +73,7 @@ export function RequestAccountFlow({ lang, t }: { lang: Lang; t: Dictionary }) {
         />
       )}
 
-      {(stage === "sent" || stage === "proof" || stage === "proved") && sent && (
-        <SentPanel
-          t={t}
-          lang={lang}
-          sent={sent}
-          stage={stage}
-          instructions={instructions}
-          onCode={(i) => {
-            setInstructions(i);
-            setStage("proof");
-          }}
-          onProved={() => setStage("proved")}
-        />
-      )}
+      {stage === "sent" && sent && <SentPanel t={t} lang={lang} sent={sent} />}
 
       {/* La puerta para el que vuelve. Solo antes de enviar: después el panel
           ya trae el link directo a SU petición, y ofrecer el buscador al lado
@@ -119,10 +97,7 @@ function Steps({ t, stage }: { t: Dictionary; stage: Stage }) {
   const items = [
     { label: t.link.step1, state: stage === "find" ? "now" : "done" },
     { label: t.link.step2, state: stage === "form" ? "now" : done ? "done" : "next" },
-    {
-      label: t.link.step3,
-      state: stage === "sent" || stage === "proof" || stage === "proved" ? "done" : "next",
-    },
+    { label: t.link.step3, state: stage === "sent" ? "done" : "next" },
   ] as const;
 
   return (
@@ -479,212 +454,54 @@ function FormStep({
   );
 }
 
-function SentPanel({
-  t,
-  lang,
-  sent,
-  stage,
-  instructions,
-  onCode,
-  onProved,
-}: {
-  t: Dictionary;
-  lang: Lang;
-  sent: Sent;
-  stage: Stage;
-  instructions: Instructions | null;
-  onCode: (i: Instructions) => void;
-  onProved: () => void;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+/**
+ * Acuse de la petición.
+ *
+ * Lo único que hace es entregar el token de seguimiento, y por eso insiste
+ * tanto: no hay cuentas ni notificaciones, así que ese token es la única forma
+ * que tiene la persona de volver a enterarse de cómo terminó su pedido.
+ */
+function SentPanel({ t, lang, sent }: { t: Dictionary; lang: Lang; sent: Sent }) {
   const [tokenCopied, setTokenCopied] = useState(false);
 
-  async function getCode() {
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/submissions/${sent.token}/code`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error ?? t.link.connError);
-      onCode(data);
-    } catch {
-      setError(t.link.connError);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verify() {
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/submissions/${sent.token}/proof`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error ?? t.link.connError);
-      onProved();
-    } catch {
-      setError(t.link.connError);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const statusUrl = `/${lang}/request/${sent.token}`;
-
   return (
-    <div className="flex flex-col gap-5">
-      <section className="rounded-xl border border-pos/25 bg-pos/[0.06] p-4 sm:p-6">
-        <h2 className="mb-1.5 flex items-center gap-2.5 font-display text-[19px] font-bold">
-          <CheckIcon size={17} className="text-pos" />
-          {t.link.sentTitle}
-        </h2>
-        <p className="mb-4 max-w-[560px] text-[13.5px] leading-relaxed text-ink-2">
-          {t.link.sentBody}
-        </p>
+    <section className="rounded-xl border border-pos/25 bg-pos/[0.06] p-4 sm:p-6">
+      <h2 className="mb-1.5 flex items-center gap-2.5 font-display text-[19px] font-bold">
+        <CheckIcon size={17} className="text-pos" />
+        {t.link.sentTitle}
+      </h2>
+      <p className="mb-4 max-w-[560px] text-[13.5px] leading-relaxed text-ink-2">
+        {t.link.sentBody}
+      </p>
 
-        <p className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-ink-4">
-          {t.link.sentIdLabel}
-        </p>
+      <p className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-ink-4">
+        {t.link.sentIdLabel}
+      </p>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <code className="rounded-lg border border-line-strong bg-bg px-4 py-2.5 font-mono text-[19px] font-semibold tracking-[0.12em] text-accent">
-            {formatToken(sent.token)}
-          </code>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(formatToken(sent.token));
-              setTokenCopied(true);
-              setTimeout(() => setTokenCopied(false), 1600);
-            }}
-            className="rounded-lg border border-line-strong px-3.5 py-2 text-[12.5px] text-ink-3 transition-colors hover:border-line-bright hover:text-ink"
-          >
-            {tokenCopied ? t.link.copied : t.link.copy}
-          </button>
-        </div>
-
-        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-3">{t.link.sentKeep}</p>
-        <Link
-          href={statusUrl}
-          className="mt-2 inline-block text-[12.5px] text-accent hover:underline"
+      <div className="flex flex-wrap items-center gap-3">
+        <code className="rounded-lg border border-line-strong bg-bg px-4 py-2.5 font-mono text-[19px] font-semibold tracking-[0.12em] text-accent">
+          {formatToken(sent.token)}
+        </code>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(formatToken(sent.token));
+            setTokenCopied(true);
+            setTimeout(() => setTokenCopied(false), 1600);
+          }}
+          className="rounded-lg border border-line-strong px-3.5 py-2 text-[12.5px] text-ink-3 transition-colors hover:border-line-bright hover:text-ink"
         >
-          {t.link.sentOpenStatus}
-        </Link>
-      </section>
+          {tokenCopied ? t.link.copied : t.link.copy}
+        </button>
+      </div>
 
-      {stage === "proved" ? (
-        <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-          <h2 className="mb-1.5 flex items-center gap-2.5 text-[15px] font-semibold">
-            <CheckIcon size={15} className="text-pos" />
-            {t.link.proofDoneTitle}
-          </h2>
-          <p className="text-[13px] leading-relaxed text-ink-3">{t.link.proofDoneBody}</p>
-        </section>
-      ) : (
-        <section className="rounded-xl border border-line bg-surface p-4 sm:p-6">
-          <h2 className="mb-1.5 text-[15px] font-semibold">{t.link.proofTitle}</h2>
-          <p className="mb-5 max-w-[600px] text-[13px] leading-relaxed text-ink-3">
-            {t.link.proofIntro}
-          </p>
-
-          {!instructions ? (
-            <button
-              onClick={getCode}
-              disabled={busy}
-              className="rounded-lg border border-line-strong px-4 py-2.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:border-line-bright hover:text-ink disabled:opacity-40"
-            >
-              {busy ? "…" : t.link.proofStart}
-            </button>
-          ) : (
-            <>
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-[14px] font-semibold">{t.link.renameTitle}</h3>
-                  <p className="mt-0.5 text-[12.5px] text-ink-3">{t.link.renameSubtitle}</p>
-                </div>
-                <span className="shrink-0 text-[12px] text-ink-4">
-                  {fill(t.link.expiresIn, { n: instructions.expiresInMinutes })}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-[240px_minmax(0,1fr)]">
-                <div className="grid place-items-center rounded-xl border border-line-strong bg-bg py-7">
-                  <p className="mb-2 text-[10.5px] font-semibold tracking-[0.1em] text-ink-4">
-                    {t.link.yourCode}
-                  </p>
-                  <p className="font-mono text-[30px] font-semibold tracking-[0.14em] text-accent">
-                    {instructions.code}
-                  </p>
-                </div>
-
-                <div className="flex flex-col">
-                  <p className="mb-2 text-[10.5px] font-semibold tracking-[0.1em] text-ink-4">
-                    {t.link.shouldLookLike}
-                  </p>
-                  <div className="flex items-center gap-3 rounded-lg border border-line-strong bg-bg px-4 py-3.5">
-                    <span className="min-w-0 flex-1 break-all font-mono text-[15px]">
-                      {instructions.suggestedName}
-                    </span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(instructions.suggestedName);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 1600);
-                      }}
-                      className="shrink-0 rounded-md border border-line-strong px-3 py-1.5 text-[12px] text-ink-3 hover:text-ink"
-                    >
-                      {copied ? t.link.copied : t.link.copy}
-                    </button>
-                  </div>
-
-                  <p className="mt-2.5 flex items-start gap-2 text-[12.5px] text-ink-3">
-                    {instructions.charsToTrim > 0 ? (
-                      <>
-                        <WarningIcon size={13} className="mt-0.5 shrink-0" />
-                        <span>
-                          {fill(t.link.mustTrim, {
-                            max: instructions.maxNameLength,
-                            n: instructions.charsToTrim,
-                          })}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckIcon size={13} className="mt-0.5 shrink-0 text-pos" />
-                        <span>
-                          {fill(t.link.fitsOk, {
-                            used: instructions.suggestedName.length,
-                            max: instructions.maxNameLength,
-                          })}
-                        </span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {error && <ErrorNote>{error}</ErrorNote>}
-
-              <div className="mt-5 flex flex-col items-stretch gap-4 border-t border-line-soft pt-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-                <p className="max-w-[420px] text-[12px] leading-relaxed text-ink-4">
-                  {t.link.cacheNote}
-                </p>
-                <button
-                  onClick={verify}
-                  disabled={busy}
-                  className="shrink-0 rounded-lg bg-accent px-5 py-2.5 text-[14px] font-semibold text-bg transition-colors hover:bg-accent-bright disabled:opacity-40"
-                >
-                  {busy ? t.link.confirming : t.link.confirmButton}
-                </button>
-              </div>
-            </>
-          )}
-
-          {error && !instructions && <ErrorNote>{error}</ErrorNote>}
-        </section>
-      )}
-    </div>
+      <p className="mt-3 text-[12.5px] leading-relaxed text-ink-3">{t.link.sentKeep}</p>
+      <Link
+        href={`/${lang}/request/${sent.token}`}
+        className="mt-2 inline-block text-[12.5px] text-accent hover:underline"
+      >
+        {t.link.sentOpenStatus}
+      </Link>
+    </section>
   );
 }
 

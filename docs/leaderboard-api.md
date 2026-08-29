@@ -267,6 +267,10 @@ cambia el nombre y que nosotros lo vemos pueden pasar varios minutos, así que
 ✅ El endpoint funciona, es público, sin auth y sin rate limit observable.
 ✅ Un solo request trae el top 1000 completo (~50 KB, ~200 ms en frío).
 ✅ El flujo de verificación por nombre de perfil es viable.
+   > **Se midió viable y no se usa.** Se implementó y después se sacó: hoy la
+   > verificación es la aprobación del admin. La conclusión técnica sigue en pie
+   > —el nombre se puede cambiar y el ladder lo refleja en minutos— por si
+   > alguna vez hace falta volver a apoyarse en eso.
 ⚠️ Solo devuelve `rank`, `playerName`, `score` — **no hay uid, cardback,
    title ni region**.
 ⚠️ Solo mes actual y anterior; el histórico más viejo hay que construirlo

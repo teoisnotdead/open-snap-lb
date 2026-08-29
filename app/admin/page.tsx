@@ -54,21 +54,27 @@ export default async function AdminPage({
     }
 
     /**
-     * El rank actual es contexto para decidir, no un dato de la petición: se
-     * resuelve al vuelo. Si el ladder no responde, el panel sigue andando —
-     * revisar una petición no depende de eso.
+     * Las filas del ladder con ese nombre son contexto para decidir, no un dato
+     * de la petición: se resuelven al vuelo. Si el ladder no responde, el panel
+     * sigue andando — revisar una petición no depende de eso.
+     *
+     * Van todas y no solo la primera: con un nombre repetido, elegir cuál fila
+     * es parte de la aprobación.
      */
-    let rankByKey = new Map<string, number>();
+    let byKey = new Map<string, SubmissionView["candidates"]>();
     try {
       const board = await fetchLeaderboard({ revalidate: 60 });
-      rankByKey = new Map(
-        [...indexByNameKey(board.rows).entries()].map(([k, rows]) => [k, rows[0].rank])
+      byKey = new Map(
+        [...indexByNameKey(board.rows).entries()].map(([k, rows]) => [
+          k,
+          rows.map((r) => ({ rank: r.rank, score: r.score, playerName: r.playerName })),
+        ])
       );
     } catch {
-      // sin ranks, pero con cola
+      // sin filas del ladder, pero con cola
     }
 
-    submissions = docs.map((d) => toSubmissionView(d, rankByKey.get(d.nameKey)));
+    submissions = docs.map((d) => toSubmissionView(d, byKey.get(d.nameKey)));
   } catch (err) {
     console.error("El panel no pudo leer Mongo:", err);
     dbError = "No se pudo leer la base. Revisá MONGODB_URI y el access list de Atlas.";

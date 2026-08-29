@@ -22,11 +22,8 @@ const MAX_POINTS = 2000;
 
 async function findPlayer(nameKey: string) {
   const players = await playersCollection();
-  return players.findOne(
-    { nameKey },
-    // Nunca sacamos el código de verificación por una página pública.
-    { projection: { verificationCode: 0, verificationExpiresAt: 0 } }
-  );
+  // Sin proyección: acá se excluía el código de verificación, que ya no existe.
+  return players.findOne({ nameKey });
 }
 
 async function findHistory(nameKey: string) {

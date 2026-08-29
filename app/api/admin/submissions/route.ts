@@ -2,7 +2,7 @@ import { submissionsCollection } from "@/lib/db";
 import { apiError, json, requireAdminAuth } from "@/lib/api";
 import { fetchLeaderboard, indexByNameKey } from "@/lib/leaderboard";
 import { toSubmissionView } from "@/lib/submissions";
-import type { SubmissionStatus } from "@/lib/types";
+import type { SubmissionStatus, SubmissionView } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -33,26 +33,32 @@ export async function GET(req: Request) {
       .toArray();
 
     /**
-     * El rank actual se resuelve al vuelo y no se guarda: es contexto para
-     * decidir, no un dato de la petición. Si el ladder no responde, el panel
-     * tiene que seguir funcionando — revisar no depende de eso.
+     * Las filas del ladder con ese nombre se resuelven al vuelo y no se
+     * guardan: son contexto para decidir, no un dato de la petición. Si el
+     * ladder no responde, el panel tiene que seguir funcionando — revisar no
+     * depende de eso.
+     *
+     * Van todas y no solo la primera porque con un nombre repetido el admin
+     * tiene que elegir cuál fila aprueba.
      */
-    let rankByKey = new Map<string, number>();
+    let byKey = new Map<string, SubmissionView["candidates"]>();
     try {
       const board = await fetchLeaderboard({ revalidate: 60 });
-      const index = indexByNameKey(board.rows);
-      rankByKey = new Map(
-        [...index.entries()].map(([key, rows]) => [key, rows[0].rank])
+      byKey = new Map(
+        [...indexByNameKey(board.rows).entries()].map(([key, rows]) => [
+          key,
+          rows.map((r) => ({ rank: r.rank, score: r.score, playerName: r.playerName })),
+        ])
       );
     } catch (err) {
-      console.error("El panel no pudo leer el ladder; sigo sin ranks:", err);
+      console.error("El panel no pudo leer el ladder; sigo sin filas:", err);
     }
 
     return json({
       status,
       count: docs.length,
       truncated: docs.length === MAX_ROWS,
-      submissions: docs.map((d) => toSubmissionView(d, rankByKey.get(d.nameKey))),
+      submissions: docs.map((d) => toSubmissionView(d, byKey.get(d.nameKey))),
     });
   } catch (err) {
     console.error("GET /api/admin/submissions falló:", err);

@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
-import { CheckIcon, WarningIcon } from "@/components/icons";
+import { WarningIcon } from "@/components/icons";
 import { findSubmissionByToken } from "@/lib/submissions";
-import { formatStatusToken } from "@/lib/verification";
+import { formatStatusToken } from "@/lib/tokens";
 import { getDictionary, isLang, type Lang } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/format";
 import type { SubmissionDoc } from "@/lib/types";
@@ -99,18 +99,6 @@ export default async function RequestStatusPage({
                     <dd className="text-ink-2">{formatDateTime(doc.reviewedAt, lang)}</dd>
                   </>
                 )}
-
-                <dt className="text-ink-4">{t.request.proofLabel}</dt>
-                <dd className="flex items-center gap-2 text-ink-2">
-                  {doc.proofVerified ? (
-                    <>
-                      <CheckIcon size={13} className="text-pos" />
-                      {t.request.proofYes}
-                    </>
-                  ) : (
-                    t.request.proofNo
-                  )}
-                </dd>
 
                 <dt className="text-ink-4">{t.request.tokenLabel}</dt>
                 <dd className="font-mono tracking-[0.08em] text-ink-2">

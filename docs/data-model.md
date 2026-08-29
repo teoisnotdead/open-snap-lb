@@ -30,14 +30,15 @@ Implementado en `lib/names.ts`.
    fila cuyo rank esté más cerca del último conocido, y si no hay histórico
    marca la fila como `ambiguous` y no le pega los links.
 
-   > `lastRank` lo siembra la aprobación del panel, con `proofRank`: la fila que
-   > probó control de la cuenta. Antes lo escribía solo el sync, y eso era un bloqueo
-   > circular: el sync saltea a los homónimos sin `lastRank` para no adivinar,
-   > así que un homónimo se verificaba bien y después no volvía a pasar nada
-   > nunca — cada corrida lo salteaba por falta del dato que solo esa corrida
-   > podía escribir, sin ningún error visible. `lastScore` sigue siendo
-   > exclusivo del sync: sembrarlo le robaría al jugador su primer snapshot,
-   > porque el sync omite el punto cuando el score no cambió.
+   > `lastRank` lo siembra la aprobación del panel: cuando el nombre está
+   > repetido, el admin elige de qué fila se trata y ese puesto queda como
+   > semilla. Antes lo escribía solo el sync, y eso era un bloqueo circular: el
+   > sync saltea a los homónimos sin `lastRank` para no adivinar, así que un
+   > homónimo aprobado no volvía a pasar nada nunca — cada corrida lo salteaba
+   > por falta del dato que solo esa corrida podía escribir, sin ningún error
+   > visible. `lastScore` sigue siendo exclusivo del sync: sembrarlo le robaría
+   > al jugador su primer snapshot, porque el sync omite el punto cuando el
+   > score no cambió.
 2. **El nombre es mutable.** Si un jugador aprobado se cambia el nombre, su
    `nameKey` deja de aparecer en el ladder y su historial deja de crecer, en
    silencio. Es detectable (`lastSeenAt` se queda viejo) y se resuelve con una
@@ -64,7 +65,7 @@ Un doc por jugador **aprobado**, o al que le pusimos un nombre patcheado.
 | `untapped?` | string | URL completa: los UUIDs no se pueden derivar de la API. |
 | `alliance?` | string | Tag, en mayúsculas. Declarado, indemostrable. |
 | `allianceName?` | string | Nombre largo. Tooltip del tag en la tabla. |
-| `verified` | boolean | Probó control de la cuenta. **No** significa "aprobado". |
+| `verified` | boolean | Aprobada por un admin. Hoy es lo mismo que estar acá. |
 | `verifiedAt?` | Date | |
 | `lastSeenAt?` | Date | Última vez visto en el ladder. |
 | `lastRank?` `lastScore?` | number | Denormalizado del último sync. |
@@ -95,20 +96,27 @@ El filtro parcial es `{ verified: true, <campo>: { $type: "string" } }`.
 Verificado con 7 casos contra un `mongod` real (incluyendo que promover a
 `verified: true` con un handle ya tomado tira `E11000`).
 
-> **Ojo con el alcance del índice.** El filtro parcial `verified: true` significa
-> que dos jugadores **aprobados sin prueba** pueden declarar el mismo Twitch sin
-> que Mongo diga nada. Por eso la ruta de aprobación lo chequea explícitamente
-> antes de escribir.
+> **Sobre el alcance del índice.** El filtro parcial `verified: true` describía
+> un subconjunto cuando había aprobados sin verificar. Hoy toda aprobación
+> verifica, así que cubre `players` entero. Se deja igual —recrear el índice no
+> compra nada—, y la ruta de aprobación igual chequea el canal antes de escribir
+> para poder decir **a quién** pertenece en vez de tirar un E11000 pelado.
 
-### Un doc en `players` significa "aprobado"
+### Un doc en `players` significa "aprobado", y eso es también el tick
 
-Ya no se crea uno al pedir un código: la única ruta que escribe acá es la
-aprobación del panel. `verified` es un eje **independiente** — vale lo que valga
-`proofVerified` en la petición, no la aprobación. Estar en la tabla y tener el
-tick son cosas distintas.
+La única ruta que escribe acá es la aprobación del panel, y desde ahí
+`verified` queda siempre en `true`.
 
-`verificationCode` se mudó a `submissions`, que es donde vive el flujo del
-código ahora.
+Fueron dos ejes distintos: estar en la tabla significaba "un admin lo aprobó" y
+el tick significaba "probó que controla la cuenta", con un código que el jugador
+pegaba en su nombre de perfil dentro del juego. Se unificaron. Si un humano leyó
+la petición y la aceptó, ya dio por buena la identidad; el código no cambiaba esa
+decisión y era un trámite que la mayoría abandonaba a mitad. Con él se fueron
+`proofVerified`, `proofRank`, `verificationCode` y `verificationExpiresAt`.
+
+Lo único que hacía falta reemplazar era la desambiguación: `proofRank` decía qué
+fila del ladder era la del jugador cuando el nombre estaba repetido. Ahora esa
+fila la elige el admin al aprobar, que es donde ya estaba el criterio humano.
 
 ---
 
@@ -125,9 +133,6 @@ nombre.
 | `allianceTag` / `allianceName` | string? | Indemostrables: no están en la API |
 | `discord` / `email` | string? | **PRIVADOS.** Nunca salen por una ruta pública |
 | `note` | string? | Texto libre del solicitante |
-| `proofVerified` | boolean | El sello, no el permiso |
-| `proofRank` | number? | Rank de la fila que probó control. Semilla de desambiguación |
-| `verificationCode` / `verificationExpiresAt` | — | Código pendiente |
 | `status` | `pending`/`approved`/`rejected` | |
 | `rejectionReason` | string? | Obligatorio al rechazar |
 | `reviewedAt` / `reviewedBy` | | |
@@ -142,8 +147,8 @@ probando ids vecinos.
 Por eso hay dos llaves con alcances distintos: **`statusToken` para lo público**
 (aleatorio, 30^12) y **`_id` solo para el panel**, que ya está detrás de sesión.
 
-Y el token es distinto del código de verificación a propósito: ese va en el
-nombre del perfil, o sea que aparece en el leaderboard público.
+El alfabeto es Crockford base32 sin 0/1/I/L/O/U: el token se dicta y se copia a
+mano, así que no puede tener caracteres que se confundan entre sí.
 
 ### Los datos de contacto no se copian a `players`
 
@@ -158,19 +163,12 @@ un problema distinto y peor que cualquier otro de este proyecto.
 { status: 1, createdAt: 1 }                    // la cola del panel
 { nameKey: 1, createdAt: -1 }                  // historial por jugador
 { nameKey: 1 } unique, partial: {status:"pending"}
-{ verificationCode: 1 } sparse
 ```
 
 El tercero es el que importa: **una sola petición pendiente por nombre.** Sin él,
 cualquiera puede mandar cien peticiones del mismo jugador y dejar el panel
 inusable. El filtro parcial es lo que permite que sí convivan varias
 aprobadas/rechazadas históricas del mismo nombre — solo las pendientes compiten.
-
-### Sobre el TTL que *no* pusimos
-
-`verificationCode` no lleva índice TTL: un TTL borra el **documento entero**, no
-el campo, así que se llevaría puesta la petición. El vencimiento se chequea en la
-ruta contra `verificationExpiresAt`.
 
 ---
 
@@ -259,6 +257,64 @@ puntos duplicados.
 
 ---
 
+## `boardBaselines`
+
+Una foto del ladder **entero** por corrida, comprimida en un solo documento.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `syncId` | string | La misma corrida que los `snapshots` de esa hora. Único |
+| `timestamp` | Date | Lleva el TTL |
+| `season` | string | `"YYYY-MM"` |
+| `total` | number | Jugadores en todo el ladder, no solo los 1000 |
+| `rows` | `{n,s}[]` | Una entrada por fila: `n` = nameKey, `s` = score |
+
+### Por qué existe
+
+Para que el **Δ 24 h de la tabla exista para las 1000 filas**, no solo para los
+jugadores vinculados. Antes ese número salía de `snapshots`, que por diseño solo
+cubre a quien pidió su ficha, así que la enorme mayoría de la tabla mostraba un
+guión permanente.
+
+Y para eso no hace falta una serie temporal de todos: hace falta **un valor por
+fila de hace un día**. Esa es toda la diferencia de costo.
+
+### Por qué un documento y no mil
+
+Un snapshot por jugador por hora para el top 1000 son 8.76 M docs y ~2.2 GB al
+año — cuatro veces el M0 entero, y eso recortando por "solo si cambió" ni
+siquiera alcanzaba. Un documento por corrida son ~35 KB, y el TTL lo deja fijo
+en menos de 3 MB para siempre.
+
+Las claves de `rows` son de una letra por lo mismo: con 1000 entradas, escribir
+`nameKey` y `score` completos agrega ~14 KB por documento sin decir nada que el
+comentario del tipo no diga.
+
+Tampoco es un mapa `nameKey → score`: se guardan **todas** las filas, repetidos
+incluidos. Colapsarlos escondería la ambigüedad justo donde importa. Al leer, un
+nameKey que aparece dos veces se descarta y esa fila vuelve a mostrar un guión
+— restarle el score del homónimo equivocado daría un número inventado con pinta
+de dato.
+
+### Índices
+
+```js
+{ timestamp: -1 }                              // el baseline anterior al corte
+{ timestamp: 1 } expireAfterSeconds: 259200    // TTL de 72 h
+{ syncId: 1 } unique                           // idempotencia del reintento
+```
+
+El TTL es lo que vuelve constante el costo: sin él, 35 KB por hora son ~300 MB
+al año. Se guardan 72 h y no 24 porque el mínimo útil es un día: con margen, si
+el cron se cae una noche entera, al volver todavía hay contra qué comparar en
+vez de mostrar guiones en las 1000 filas.
+
+> **No es un archivo histórico.** Se borra solo y a propósito. Para el pasado
+> están `snapshots` (la curva de los vinculados) y `seasonResults` (el cierre de
+> cada temporada).
+
+---
+
 ## Presupuesto de almacenamiento en M0 (512 MB)
 
 Cada snapshot pesa ~250 B con índices incluidos. Con sync **cada hora**:
@@ -283,6 +339,17 @@ Ninguna se implementa todavía. Lo que sí ya está: el sync arranca **limitado 
 los jugadores que están en `players`**, no al top 1000 completo, tal como pide
 el plan.
 
+A eso se le suma `boardBaselines`, que sí cubre el top 1000 pero con un costo de
+otra escala:
+
+| Colección | Docs/año | Tamaño |
+|---|---|---|
+| `snapshots` del top 1000, un doc por jugador y hora | 8.76 M | ~2.2 GB/año ❌ |
+| `boardBaselines`, un doc por hora con TTL de 72 h | 72 vivos | **~2.5 MB constantes** |
+
+Es el mismo dato para la columna Δ 24 h. La diferencia entera está en no guardar
+una serie temporal cuando lo que se necesita es un punto de comparación.
+
 ---
 
 ## Archivos
@@ -295,7 +362,8 @@ el plan.
 | `lib/names.ts` | `toNameKey`, `toDisplayName`. |
 | `lib/socials.ts` | Parseo/canonicalización de Twitch, YouTube y Untapped. |
 | `lib/db.ts` | Accessors de colecciones, definición de índices, `ensureIndexes`. |
-| `scripts/ensure-indexes.ts` | `npm run db:indexes` — idempotente. |
+| `lib/tokens.ts` | El token de seguimiento: generación, formato y parseo. |
+| `scripts/ensure-indexes.ts` | `npm run db:indexes` — idempotente. Borra los índices obsoletos. |
 | `scripts/smoke.ts` | `npm run db:smoke` — 10 checks contra Atlas, se autolimpia. |
 
 ### Por qué se cachea la promesa y no el cliente

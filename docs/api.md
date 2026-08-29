@@ -14,6 +14,7 @@ Ranking en vivo del endpoint oficial, mergeado con `players`.
   "season": "2026-08",
   "fetchedAt": "2026-08-24T03:00:00.000Z",
   "total": 50520,          // jugadores en TODO el ladder
+  "deltaSince": "2026-08-23T03:07:12.000Z",  // contra qué momento se comparó
   "count": 1000,           // filas devueltas (la API sirve top 1000 y nada más)
   "rows": [
     {
@@ -23,7 +24,8 @@ Ranking en vivo del endpoint oficial, mergeado con `players`.
       "score": 10169,
       "displayName": "Cerebro = No Hands",  // patchedName si existe
       "verified": false,
-      "ambiguous": false   // true si hay otra fila con el mismo nameKey
+      "ambiguous": false,  // true si hay otra fila con el mismo nameKey
+      "delta24h": 45       // ausente cuando no lo sabemos: ver abajo
     }
   ]
 }
@@ -31,6 +33,14 @@ Ranking en vivo del endpoint oficial, mergeado con `players`.
 
 Cachea el fetch al endpoint oficial 60 s. No tiene sentido bajar de ahí: la
 respuesta oficial pasa por CloudFront con un TTL de varios minutos.
+
+**Sobre `delta24h`:** sale de `boardBaselines`, la foto comprimida del ladder
+entero que guarda cada corrida de sync, así que existe para las 1000 filas y no
+solo para los jugadores vinculados. Se **omite** —y la tabla pinta un guión— en
+tres casos: todavía no hay un baseline anterior al corte de 24 h, el jugador no
+estaba en el top 1000 entonces, o su nombre está repetido. Ese último caso es el
+mismo criterio de siempre: con dos filas homónimas no sabemos cuál era cuál, y
+restar la equivocada da un número inventado con pinta de dato.
 
 **Sobre `ambiguous`:** en la corrida real de prueba se detectaron 10 filas
 ambiguas — `Leaf`, `Jay`, `I AM`, `Bob`/`BOB`, `Shadow`/`shadow`, `jl`/`JL`. Las
@@ -54,6 +64,8 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
   "ok": true,
   "syncId": "2026-08-24T03",   // franja horaria UTC
   "season": "2026-08",
+  "baselineSaved": true, // foto del ladder entero guardada en esta corrida
+  "baselineRows": 1000,  // filas que entraron en esa foto
   "tracked": 1,          // jugadores en `players`
   "inserted": 1,         // snapshots escritos
   "unchanged": 0,        // sin cambio de rank ni score -> no se escribe
@@ -112,13 +124,8 @@ Crea una petición. **No publica nada**: deja un documento `pending`.
 los ObjectId de Mongo son timestamp + valor por proceso + **contador
 incremental**, así que desde uno conocido se adivinan los vecinos y cualquiera
 que mande una petición podría leer las de al lado. El token son 12 caracteres
-aleatorios del mismo alfabeto Crockford del código de verificación — 30^12 ≈
-5.3 × 10^17.
-
-> Tiene que ser **distinto** del código de verificación, y no por longitud: ese
-> código va en el nombre del perfil, o sea que se publica en el leaderboard.
-> Reusarlo para consultar el estado regalaría el acceso a cualquiera que mire la
-> tabla.
+aleatorios de un alfabeto Crockford —sin 0/1/I/L/O/U, que se confunden al
+dictarlo— así que son 30^12 ≈ 5.3 × 10^17 combinaciones.
 
 El insert distingue los dos índices únicos que pueden chocar: `uniq_status_token`
 es mala suerte y se reintenta con otro token, `uniq_pending_per_player` es un
@@ -137,64 +144,12 @@ Reglas de entrada:
 
 ---
 
-## `POST /api/submissions/[token]/code`
-
-Emite —o reutiliza— el código de prueba de propiedad.
-
-Se emite acá y no al crear la petición porque el que nunca va a probar nada no
-necesita un código colgando. Si ya hay uno vigente devuelve **el mismo**:
-rotarlo dejaría inservible el nombre que el jugador quizá ya se cambió.
-
----
-
-## `POST /api/submissions/[token]/proof`
-
-Busca el código en el ladder en vivo y, si aparece en la cuenta reclamada, marca
-la petición como `proofVerified`. **Sigue sin publicar nada**: solo agrega el
-sello para quien revisa.
-
-### Las tres decisiones que importan acá
-
-**1. Se busca por código, no por nombre.** Al agregarse el código al nombre, el
-`nameKey` cambió y ya no coincide con el reclamado.
-
-**2. Encontrar el código NO alcanza.** Prueba control de *alguna* cuenta, no de
-la reclamada. Sin el chequeo extra, alguien podría pedir un código para "Sizer",
-pegarlo en el nombre de **su propia** cuenta y quedar marcado como Sizer. Por eso
-`checkClaim()` saca el código del nombre encontrado y exige que lo que queda sea
-prefijo del reclamado — por prefijo y no por igualdad, porque quien tiene el
-nombre al tope de 20 caracteres necesita recortarlo para que el código entre.
-
-Se revisan **todas** las filas que contengan el código, no solo la primera: 5
-caracteres pueden aparecer por casualidad en el nombre de otro.
-
-**3. `checkClaim()` tampoco alcanza: falta descartar la ocupación de nombre.**
-Un atacante que se renombra `730` pasa ese chequeo igual de bien que el dueño.
-Lo cierra `findSquatConflict()`: si el ladder **todavía muestra una fila con el
-nombre pelado** mientras aparece otra con el código, hay dos cuentas distintas
-en juego. El ladder trae una fila por cuenta, así que las dos formas del nombre
-no pueden coexistir siendo la misma persona — cuando el dueño se renombra, su
-fila deja de decir `730`. Ver las dos a la vez es la señal.
-
-El falso negativo es un homónimo genuino queriendo verificarse: lo rechazamos,
-mismo criterio que usa el sync con los nombres repetidos.
-
-**Riesgo residual, sin arreglo posible con identidad por nombre:** si el dueño
-abandona el nombre o se cae del top 1000, no queda fila pelada que delate nada.
-Con la API oficial sin IDs de jugador, control del nombre *es* la identidad.
-
-El fetch al ladder va con `cache: no-store`. Con la respuesta cacheada podríamos
-estar mirando el nombre viejo y rechazar una prueba legítima.
-
----
-
 ## `GET /api/submissions/[token]`
 
 Estado de una petición, para el solicitante. Sin cuentas ni notificaciones, es la
 única forma que tiene de saber cómo quedó.
 
-Devuelve el estado, la prueba, **lo que pidió publicar** y el motivo si fue
-rechazada. Eso último se puede mostrar justamente porque la llave es un token
+Devuelve el estado, **lo que pidió publicar** y el motivo si fue rechazada. Eso último se puede mostrar justamente porque la llave es un token
 aleatorio: con el `_id` adivinable había que dejar la vista casi vacía.
 
 **El contacto sigue afuera.** No porque el token sea débil, sino porque un token
@@ -221,21 +176,32 @@ env vars del panel devuelven **503**: cerradas, nunca abiertas.
 |---|---|
 | `POST /api/admin/login` | Valida usuario y clave, setea la cookie |
 | `POST /api/admin/logout` | Borra la cookie |
-| `GET /api/admin/submissions?status=` | La cola, con el rank actual resuelto al vuelo |
-| `POST /api/admin/submissions/[id]` | `{action:"approve"\|"reject", reason?}` |
+| `GET /api/admin/submissions?status=` | La cola, con las filas del ladder que tienen ese nombre resueltas al vuelo |
+| `POST /api/admin/submissions/[id]` | `{action:"approve"\|"reject", reason?, rank?}` |
 
 **Aprobar es lo único que escribe en `players`**, o sea lo único que publica
 algo. Al aprobar:
 
-- `verified` toma el valor de `proofVerified`, no de la aprobación. El tick
-  refleja la prueba de propiedad; estar en la tabla refleja la aprobación.
-- `lastRank` se siembra con `proofRank` **solo si todavía no hay uno**. Si el
-  jugador ya venía trackeado, el sync tiene un valor más fresco.
+- `verified` queda en **true, siempre**. Aprobar *es* verificar: hubo un paso
+  automático —un código que el jugador pegaba en su nombre de perfil— y se sacó,
+  porque si un humano ya leyó la petición y la aceptó, dio por buena la
+  identidad. Sostener dos niveles de confianza sobre el mismo acto no le decía
+  nada a nadie.
+- `lastRank` se siembra con el puesto de la fila aprobada **solo si todavía no
+  hay uno**. Si el jugador ya venía trackeado, el sync tiene un valor más fresco.
 - El contacto (Discord, email) **no se copia** a `players`: esa colección se
   sirve en público.
 - Se chequea que ningún otro jugador tenga ya ese canal. El índice único de las
-  redes solo aplica a `verified: true`, así que no frena a dos aprobados sin
-  prueba que declaren el mismo Twitch.
+  redes ya lo cubriría, pero así el error dice **a quién** pertenece en vez de
+  ser un E11000.
+
+**`rank` es obligatorio cuando el nombre está repetido** en el ladder (409 si
+falta, con la lista de puestos y SP para elegir). Es la semilla de
+desambiguación que antes daba la prueba de propiedad, y sin ella un aprobado
+homónimo nunca mostraría sus links ni acumularía historial: no sabríamos cuál de
+las dos filas es. Con un solo candidato no hace falta mandarlo. Si el ladder
+oficial no responde, se aprueba igual sin semilla — revisar no puede depender de
+un servicio de terceros.
 
 Rechazar exige motivo: sin él, el solicitante se queda sin nada que hacer con la
 respuesta y vos sin memoria de por qué lo rechazaste.
@@ -280,9 +246,10 @@ de dónde leer sin esto.
 }
 ```
 
-La projection excluye `verificationCode` y `verificationExpiresAt`: un código
-pendiente filtrado por una ruta pública dejaría que cualquiera se adelante a
-verificar esa cuenta. Hay un test que lo cubre.
+Sin projection: `players` es la colección pública y no guarda nada privado. Acá
+se excluían `verificationCode` y `verificationExpiresAt`, que dejaron de existir
+cuando la verificación pasó a ser la aprobación del admin; el contacto del
+solicitante nunca vivió en esta colección sino en `submissions`.
 
 ---
 
@@ -293,11 +260,10 @@ verificar esa cuenta. Hay un test que lo cubre.
 | Comando | Qué cubre |
 |---|---|
 | `npm run test:socials` | 18 casos de parseo de handles y normalización de nombres |
-| `npm run test:verification` | 30 casos de la lógica de verificación, incluidos el secuestro y la ocupación de nombre |
+| `npm run test:tokens` | 17 casos del token de seguimiento: generación, formato y parseo |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run db:smoke` | 10 casos del modelo contra Atlas real; se autolimpia |
 
 Y verificación end-to-end contra el server levantado del ciclo completo:
 validación de entrada, la petición duplicada, la no-fuga de contacto por la ruta
-pública, las rutas de admin cerradas sin sesión, login, cola y aprobación —
-comprobando que aprobar **sin** prueba publica los links pero **no** el tick.
+pública, las rutas de admin cerradas sin sesión, login, cola y aprobación.

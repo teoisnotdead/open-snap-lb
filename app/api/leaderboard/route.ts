@@ -20,6 +20,12 @@ export async function GET() {
       fetchedAt: board.fetchedAt.toISOString(),
       /** Jugadores en todo el ladder; `rows` es solo el top 1000 que sirve la API. */
       total: board.total,
+      /**
+       * Contra qué momento se calcularon los `delta24h`. No es exactamente
+       * hace 24 h: es la corrida de sync más cercana anterior a ese corte.
+       * Ausente mientras no haya ninguna, que es cuando ninguna fila trae delta.
+       */
+      ...(board.deltaSince ? { deltaSince: board.deltaSince.toISOString() } : {}),
       count: board.rows.length,
       rows: board.rows,
     });

@@ -2,7 +2,7 @@ import { submissionsCollection } from "@/lib/db";
 import { fetchLeaderboard, indexByNameKey, LeaderboardError } from "@/lib/leaderboard";
 import { apiError, json, readJson } from "@/lib/api";
 import { toNameKey, isValidNameKey } from "@/lib/names";
-import { generateStatusToken } from "@/lib/verification";
+import { generateStatusToken } from "@/lib/tokens";
 import {
   SOCIAL_PARSERS,
   CONTACT_PARSERS,
@@ -34,9 +34,9 @@ interface Body {
  * POST /api/submissions — crea una petición para aparecer en la tabla.
  *
  * NO publica nada: deja un documento en `pending` para que un admin lo revise.
- * Es el cambio de modelo respecto de la versión anterior, donde verificar el
- * código publicaba directo. El motivo está en `SubmissionDoc`: casi nada de lo
- * que se pide acá es verificable contra la API oficial.
+ * El motivo está en `SubmissionDoc`: casi nada de lo que se pide acá es
+ * verificable contra la API oficial, así que el único filtro posible —y toda la
+ * verificación que hay— es el ojo humano del panel.
  */
 export async function POST(req: Request) {
   const body = await readJson<Body>(req);
@@ -125,7 +125,6 @@ export async function POST(req: Request) {
       ...(allianceName ? { allianceName } : {}),
       ...contact,
       ...(note ? { note } : {}),
-      proofVerified: false,
       status: "pending",
       createdAt: now,
       updatedAt: now,
@@ -170,7 +169,10 @@ export async function POST(req: Request) {
         nameKey,
         playerName: matches[0].playerName,
         status: "pending",
-        /** Aviso para la UI: con varias filas homónimas, conviene la prueba. */
+        /**
+         * Aviso para la UI. Con varias filas homónimas el admin tiene que
+         * elegir cuál es al aprobar, así que conviene que la nota lo aclare.
+         */
         ambiguous: matches.length > 1,
       },
       201

@@ -93,6 +93,16 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
 
+  const candidates = s.candidates ?? [];
+
+  /**
+   * Con el nombre repetido hay que elegir a mano qué fila se aprueba. No es un
+   * detalle cosmético: ese puesto queda como `lastRank` y es lo único que
+   * después permite decirle al sync cuál de los homónimos es esta persona.
+   */
+  const mustChoose = candidates.length > 1;
+  const [rank, setRank] = useState<number | null>(null);
+
   async function review(action: "approve" | "reject") {
     setBusy(action);
     setError(null);
@@ -101,7 +111,11 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
       const res = await fetch(`/api/admin/submissions/${s.id}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action, reason: reason.trim() || undefined }),
+        body: JSON.stringify({
+          action,
+          reason: reason.trim() || undefined,
+          ...(mustChoose && rank !== null ? { rank } : {}),
+        }),
       });
       const data = await res.json();
 
@@ -126,18 +140,21 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
           <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="min-w-0 break-words font-display text-[17px] font-bold">{s.playerName}</h2>
 
-            {s.currentRank !== undefined && (
-              <span className="font-mono text-[12px] text-ink-4">#{s.currentRank}</span>
+            {candidates.length === 1 && (
+              <span className="font-mono text-[12px] text-ink-4">
+                #{candidates[0].rank} · {candidates[0].score} SP
+              </span>
             )}
 
-            {/* El sello es la única señal objetiva de la cola: se destaca. */}
-            {s.proofVerified ? (
-              <span className="rounded-full border border-[#2a5e46] bg-[#132a20] px-2 py-0.5 text-[11px] font-semibold text-pos">
-                ✓ propiedad comprobada
+            {mustChoose && (
+              <span className="rounded-full border border-accent-line bg-accent-surface px-2 py-0.5 text-[11px] font-semibold text-accent">
+                {candidates.length} homónimos
               </span>
-            ) : (
+            )}
+
+            {candidates.length === 0 && (
               <span className="rounded-full border border-line-strong px-2 py-0.5 text-[11px] text-ink-4">
-                sin comprobar
+                fuera del top 1000
               </span>
             )}
           </div>
@@ -187,6 +204,37 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
 
       {pending && (
         <div className="flex flex-col gap-3 border-t border-line-soft pt-4">
+          {mustChoose && !rejecting && (
+            <fieldset>
+              <legend className="mb-2 text-[12.5px] text-ink-3">
+                Hay {candidates.length} jugadores con este nombre en el ladder. Elegí
+                cuál es antes de aprobar: al que elijas se le pegan los links.
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {candidates.map((cand) => (
+                  <label
+                    key={cand.rank}
+                    className={`cursor-pointer rounded-lg border px-3 py-2 text-[13px] transition-colors ${
+                      rank === cand.rank
+                        ? "border-accent bg-accent-surface text-ink"
+                        : "border-line-strong text-ink-3 hover:border-line-bright"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`rank-${s.id}`}
+                      className="sr-only"
+                      checked={rank === cand.rank}
+                      onChange={() => setRank(cand.rank)}
+                    />
+                    <span className="font-mono">#{cand.rank}</span>
+                    <span className="ml-2 text-ink-4">{cand.score} SP</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
           {rejecting && (
             <input
               value={reason}
@@ -200,10 +248,13 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
           <div className="flex flex-wrap gap-2.5">
             <button
               onClick={() => review("approve")}
-              disabled={busy !== null || rejecting}
+              disabled={busy !== null || rejecting || (mustChoose && rank === null)}
+              title={
+                mustChoose && rank === null ? "Elegí primero de qué fila se trata" : undefined
+              }
               className="rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-bg transition-colors hover:bg-accent-bright disabled:opacity-40"
             >
-              {busy === "approve" ? "Aprobando…" : "Aprobar"}
+              {busy === "approve" ? "Aprobando…" : "Aprobar y verificar"}
             </button>
 
             {rejecting ? (
