@@ -283,5 +283,9 @@ export const POST = runSync;
  * `Authorization: Bearer $CRON_SECRET` por su cuenta cuando esa variable
  * existe en el proyecto, así que la misma protección aplica sin configurar
  * nada extra.
+ *
+ * Hoy no hay ningún cron de Vercel declarado: el disparador es el workflow, que
+ * usa POST. El GET se deja igual para que reponer esa red de seguridad sea
+ * devolver el bloque `crons` a `vercel.json` y nada más — ver el README.
  */
 export const GET = runSync;

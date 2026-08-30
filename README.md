@@ -173,10 +173,11 @@ Probalo a mano desde la pestaña **Actions → Sync leaderboard snapshots → Ru
 workflow**. Si anda, el resumen de la corrida muestra una tabla con cuántos
 snapshots entraron.
 
-### Respaldo: Vercel Cron
+### Por qué no hay respaldo en Vercel Cron
 
-`vercel.json` declara además un cron **diario** a las 06:00 UTC. Es una red de
-seguridad, no el mecanismo principal:
+`vercel.json` declaró un cron diario a las 06:00 UTC hasta que Actions quedó
+operativo. Se sacó para tener un solo disparador: dos mecanismos para la misma
+tarea significan dos lugares donde mirar cuando algo falla.
 
 | | GitHub Actions | Vercel Cron (Hobby) |
 |---|---|---|
@@ -185,14 +186,18 @@ seguridad, no el mecanismo principal:
 | Costo | Gratis (repo público) | Incluido en Hobby |
 | Límite | — | 2 cron jobs |
 
-Un punto por día hace una gráfica pobre, así que el objetivo es que el
-disparador real sea el workflow. El cron de Vercel existe para que el proyecto
-siga juntando *algo* de historial si Actions queda fuera de servicio — el
-historial es el único dato que no se puede recuperar hacia atrás.
+Un punto por día hace una gráfica pobre, así que nunca fue candidato a
+disparador principal. Si hiciera falta reponerlo como red de seguridad —
+GitHub deshabilita los workflows programados tras 60 días sin actividad, ver
+abajo — alcanza con devolver el bloque a `vercel.json`:
 
-**Los dos pueden convivir.** El índice único `{nameKey, syncId}` y el `syncId`
-truncado a la hora hacen que dos disparos en la misma franja no dupliquen nada;
-está verificado con GET y POST seguidos.
+```json
+"crons": [{ "path": "/api/cron/sync", "schedule": "0 6 * * *" }]
+```
+
+Los dos pueden convivir sin duplicar nada: el índice único `{nameKey, syncId}` y
+el `syncId` truncado a la hora hacen que dos disparos en la misma franja se
+anulen; está verificado con GET y POST seguidos.
 
 > Vercel Cron **solo emite `GET`**, por eso la ruta expone `GET` además de
 > `POST`. Vercel agrega el header `Authorization: Bearer $CRON_SECRET` por su
