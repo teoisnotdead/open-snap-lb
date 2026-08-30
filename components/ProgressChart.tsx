@@ -191,6 +191,18 @@ export function ProgressChart({
 
   const peak = real.reduce((a, b) => (b.score > a.score ? b : a), real[0]);
 
+  /**
+   * Los puntos se marcan solo cuando son contables de un vistazo.
+   *
+   * Cada uno es una corrida del cron, así que verlos es lo que deja claro que
+   * la resolución es horaria y no diaria. Pero en "Temporada" o "Todo" son
+   * cientos: el trazo se convierte en una hilera de círculos pegados y se lee
+   * peor que la línea sola. El umbral es la densidad real de la serie, no el
+   * rango elegido, porque un jugador que se movió poco tiene pocos puntos
+   * incluso en un mes.
+   */
+  const showDots = real.length <= 60;
+
   const scores = real.map((d) => d.score);
   const { domain: scoreDomain, ticks: scoreTicks } = niceAxis(
     Math.min(...scores),
@@ -267,12 +279,22 @@ export function ProgressChart({
               cursor={{ stroke: "#35353f", strokeDasharray: "3 3" }}
             />
             <Area
-              type="monotone"
+              /**
+               * Escalones, no curva suave.
+               *
+               * Los SP saltan de golpe al terminar una partida y se quedan
+               * quietos hasta la siguiente; `monotone` interpolaba una subida
+               * gradual entre dos mediciones, que es una lectura inventada —
+               * sugería actividad continua donde hubo un salto puntual.
+               * `stepAfter` mantiene el valor hasta la medición siguiente, que
+               * es exactamente lo que sabemos que pasó.
+               */
+              type="stepAfter"
               dataKey="score"
               stroke={C.accent}
               strokeWidth={2}
               fill="url(#spFill)"
-              dot={false}
+              dot={showDots ? { r: 2.5, fill: C.accent, strokeWidth: 0 } : false}
               activeDot={{ r: 5, fill: C.accent, stroke: C.surface, strokeWidth: 2 }}
               isAnimationActive={false}
             />
@@ -334,11 +356,13 @@ export function ProgressChart({
               cursor={{ stroke: "#35353f", strokeDasharray: "3 3" }}
             />
             <Line
-              type="monotone"
+              // Mismo motivo que en la gráfica de SP: el puesto cambia de un
+              // salto cuando alguien te pasa, no deslizándose.
+              type="stepAfter"
               dataKey="rank"
               stroke={C.rank}
               strokeWidth={2}
-              dot={false}
+              dot={showDots ? { r: 2.5, fill: C.rank, strokeWidth: 0 } : false}
               activeDot={{ r: 5, fill: C.rank, stroke: C.surface, strokeWidth: 2 }}
               isAnimationActive={false}
             />
