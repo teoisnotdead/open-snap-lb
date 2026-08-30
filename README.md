@@ -271,20 +271,22 @@ https://<tu-app>/overlay/leaf?rank=211
 En OBS: **+ → Browser**, pegar la URL y poner el tamaño. No hace falta tocar el
 CSS personalizado — la página ya viene con el fondo transparente.
 
-El ancho es fijo en **340 px** y cada fila mide **36**, así que el alto es
-`36 × filas + 1`:
+El ancho es fijo en **340 px** y cada fila mide **36**. Los tamaños de abajo
+llevan 9 px de holgura ya incluidos, porque el alto exacto **no alcanza**:
+comprobado en OBS, con los 181 px que mide la tarjeta de cinco filas la última
+quedaba cortada, y con 190 entra bien.
 
-| `rows` | Tamaño |
-|---|---|
-| 3 | 340 × 109 |
-| **5** (default) | **340 × 181** |
-| 7 | 340 × 253 |
-| 11 | 340 × 397 |
+| `rows` | Poner en OBS | (mide) |
+|---|---|---|
+| 3 | 340 × 118 | 109 |
+| **5** (default) | **340 × 190** | 181 |
+| 7 | 340 × 262 | 253 |
+| 11 | 340 × 406 | 397 |
 
-Conviene poner unos píxeles de más: si el alto queda corto OBS **recorta** la
-última fila, y si sobra el resto queda transparente y no se nota. Estirar el
-ancho del Browser Source no ensancha la tarjeta —los 340 px están en el CSS—
-solo agrega espacio vacío; para agrandarla se escala la capa en el canvas.
+Sobrar no se nota —el resto queda transparente— y faltar se descubre al aire,
+así que la fórmula es `36 × filas + 10`. Estirar el ancho del Browser Source no
+ensancha la tarjeta —los 340 px están en el CSS— solo agrega espacio vacío;
+para agrandarla se escala la capa en el canvas.
 
 ### Cuando no hay overlay que mostrar
 

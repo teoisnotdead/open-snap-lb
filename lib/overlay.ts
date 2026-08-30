@@ -22,9 +22,27 @@ import type { MergedLeaderboardRow } from "./types";
 export const OVERLAY_WIDTH = 340;
 const ROW_HEIGHT = 36;
 
-/** Alto total para N filas. El +1 es el borde inferior de la tarjeta. */
-export function overlayHeight(rows: number): number {
+/**
+ * Alto real de la tarjeta. El +1 es el borde inferior.
+ *
+ * Sirve para verificar contra el CSS, no para dárselo a nadie: ver
+ * `obsHeight`.
+ */
+export function cardHeight(rows: number): number {
   return rows * ROW_HEIGHT + 1;
+}
+
+/**
+ * Lo que conviene poner de alto en OBS: la tarjeta más 9 px de holgura.
+ *
+ * El valor exacto NO alcanza, comprobado en OBS: con 181 —el alto medido para
+ * cinco filas— la última quedaba cortada, y 190 entra bien. No importa de dónde
+ * salen esos píxeles (redondeo de CEF, la fuente cargando distinto): lo que
+ * importa es que sobrar no se nota, porque el resto queda transparente, y
+ * faltar se descubre al aire.
+ */
+export function obsHeight(rows: number): number {
+  return rows * ROW_HEIGHT + 10;
 }
 
 /** Filas del overlay. Cinco entran en cualquier layout de stream sin tapar el juego. */

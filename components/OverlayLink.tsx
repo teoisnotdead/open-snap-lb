@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Dictionary } from "@/lib/i18n";
 import { fill } from "@/lib/i18n";
-import { DEFAULT_ROWS, OVERLAY_WIDTH, overlayHeight } from "@/lib/overlay";
+import { DEFAULT_ROWS, OVERLAY_WIDTH, obsHeight } from "@/lib/overlay";
 
 /**
  * La URL del overlay del jugador, con botón de copiar.
@@ -53,7 +53,7 @@ export function OverlayLink({
         {/* En mono y más claro porque es lo que hay que teclear en OBS, no
             prosa: el resto de la línea se lee una vez y esto se copia. */}
         <span className="num text-ink-2">
-          {OVERLAY_WIDTH} × {overlayHeight(DEFAULT_ROWS)}
+          {OVERLAY_WIDTH} × {obsHeight(DEFAULT_ROWS)}
         </span>
       </p>
       <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-4">{t.overlay.sizeNote}</p>

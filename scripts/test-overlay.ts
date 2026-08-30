@@ -10,7 +10,8 @@
 import {
   windowAround,
   clampRows,
-  overlayHeight,
+  cardHeight,
+  obsHeight,
   OVERLAY_WIDTH,
   DEFAULT_ROWS,
   MIN_ROWS,
@@ -139,10 +140,25 @@ c("un valor válido pasa tal cual", clampRows("7"), 7);
  * CSS, así que nada más los mantiene atados.
  */
 c("ancho de la tarjeta", OVERLAY_WIDTH, 340);
-c("alto con 3 filas", overlayHeight(3), 109);
-c("alto con 5 filas (default)", overlayHeight(DEFAULT_ROWS), 181);
-c("alto con 7 filas", overlayHeight(7), 253);
-c("alto con 11 filas (el máximo)", overlayHeight(MAX_ROWS), 397);
+c("alto real con 3 filas", cardHeight(3), 109);
+c("alto real con 5 filas (default)", cardHeight(DEFAULT_ROWS), 181);
+c("alto real con 7 filas", cardHeight(7), 253);
+c("alto real con 11 filas (el máximo)", cardHeight(MAX_ROWS), 397);
+
+/**
+ * El recomendado lleva holgura, y el 190 no es una preferencia: es lo que se
+ * comprobó en OBS. Con el alto exacto de cinco filas —181— la última quedaba
+ * cortada. Si alguien "corrige" `obsHeight` para que devuelva el valor real,
+ * este test lo frena.
+ */
+c("el recomendado para OBS sobra, no falta", obsHeight(DEFAULT_ROWS) > cardHeight(DEFAULT_ROWS), true);
+c("cinco filas en OBS", obsHeight(DEFAULT_ROWS), 190);
+c("siete filas en OBS", obsHeight(7), 262);
+c(
+  "la holgura existe en todos los tamaños",
+  [MIN_ROWS, 5, 7, MAX_ROWS].every((n) => obsHeight(n) - cardHeight(n) >= 5),
+  true
+);
 
 ok.forEach((t) => console.log("  [ok] " + t));
 bad.forEach((t) => console.log("  [XX] " + t));
