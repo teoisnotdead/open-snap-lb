@@ -286,6 +286,41 @@ export interface BoardBaselineDoc {
   rows: { n: string; s: number }[];
 }
 
+/**
+ * Una foto diaria del ladder, igual de comprimida que `BoardBaselineDoc` pero
+ * SIN TTL: esto sí es archivo.
+ *
+ * Existe para que la gráfica de progreso no sea un privilegio de los
+ * vinculados. `snapshots` solo cubre a quien pidió su ficha, y las baselines
+ * horarias se borran a las 72 h, así que sin esto el 99% del ladder no tiene
+ * historia que mostrar por más que el cron lo esté leyendo cada hora.
+ *
+ * La cuenta es lo que lo hace posible: un doc por jugador por hora para los
+ * 1000 son ~2.2 GB al año, pero UNA foto por día son ~35 KB × 365 = ~13 MB al
+ * año, que en el M0 no se notan. Lo que se paga es resolución —un punto diario
+ * en vez de uno horario— y esa sigue siendo la ventaja concreta de vincular.
+ *
+ * Se captura en la primera corrida de cada día UTC, no en una hora elegida: el
+ * cron ya corre a las 00:07 y agregar una franja preferida solo sumaría una
+ * forma de perder el día si esa corrida falla.
+ */
+export interface BoardDailyDoc {
+  _id?: ObjectId;
+  /** "YYYY-MM-DD" en UTC. Único: es la clave de idempotencia del día. */
+  day: string;
+  /** Momento exacto de la corrida que quedó como foto del día. */
+  timestamp: Date;
+  season: string;
+  /** Jugadores en TODO el ladder, no solo los 1000 de `rows`. */
+  total: number;
+  /**
+   * Mismo formato que `BoardBaselineDoc.rows` y por las mismas razones: `n` es
+   * el nameKey, `s` el score, y el orden ES el rank, así que el puesto sale
+   * del índice del array sin ocupar un campo por fila.
+   */
+  rows: { n: string; s: number }[];
+}
+
 /** Lo que devuelve GET /api/leaderboard: fila viva + merge con `players`. */
 export interface MergedLeaderboardRow extends LeaderboardRow {
   /** `patchedName` si existe, si no `playerName`. */

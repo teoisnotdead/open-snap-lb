@@ -92,6 +92,8 @@ const en = {
     spTitle: "{name}’s Snap Points",
     spSubtitle:
       "One point per detected change. A flat line means they didn't move, not that data is missing.",
+    spSubtitleDaily:
+      "One point per day, from the daily ladder archive. Link this account and we start recording it every hour.",
     rankTitle: "Ladder position",
     rankNote: "Inverted axis: higher is a better rank",
     range7: "7 D",
@@ -170,7 +172,7 @@ const en = {
       "That also means we can say no — to a link we won't publish, or to somebody claiming a name that isn't theirs.",
     afterTitle: "Once approved",
     after1: "Your links appear next to your row in the table.",
-    after2: "We start storing your history for the chart.",
+    after2: "Your chart goes from one point a day to one every hour.",
     after3: "Your row gets the verified tick: here, approving is verifying.",
     topOnly:
       "Only accounts in the top 1 000 of the ladder can be requested, which is the most the official API returns.",
@@ -183,7 +185,7 @@ const en = {
     pendingBody:
       "It's in the queue. We review by hand, so it isn't instant — nothing shows on the table until it's approved.",
     approvedBody:
-      "Approved. Your links show next to your row, and we've started storing your history for the chart.",
+      "Approved. Your links show next to your row, and your chart now records every hour instead of once a day.",
     rejectedBody: "This request wasn't approved.",
     reasonLabel: "REASON",
     sentAt: "Sent",
@@ -224,8 +226,8 @@ const en = {
     s1a: "From the official leaderboard's public endpoint. It returns the top 1 000 of a ladder that currently holds more than 50 000 players, and only three fields per row: rank, name and Snap Points.",
     s1b: "There's no player ID, no region, no cardback, no title, and no alliance. That's why identity here is the name, with everything that implies.",
     s2Title: "We build the history ourselves",
-    s2a: "The official API only serves the current and previous month — you can't ask it for a back catalogue. Every hour we read the ladder and store a measurement for linked players, and that's where the progress chart comes from.",
-    s2b: "We only write when something changed. If a player hasn't moved in three hours, that's three identical measurements that add nothing — the curve draws the same between two known points.",
+    s2a: "The official API only serves the current and previous month — you can't ask it for a back catalogue. So we build it: every hour we read the ladder and store one compressed snapshot of all 1 000 rows, and once a day we keep one for good. That daily archive is why every player on the ladder has a chart, linked or not.",
+    s2b: "Linking adds resolution, not existence: from then on we also store a measurement of that player every hour, and only when something actually changed. If someone hasn't moved in three hours, three identical measurements add nothing — the curve draws the same between two known points.",
     s3Title: "Why Δ 24 h is sometimes blank",
     s3a: "Every hourly run also stores the whole ladder as a single compressed row, so the 24 h change is there for all 1 000 players, linked or not. It stays blank in three cases: we don't have a reading from a day ago yet, the player wasn't in the top 1 000 back then, or their name is repeated and we can't tell which row was which. Not knowing and not moving are different things, so we don't draw them the same.",
     s4Title: "Alliances are self-reported",
@@ -258,7 +260,7 @@ const en = {
       "Our database isn't responding, so the ranking is showing without links, alliances or 24 h changes. The standings themselves are live and correct.",
     notFoundTitle: "We don't have data on that player",
     notFoundBody:
-      "We only store history for accounts that linked themselves. If this is you and you're in the top 1 000, you can link your account.",
+      "This name hasn't shown up in any of our daily ladder snapshots yet — it may have just entered the top 1 000. If it's you, linking your account also starts an hourly record.",
     notFoundCta: "Link your account",
   },
 };
@@ -336,6 +338,8 @@ const es: Dictionary = {
     spTitle: "Snap Points de {name}",
     spSubtitle:
       "Un punto por cada cambio detectado. La línea plana significa que no se movió, no que falten datos.",
+    spSubtitleDaily:
+      "Un punto por día, del archivo diario del ladder. Al vincular esta cuenta empezamos a registrarla cada hora.",
     rankTitle: "Posición en el ladder",
     rankNote: "Eje invertido: más arriba es mejor puesto",
     range7: "7 D",
@@ -414,7 +418,7 @@ const es: Dictionary = {
       "Eso también nos permite decir que no — a un link que no vamos a publicar, o a alguien reclamando un nombre que no es suyo.",
     afterTitle: "Una vez aprobada",
     after1: "Tus links aparecen junto a tu fila en la tabla.",
-    after2: "Empezamos a guardar tu historial para la gráfica.",
+    after2: "Tu gráfica pasa de un punto por día a uno por hora.",
     after3: "Tu fila se lleva el tick de verificado: acá aprobar es verificar.",
     topOnly:
       "Solo se pueden pedir cuentas que estén en el top 1 000 del ladder, que es lo máximo que devuelve la API oficial.",
@@ -427,7 +431,7 @@ const es: Dictionary = {
     pendingBody:
       "Quedó en la cola. Revisamos a mano, así que no es inmediato — nada aparece en la tabla hasta que se apruebe.",
     approvedBody:
-      "Aprobada. Tus links aparecen junto a tu fila, y ya empezamos a guardar tu historial para la gráfica.",
+      "Aprobada. Tus links aparecen junto a tu fila, y tu gráfica pasa a registrarse cada hora en vez de una vez por día.",
     rejectedBody: "Esta petición no fue aprobada.",
     reasonLabel: "MOTIVO",
     sentAt: "Enviada",
@@ -468,8 +472,8 @@ const es: Dictionary = {
     s1a: "Del endpoint público del leaderboard oficial. Devuelve el top 1 000 de un ladder que hoy tiene más de 50 000 jugadores, y solo tres campos por fila: puesto, nombre y Snap Points.",
     s1b: "No hay ID de jugador, ni región, ni cardback, ni título, ni alianza. Por eso la identidad aquí es el nombre, con todo lo que eso implica.",
     s2Title: "El historial lo construimos nosotros",
-    s2a: "La API oficial solo sirve el mes actual y el anterior: no se le puede pedir un histórico. Cada hora leemos el ladder y guardamos una medición de los jugadores vinculados, y de ahí sale la gráfica de progreso.",
-    s2b: "Solo escribimos cuando algo cambió. Si un jugador no se movió en tres horas, eso son tres mediciones idénticas que no aportan nada — la curva se dibuja igual entre dos puntos conocidos.",
+    s2a: "La API oficial solo sirve el mes actual y el anterior: no se le puede pedir un histórico. Así que lo construimos: cada hora leemos el ladder y guardamos una foto comprimida de las 1 000 filas, y una vez por día nos quedamos con una para siempre. Ese archivo diario es lo que hace que cualquier jugador del ladder tenga gráfica, se haya vinculado o no.",
+    s2b: "Vincular suma resolución, no existencia: desde ese momento guardamos además una medición de ese jugador cada hora, y solo cuando algo cambió de verdad. Si alguien no se movió en tres horas, tres mediciones idénticas no aportan nada — la curva se dibuja igual entre dos puntos conocidos.",
     s3Title: "Por qué a veces el Δ 24 h está vacío",
     s3a: "Cada corrida horaria guarda además el ladder entero en una sola fila comprimida, así que el cambio de 24 h está para los 1 000 jugadores, se hayan vinculado o no. Queda vacío en tres casos: todavía no tenemos una lectura de hace un día, el jugador no estaba en el top 1 000 entonces, o su nombre está repetido y no podemos saber cuál fila era cuál. No saber y no haberse movido son cosas distintas, así que no las dibujamos igual.",
     s4Title: "Las alianzas las declara cada jugador",
@@ -502,7 +506,7 @@ const es: Dictionary = {
       "Nuestra base de datos no está respondiendo, así que el ranking se muestra sin links, alianzas ni cambios de 24 h. Las posiciones sí son en vivo y correctas.",
     notFoundTitle: "No tenemos datos de ese jugador",
     notFoundBody:
-      "Solo guardamos historial de las cuentas que se vincularon. Si eres tú y estás en el top 1 000, puedes vincular tu cuenta.",
+      "Este nombre todavía no aparece en ninguna de nuestras fotos diarias del ladder — puede que acabe de entrar al top 1 000. Si eres tú, vincular tu cuenta además arranca el registro por hora.",
     notFoundCta: "Vincula tu cuenta",
   },
 };

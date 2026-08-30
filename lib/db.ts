@@ -6,6 +6,7 @@ import type {
   SubmissionDoc,
   SeasonResultDoc,
   BoardBaselineDoc,
+  BoardDailyDoc,
 } from "./types";
 
 export const COLLECTIONS = {
@@ -14,6 +15,7 @@ export const COLLECTIONS = {
   submissions: "submissions",
   seasonResults: "seasonResults",
   boardBaselines: "boardBaselines",
+  boardDailies: "boardDailies",
 } as const;
 
 export async function playersCollection(): Promise<Collection<PlayerDoc>> {
@@ -39,6 +41,11 @@ export async function submissionsCollection(): Promise<Collection<SubmissionDoc>
 export async function boardBaselinesCollection(): Promise<Collection<BoardBaselineDoc>> {
   const db = await getDb();
   return db.collection<BoardBaselineDoc>(COLLECTIONS.boardBaselines);
+}
+
+export async function boardDailiesCollection(): Promise<Collection<BoardDailyDoc>> {
+  const db = await getDb();
+  return db.collection<BoardDailyDoc>(COLLECTIONS.boardDailies);
 }
 
 /**
@@ -111,6 +118,28 @@ export const BOARD_BASELINE_INDEXES: IndexDescription[] = [
   { key: { syncId: 1 }, name: "uniq_sync", unique: true },
 ];
 
+export const BOARD_DAILY_INDEXES: IndexDescription[] = [
+  /**
+   * Idempotencia del día, y a la vez la razón de que exista el campo `day`.
+   *
+   * El cron corre cada hora: sin este único, la segunda corrida del día
+   * guardaría una segunda foto y en un mes habría 24 puntos por jornada, que
+   * es exactamente el volumen que esta colección existe para no tener.
+   */
+  { key: { day: 1 }, name: "uniq_day", unique: true },
+
+  /**
+   * La serie de un jugador se arma recorriendo los docs en orden de tiempo.
+   * NO hay índice por jugador y no puede haberlo: el nameKey vive dentro de
+   * `rows`, y indexar un array de 1000 entradas por documento costaría más que
+   * la colección entera. El filtrado lo hace la agregación, en el servidor.
+   */
+  { key: { timestamp: 1 }, name: "by_time" },
+
+  // Deliberadamente SIN TTL. Ver `BoardDailyDoc`: esto es el archivo que
+  // `boardBaselines` no es.
+];
+
 export const SEASON_RESULT_INDEXES: IndexDescription[] = [
   /**
    * La tabla de una temporada, y la clave de idempotencia.
@@ -178,10 +207,12 @@ export async function ensureIndexes(): Promise<void> {
   const submissions = await submissionsCollection();
   const seasonResults = await seasonResultsCollection();
   const baselines = await boardBaselinesCollection();
+  const dailies = await boardDailiesCollection();
 
   await players.createIndexes(PLAYER_INDEXES);
   await snapshots.createIndexes(SNAPSHOT_INDEXES);
   await submissions.createIndexes(SUBMISSION_INDEXES);
   await seasonResults.createIndexes(SEASON_RESULT_INDEXES);
   await baselines.createIndexes(BOARD_BASELINE_INDEXES);
+  await dailies.createIndexes(BOARD_DAILY_INDEXES);
 }

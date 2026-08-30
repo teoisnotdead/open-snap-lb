@@ -10,7 +10,8 @@ import {
   UntappedIcon,
   YouTubeIcon,
 } from "@/components/icons";
-import { playersCollection, snapshotsCollection } from "@/lib/db";
+import { playersCollection } from "@/lib/db";
+import { loadHistory, type HistoryRow } from "@/lib/history";
 import { getMergedLeaderboard } from "@/lib/merge";
 import { toNameKey } from "@/lib/names";
 import { formatRank, formatRelative, formatScore } from "@/lib/format";
@@ -18,22 +19,10 @@ import { fill, getDictionary, isLang, type Dictionary, type Lang } from "@/lib/i
 
 export const dynamic = "force-dynamic";
 
-/** Tope de puntos, para que una serie larga no reviente la gráfica. */
-const MAX_POINTS = 2000;
-
 async function findPlayer(nameKey: string) {
   const players = await playersCollection();
   // Sin proyección: acá se excluía el código de verificación, que ya no existe.
   return players.findOne({ nameKey });
-}
-
-async function findHistory(nameKey: string) {
-  const snapshots = await snapshotsCollection();
-  return snapshots
-    .find({ nameKey }, { projection: { _id: 0, timestamp: 1, rank: 1, score: 1, season: 1 } })
-    .sort({ timestamp: 1 })
-    .limit(MAX_POINTS)
-    .toArray();
 }
 
 export default async function PlayerPage({
@@ -53,14 +42,21 @@ export default async function PlayerPage({
   // en vez de tirar la página. Sin base no hay historial ni links, pero el
   // puesto y los SP del jugador son públicos.
   let player: Awaited<ReturnType<typeof findPlayer>> = null;
-  let history: Awaited<ReturnType<typeof findHistory>> = [];
+  let history: HistoryRow[] = [];
 
   try {
     player = await findPlayer(nameKey);
-    history = await findHistory(nameKey);
   } catch (err) {
     console.error("Mongo no respondió en la vista de jugador:", err);
   }
+
+  /**
+   * Va aparte del `findPlayer`: el historial ya no depende de estar vinculado.
+   * La foto diaria del ladder cubre a los 1000, así que cualquier fila de la
+   * tabla llega acá con gráfica — y quien vinculó suma resolución horaria
+   * encima. Ver `lib/history.ts`.
+   */
+  history = await loadHistory(nameKey);
 
   /**
    * La tabla linkea las 1000 filas, pero `players` solo tiene a los vinculados.
@@ -78,6 +74,8 @@ export default async function PlayerPage({
   }
 
   if (!player && history.length === 0 && !live) notFound();
+
+  const hasHourly = history.some((h) => !h.daily);
 
   const points: HistoryPoint[] = history.map((h) => ({
     timestamp: h.timestamp.toISOString(),
@@ -203,15 +201,22 @@ export default async function PlayerPage({
 
         {/*
           La condición mira si HAY datos, no si el jugador está en `players`.
-          Antes miraba solo lo segundo, apoyándose en que sin doc de jugador no
-          podía haber historial — cierto con el flujo viejo, falso ahora: los
-          snapshots sobreviven al documento (una petición rechazada después de
-          aprobada, un borrado a pedido). Con la condición vieja, esas
-          mediciones reales quedaban invisibles y la página decía "no tenemos
-          datos" teniéndolos.
+          Eso empezó cubriendo a los desvinculados cuyos snapshots sobrevivían
+          al documento, y ahora cubre además al ladder entero: con el archivo
+          diario, cualquier fila de la tabla llega con algo que graficar.
+
+          `NotLinked` quedó para el caso que de verdad no tiene nada: un nombre
+          que todavía no apareció en ninguna foto diaria — recién entrado al
+          top 1000, o el primer día de vida de la colección.
         */}
         {player || points.length > 0 ? (
-          <ProgressChart history={points} playerName={displayName} lang={lang} t={t} />
+          <ProgressChart
+            history={points}
+            playerName={displayName}
+            lang={lang}
+            t={t}
+            hasHourly={hasHourly}
+          />
         ) : (
           <NotLinked lang={lang} t={t} />
         )}

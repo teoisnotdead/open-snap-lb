@@ -1,18 +1,22 @@
-import { playersCollection, snapshotsCollection } from "@/lib/db";
+import { playersCollection } from "@/lib/db";
+import { loadHistory } from "@/lib/history";
 import { apiError, json } from "@/lib/api";
 import { toNameKey } from "@/lib/names";
 
 export const dynamic = "force-dynamic";
 
-/** Tope de puntos devueltos, para que una serie larga no reviente la gráfica. */
-const MAX_POINTS = 2000;
-
 /**
  * GET /api/player/[nameKey]?season=YYYY-MM
  *
- * Perfil + histórico de snapshots. Es lo que alimenta la gráfica de recharts
- * de la Fase 3. No estaba en el plan original, pero sin esto la vista de
- * detalle no tiene de dónde leer.
+ * Perfil + histórico. Es lo que alimenta la gráfica de recharts de la Fase 3.
+ * No estaba en el plan original, pero sin esto la vista de detalle no tiene de
+ * dónde leer.
+ *
+ * El historial sale de `loadHistory`, la MISMA fuente que la ficha web: es
+ * diario para cualquier jugador del ladder y horario desde que se vinculó. Que
+ * la API y la página leyeran de distinto lado fue un bug esperando a pasar —
+ * cada punto trae `daily` para que quien consuma esto sepa qué resolución
+ * tiene en la mano.
  */
 export async function GET(
   _req: Request,
@@ -32,12 +36,7 @@ export async function GET(
      */
     const player = await players.findOne({ nameKey });
 
-    const snapshots = await snapshotsCollection();
-    const history = await snapshots
-      .find({ nameKey }, { projection: { _id: 0, nameKey: 0, syncId: 0 } })
-      .sort({ timestamp: 1 })
-      .limit(MAX_POINTS)
-      .toArray();
+    const history = await loadHistory(nameKey);
 
     if (!player && history.length === 0) {
       return apiError("No tenemos datos de ese jugador todavía.", 404);
@@ -67,7 +66,6 @@ export async function GET(
         : null,
       history,
       count: history.length,
-      truncated: history.length === MAX_POINTS,
     });
   } catch (err) {
     console.error("GET /api/player/[nameKey] falló:", err);

@@ -133,11 +133,21 @@ export function ProgressChart({
   playerName,
   lang,
   t,
+  hasHourly,
 }: {
   history: HistoryPoint[];
   playerName: string;
   lang: Lang;
   t: Dictionary;
+  /**
+   * Si la serie incluye mediciones horarias, o es solo el archivo diario.
+   *
+   * Cambia el subtítulo y nada más. Importa porque las dos series se dibujan
+   * igual pero no dicen lo mismo: "un punto por cada cambio detectado" es
+   * verdad con `snapshots` y mentira con la foto diaria, donde entre dos
+   * puntos pudo pasar cualquier cosa.
+   */
+  hasHourly: boolean;
 }) {
   const [range, setRange] = useState<Range>(30);
 
@@ -224,7 +234,9 @@ export function ProgressChart({
             <h2 className="mb-1 text-[15px] font-semibold tracking-[-0.01em]">
               {fill(t.chart.spTitle, { name: playerName })}
             </h2>
-            <p className="text-[12.5px] text-ink-4">{t.chart.spSubtitle}</p>
+            <p className="text-[12.5px] text-ink-4">
+              {hasHourly ? t.chart.spSubtitle : t.chart.spSubtitleDaily}
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 self-start">
             {ranges(t).map((r) => (

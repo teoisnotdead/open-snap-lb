@@ -339,16 +339,70 @@ Ninguna se implementa todavía. Lo que sí ya está: el sync arranca **limitado 
 los jugadores que están en `players`**, no al top 1000 completo, tal como pide
 el plan.
 
-A eso se le suma `boardBaselines`, que sí cubre el top 1000 pero con un costo de
-otra escala:
+A eso se le suman las dos colecciones comprimidas del ladder, que sí cubren el
+top 1000 pero con un costo de otra escala:
 
 | Colección | Docs/año | Tamaño |
 |---|---|---|
 | `snapshots` del top 1000, un doc por jugador y hora | 8.76 M | ~2.2 GB/año ❌ |
 | `boardBaselines`, un doc por hora con TTL de 72 h | 72 vivos | **~2.5 MB constantes** |
+| `boardDailies`, un doc por día sin TTL | 365 | **~13 MB/año** |
 
-Es el mismo dato para la columna Δ 24 h. La diferencia entera está en no guardar
-una serie temporal cuando lo que se necesita es un punto de comparación.
+La diferencia entera está en no guardar una serie temporal por jugador cuando lo
+que se necesita es un punto por fila: uno de hace un día para el Δ 24 h, uno por
+jornada para la gráfica.
+
+---
+
+## `boardDailies`
+
+Una foto del ladder entero **por día**, con el mismo formato comprimido que
+`boardBaselines` pero **sin TTL**: esto sí es archivo.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `day` | string | `"YYYY-MM-DD"` UTC. Único: la idempotencia del día |
+| `timestamp` | Date | Momento de la corrida que quedó como foto |
+| `season` | string | `"YYYY-MM"` |
+| `total` | number | Jugadores en todo el ladder, no solo los 1000 |
+| `rows` | `{n,s}[]` | Igual que en `boardBaselines`. El ORDEN es el rank |
+
+### Por qué existe
+
+Para que **la gráfica de progreso no sea un privilegio de los vinculados**.
+`snapshots` solo cubre a quien pidió su ficha y las baselines se borran a las
+72 h, así que sin esto el 99% del ladder no tenía historia que mostrar por más
+que el cron lo estuviera leyendo cada hora — y la tabla, que linkea las 1000
+filas, prometía un detalle que casi nunca existía.
+
+Lo que se paga es resolución: un punto por día en vez de uno por hora. Esa sigue
+siendo la ventaja concreta de vincular, junto con el tilde de verificado, los
+canales y la alianza.
+
+### Por qué el rank no se guarda
+
+Sale del índice del array: `rows` va en orden de puesto, así que la fila *i* es
+el rank *i+1*. Guardarlo como campo agregaría ~5 KB por documento para repetir
+un dato que la posición ya expresa.
+
+### Cómo se lee
+
+Con una agregación, no en JS. Cada documento son las 1000 filas (~35 KB): traer
+un año entero al proceso para buscar una fila serían ~13 MB por visita a una
+ficha. El `$filter` corre en Mongo y devuelve un puñado de bytes por día.
+
+No hay ni puede haber índice por jugador —el nameKey vive dentro de un array de
+1000 entradas— así que el recorrido es secuencial por `timestamp`. Es el costo
+aceptado a cambio de que la escritura sea un documento por día.
+
+### Índices
+
+| Índice | Clave | Para qué |
+|---|---|---|
+| `uniq_day` | `{day:1}` unique | Idempotencia: solo la primera corrida del día escribe |
+| `by_time` | `{timestamp:1}` | Orden de la serie, sin sort en memoria |
+
+Sin TTL, deliberadamente.
 
 ---
 

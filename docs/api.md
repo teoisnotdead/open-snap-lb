@@ -274,13 +274,31 @@ de dónde leer sin esto.
     "peakRank": 2, "peakScore": 9987, "lastSeenAt": "2026-08-24T03:00:21.279Z"
   },
   "history": [
-    { "playerName": "Sizer", "timestamp": "2026-08-24T03:00:20.669Z",
-      "rank": 2, "score": 9987, "season": "2026-08" }
+    // daily:true  → del archivo diario del ladder. Existe para CUALQUIER
+    //               jugador del top 1000, se haya vinculado o no.
+    { "timestamp": "2026-08-23T00:07:11.402Z",
+      "rank": 3, "score": 9901, "season": "2026-08", "daily": true },
+    // daily:false → medición horaria de `snapshots`. Solo para vinculados,
+    //               y solo desde el momento en que se vincularon.
+    { "timestamp": "2026-08-24T03:00:20.669Z",
+      "rank": 2, "score": 9987, "season": "2026-08", "daily": false }
   ],
-  "count": 1,
-  "truncated": false   // true si se llegó al tope de 2000 puntos
+  "count": 2
 }
 ```
+
+**Sobre `history`:** sale de `lib/history.ts`, la misma fuente que la ficha web.
+Los dos tramos van concatenados en orden de tiempo y no se solapan: el diario
+corta donde arranca el horario, así que quien vincula hoy conserva la historia
+de antes de vincular y desde ahí gana resolución.
+
+Un día en que el jugador no estaba en el top 1000, o en que su nombre aparecía
+repetido en el ladder, **no produce punto**. Es el mismo criterio del `delta24h`:
+preferimos el hueco antes que un número que no sabemos atribuir.
+
+El campo `truncated` ya no existe. Solo tenía sentido cuando el historial era el
+tope de 2000 snapshots; con el tramo diario, la serie está acotada por los días
+que lleva viva la colección.
 
 Sin projection: `players` es la colección pública y no guarda nada privado. Acá
 se excluían `verificationCode` y `verificationExpiresAt`, que dejaron de existir

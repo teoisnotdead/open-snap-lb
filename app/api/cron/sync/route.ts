@@ -1,5 +1,10 @@
 import type { AnyBulkWriteOperation } from "mongodb";
-import { boardBaselinesCollection, playersCollection, snapshotsCollection } from "@/lib/db";
+import {
+  boardBaselinesCollection,
+  boardDailiesCollection,
+  playersCollection,
+  snapshotsCollection,
+} from "@/lib/db";
 import {
   fetchLeaderboard,
   indexByNameKey,
@@ -94,6 +99,41 @@ async function saveBaseline(
 }
 
 /**
+ * Guarda UNA foto del ladder por día, sin TTL: el archivo que hace que la
+ * gráfica exista para los 1000 y no solo para los vinculados.
+ *
+ * Se queda con la PRIMERA corrida de cada día UTC — las otras 23 chocan con el
+ * único de `day` y no escriben. Eso no es un descarte a lamentar: cuál de las
+ * 24 lecturas queda es indistinto para una serie diaria, y la primera es la
+ * única que no depende de que las anteriores hayan funcionado.
+ *
+ * NUNCA tira, por la misma razón que `archivePreviousSeason` y `saveBaseline`:
+ * es un extra sobre el sync, y perder el punto de un día no puede llevarse
+ * puesta la corrida que sostiene el historial de los vinculados.
+ */
+async function saveDaily(
+  board: LeaderboardFetchResult,
+  now: Date
+): Promise<boolean> {
+  try {
+    const col = await boardDailiesCollection();
+    await col.insertOne({
+      day: now.toISOString().slice(0, 10), // "2026-08-30"
+      timestamp: now,
+      season: board.season,
+      total: board.total,
+      rows: board.rows.map((r) => ({ n: r.nameKey, s: r.score })),
+    });
+    return true;
+  } catch (err) {
+    // E11000 es el caso NORMAL: son las otras 23 corridas del día.
+    if ((err as { code?: number }).code === 11000) return false;
+    console.error("No se pudo guardar la foto diaria del ladder:", err);
+    return false;
+  }
+}
+
+/**
  * POST /api/cron/sync — disparador principal, el workflow de GitHub Actions.
  * GET  /api/cron/sync — mismo trabajo, para Vercel Cron.
  *
@@ -150,6 +190,14 @@ async function runSync(req: Request) {
      */
     const baselineSaved = await saveBaseline(board, syncId, now);
 
+    /**
+     * Va acá arriba junto con el baseline, y ANTES del corte por "no hay
+     * trackeados", por el mismo motivo: la foto diaria es del ladder entero.
+     * Con esto abajo, un sitio sin nadie vinculado nunca acumularía el archivo
+     * que justamente existe para los no vinculados.
+     */
+    const dailySaved = await saveDaily(board, now);
+
     if (tracked.length === 0) {
       return json({
         ok: true,
@@ -159,6 +207,7 @@ async function runSync(req: Request) {
         tracked: 0,
         inserted: 0,
         baselineSaved,
+        dailySaved,
         baselineRows: board.rows.length,
         ...(archived ? { archived } : {}),
       });
@@ -257,6 +306,7 @@ async function runSync(req: Request) {
       season: board.season,
       ...(archived ? { archived } : {}),
       baselineSaved,
+      dailySaved,
       baselineRows: board.rows.length,
       tracked: tracked.length,
       inserted,
