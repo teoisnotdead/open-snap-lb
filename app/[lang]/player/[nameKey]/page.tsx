@@ -13,6 +13,7 @@ import {
 import { playersCollection } from "@/lib/db";
 import { loadHistory, type HistoryRow } from "@/lib/history";
 import { getMergedLeaderboard } from "@/lib/merge";
+import type { MergedLeaderboardRow } from "@/lib/types";
 import { toNameKey } from "@/lib/names";
 import { formatRank, formatRelative, formatScore } from "@/lib/format";
 import { fill, getDictionary, isLang, type Dictionary, type Lang } from "@/lib/i18n";
@@ -65,10 +66,22 @@ export default async function PlayerPage({
    * caemos al ladder en vivo (ya cacheado 60 s por la home) para mostrar al
    * menos puesto y SP actuales.
    */
-  let live = null;
+  let live: MergedLeaderboardRow | null = null;
+  /**
+   * Las filas de arriba y abajo en el ladder vivo. Vienen del MISMO fetch que
+   * `live` —ya cacheado 60 s por la home— así que saber cuánto falta para el
+   * puesto siguiente no cuesta ninguna consulta extra.
+   */
+  let above: MergedLeaderboardRow | null = null;
+  let below: MergedLeaderboardRow | null = null;
   try {
     const board = await getMergedLeaderboard(60);
-    live = board.rows.find((r) => r.nameKey === nameKey) ?? null;
+    const i = board.rows.findIndex((r) => r.nameKey === nameKey);
+    if (i >= 0) {
+      live = board.rows[i];
+      above = board.rows[i - 1] ?? null;
+      below = board.rows[i + 1] ?? null;
+    }
   } catch {
     // Si el endpoint oficial está caído seguimos con lo que tengamos guardado.
   }
@@ -96,6 +109,34 @@ export default async function PlayerPage({
   // El ladder en vivo es más fresco que lo denormalizado del último sync.
   const currentScore = live?.score ?? player?.lastScore;
   const currentRank = live?.rank ?? player?.lastRank;
+
+  /**
+   * Cuánto falta para el puesto de arriba, colgado del tile de PUESTO ACTUAL.
+   *
+   * Se calla con los nombres repetidos, igual que el Δ 24 h: con dos filas
+   * homónimas no sabemos cuál es esta persona, así que la distancia al de
+   * arriba sería la de un desconocido presentada como propia. Mismo criterio
+   * que `merge.ts` — antes el hueco que el número inventado.
+   *
+   * El #1 no tiene a nadie arriba y la línea no desaparece: se da vuelta y
+   * muestra su ventaja sobre el #2, que es el dato que le importa a quien va
+   * primero.
+   */
+  const rankNote = (() => {
+    if (!live || live.ambiguous) return undefined;
+
+    const rival = above ?? below;
+    if (!rival) return undefined;
+
+    const gap = Math.abs(rival.score - live.score);
+    const rank = formatRank(rival.rank);
+
+    if (gap === 0) return fill(t.player.gapTied, { rank });
+    return fill(above ? t.player.gapToNext : t.player.gapLead, {
+      n: formatScore(gap),
+      rank,
+    });
+  })();
 
   const daysTracked =
     history.length > 0
@@ -193,7 +234,7 @@ export default async function PlayerPage({
             tablet. */}
         <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
           <Stat label={t.player.snapPoints} value={currentScore} />
-          <Stat label={t.player.currentRank} value={currentRank} isRank />
+          <Stat label={t.player.currentRank} value={currentRank} isRank note={rankNote} />
           <Stat label={t.player.peakSp} value={player?.peakScore} accent />
           <Stat label={t.player.bestRank} value={player?.peakRank} isRank />
           <Stat label={t.player.daysTracked} value={daysTracked || undefined} plain />
@@ -266,12 +307,19 @@ function Stat({
   accent,
   isRank,
   plain,
+  note,
 }: {
   label: string;
   value?: number;
   accent?: boolean;
   isRank?: boolean;
   plain?: boolean;
+  /**
+   * Línea chica bajo el número. Sale de la grilla de 5 columnas a propósito:
+   * un sexto tile la rompería en desktop, y este dato es una precisión sobre
+   * el puesto, no una métrica aparte.
+   */
+  note?: string;
 }) {
   const text =
     value === undefined
@@ -294,6 +342,7 @@ function Stat({
       >
         {text}
       </div>
+      {note && <div className="mt-1 text-[11.5px] text-ink-4">{note}</div>}
     </div>
   );
 }

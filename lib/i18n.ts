@@ -86,6 +86,9 @@ const en = {
     peakSp: "PEAK SP",
     bestRank: "BEST RANK",
     daysTracked: "DAYS OF HISTORY",
+    gapToNext: "{n} SP to #{rank}",
+    gapTied: "tied with #{rank}",
+    gapLead: "{n} SP ahead of #{rank}",
     alliance: "ALLIANCE",
   },
   chart: {
@@ -332,6 +335,9 @@ const es: Dictionary = {
     peakSp: "PICO DE SP",
     bestRank: "MEJOR PUESTO",
     daysTracked: "DÍAS CON HISTORIAL",
+    gapToNext: "a {n} SP del #{rank}",
+    gapTied: "empatado con el #{rank}",
+    gapLead: "{n} SP de ventaja sobre el #{rank}",
     alliance: "ALIANZA",
   },
   chart: {
