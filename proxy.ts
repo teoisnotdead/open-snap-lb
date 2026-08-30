@@ -37,9 +37,14 @@ export const config = {
   /**
    * Todo menos las rutas de API, el panel, los internos de Next y los estáticos.
    *
+   * `overlay` va excluido porque necesita una URL estable: la pega un streamer
+   * en OBS una vez y queda ahí meses, así que un redirect de más es una forma
+   * de que deje de andar el día que cambiemos el idioma por defecto. Tampoco
+   * tiene prosa que traducir — son puestos, nombres y números.
+   *
    * `admin` va excluido porque el panel NO se traduce: vive fuera de `[lang]` y
    * sin esta exclusión `/admin` terminaría redirigido a `/en/admin`, que no
    * existe.
    */
-  matcher: ["/((?!api|admin|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: ["/((?!api|admin|overlay|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

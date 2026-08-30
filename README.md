@@ -228,6 +228,7 @@ anulen; está verificado con GET y POST seguidos.
 | `npm run admin:hash -- "clave"` | Genera `ADMIN_PASSWORD_HASH` y `ADMIN_SESSION_SECRET` |
 | `npm run test:socials` | 18 casos de parseo de handles y normalización |
 | `npm run test:tokens` | 17 casos del token de seguimiento |
+| `npm run test:overlay` | 28 casos de la ventana del overlay: bordes del ladder y homónimos |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run test:self-edit` | 27 casos de la edición con el código, contra la ruta viva (necesita `npm run dev`). Se autolimpia |
 | `npm run db:archive-season -- 2026-07` | Congela una temporada antes de que la API la suelte |
@@ -237,6 +238,51 @@ anulen; está verificado con GET y POST seguidos.
 
 > ⚠️ `db:seed-demo` escribe datos **inventados** en la base a la que apunte
 > `MONGODB_URI`. Nunca contra producción.
+
+---
+
+## Overlay para streams
+
+`/overlay/<nombre>` devuelve las filas del ladder alrededor de un jugador, con
+fondo transparente, para pegar en OBS como **Browser Source**.
+
+No es una Twitch Extension y no lo necesita: no hay cuenta de desarrollador que
+sacar, ni revisión que esperar, y funciona igual en YouTube o Kick porque la
+capa se compone del lado del streamer.
+
+```
+https://<tu-app>/overlay/730
+https://<tu-app>/overlay/730?rows=7
+https://<tu-app>/overlay/leaf?rank=211
+```
+
+| Parámetro | Default | Qué hace |
+|---|---|---|
+| `rows` | 5 | Filas visibles. Se recorta entre 3 y 11 |
+| `rank` | — | Desempata un nombre repetido eligiendo la fila por puesto |
+
+En OBS: **+ → Browser**, pegar la URL, ancho 360 y alto ~40 px por fila. No hace
+falta tocar el CSS personalizado — la página ya viene con el fondo transparente.
+
+### Detalles que importan
+
+**La ventana no cambia de alto.** El #1 no tiene a nadie arriba, así que muestra
+cuatro filas hacia abajo en vez de dos huecos; el #1000 al revés. Una capa que
+cambia de tamaño al subir de puesto correría el resto del layout del stream.
+
+**Los nombres repetidos avisan.** Si hay dos filas con el mismo nombre no
+sabemos cuál es la del streamer, así que el overlay lo dice en pantalla en vez
+de elegir en silencio. Se arregla agregando `&rank=` con el puesto propio — y
+si ese puesto deja de existir, el aviso vuelve.
+
+**Se refresca solo cada 60 s**, que es el cache del ladder: preguntar más
+seguido devuelve lo mismo y gasta invocaciones. Si una consulta falla se queda
+con las últimas filas buenas en vez de vaciarse: nadie está mirando el overlay
+para darse cuenta de que se cayó.
+
+**El primer render es del servidor.** OBS carga la página una vez y la deja
+corriendo meses, así que la capa no puede arrancar vacía esperando al JS —
+justo cuando el streamer la está encuadrando.
 
 ---
 

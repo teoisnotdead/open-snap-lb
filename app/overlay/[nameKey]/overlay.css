@@ -1,0 +1,98 @@
+/*
+ * Estilos del overlay de stream.
+ *
+ * Van en un CSS propio y no en Tailwind porque esto se compone sobre vídeo en
+ * movimiento, y las decisiones que importan acá —opacidad del fondo, sombra
+ * del texto, ancho fijo— son de legibilidad sobre una imagen impredecible, no
+ * del sistema de diseño del sitio.
+ */
+
+.ov-wrap {
+  /* Sin padding: el streamer posiciona la capa en OBS, no nosotros. Cualquier
+     margen nuestro sería un margen que tiene que compensar a mano. */
+  display: inline-block;
+  padding: 0;
+}
+
+.ov-card {
+  width: 340px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+
+  /* Opaco al 78%, no transparente del todo: sobre una partida clara el texto
+     blanco desaparecería, y sobre una oscura un fondo sólido tapa de más. */
+  background: rgba(8, 8, 11, 0.78);
+
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ov-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+  color: #c8c8d4;
+}
+
+.ov-row:last-child {
+  border-bottom: 0;
+}
+
+/* La fila del streamer. Es lo único que la gente busca en un vistazo, así que
+   se marca por partida triple: fondo, barra lateral y color del texto. Una
+   sola señal se pierde sobre un fondo que cambia cada segundo. */
+.ov-self {
+  background: rgba(240, 180, 41, 0.13);
+  box-shadow: inset 3px 0 0 #f0b429;
+  color: #ececf2;
+  font-weight: 600;
+}
+
+.ov-rank,
+.ov-score,
+.ov-delta {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-rank {
+  color: #5e5e6c;
+  font-size: 12.5px;
+}
+
+.ov-self .ov-rank {
+  color: #f0b429;
+}
+
+.ov-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ov-score {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ov-delta {
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+
+.ov-pos { color: #5cd9a6; }
+.ov-neg { color: #ff7b6b; }
+
+.ov-warn {
+  margin: 6px 0 0;
+  max-width: 340px;
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-size: 11px;
+  color: #ff7b6b;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
