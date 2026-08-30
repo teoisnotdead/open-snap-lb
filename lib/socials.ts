@@ -45,7 +45,7 @@ export function parseTwitch(input: string): SocialParseResult {
   if (!TWITCH_HANDLE.test(handle)) {
     return {
       ok: false,
-      error: "Handle de Twitch inválido (4-25 caracteres, letras/números/_)",
+      error: "Usuario de Twitch inválido (4-25 caracteres, letras/números/_)",
     };
   }
 
@@ -74,7 +74,7 @@ export function parseYouTube(input: string): SocialParseResult {
   } else if (/^https?:\/\//i.test(raw) || /youtube\.com/i.test(raw)) {
     return {
       ok: false,
-      error: "Usá el handle moderno de YouTube (youtube.com/@tuhandle)",
+      error: "Usa el formato nuevo de YouTube (youtube.com/@usuario)",
     };
   }
 
@@ -83,7 +83,7 @@ export function parseYouTube(input: string): SocialParseResult {
   if (!YOUTUBE_HANDLE.test(handle)) {
     return {
       ok: false,
-      error: "Handle de YouTube inválido (3-30 caracteres)",
+      error: "Usuario de YouTube inválido (3-30 caracteres)",
     };
   }
 

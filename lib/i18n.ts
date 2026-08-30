@@ -145,7 +145,7 @@ const en = {
     twitch: "TWITCH",
     youtube: "YOUTUBE",
     untapped: "UNTAPPED",
-    handlePlaceholder: "yourhandle",
+    handlePlaceholder: "your username",
     untappedPlaceholder: "Your profile link",
     allianceLabel: "ALLIANCE TAG",
     alliancePlaceholder: "e.g. JOB",
@@ -156,7 +156,7 @@ const en = {
     contactSubtitle:
       "At least one. Private: only the reviewer sees it, and it never appears on the site or in the public API.",
     discordLabel: "DISCORD",
-    discordPlaceholder: "yourhandle",
+    discordPlaceholder: "your Discord username",
     emailLabel: "EMAIL",
     emailPlaceholder: "you@example.com",
     noteLabel: "ANYTHING WE SHOULD KNOW",
@@ -260,7 +260,7 @@ const en = {
     s7b: "with the code you saved.",
     s8Title: "Editing later is automatic",
     s8a: "That by-hand review happens once. After your request is approved, the same tracking code lets you change your channels, your alliance tag and its name from the status page — and the change is published on the spot. No second review, no queue, no waiting. Clearing a field removes it.",
-    s8b: "It works that way because none of those fields can be checked against the official API: a Twitch handle and an alliance name are just as unprovable the day you edit them as the day they were approved, so sending them back to the queue would add a wait without adding certainty — while the outdated data stays on the table. What approval settled was who you are, and changing a link doesn't reopen that.",
+    s8b: "It works that way because none of those fields can be checked against the official API: a Twitch username and an alliance name are just as unprovable the day you edit them as the day they were approved, so sending them back to the queue would add a wait without adding certainty — while the outdated data stays on the table. What approval settled was who you are, and changing a link doesn't reopen that.",
     s8c: "Which is why the code is worth guarding: whoever holds it can change what shows next to your name. Every edit is stamped with a date and counted, and both the status page and the review panel show it. Your contact details and your player name are the exception — those aren't editable with the code, so write to us if either has to change.",
     legal:
       "Unofficial project, not affiliated with Second Dinner or Nuverse. Marvel Snap and its marks belong to their respective owners.",
@@ -405,7 +405,7 @@ const es: Dictionary = {
     twitch: "TWITCH",
     youtube: "YOUTUBE",
     untapped: "UNTAPPED",
-    handlePlaceholder: "tuhandle",
+    handlePlaceholder: "tu usuario",
     untappedPlaceholder: "Link de tu perfil",
     allianceLabel: "TAG DE ALIANZA",
     alliancePlaceholder: "ej. JOB",
@@ -416,7 +416,7 @@ const es: Dictionary = {
     contactSubtitle:
       "Al menos uno. Privado: solo lo ve quien revisa, y nunca aparece en el sitio ni en la API pública.",
     discordLabel: "DISCORD",
-    discordPlaceholder: "tuhandle",
+    discordPlaceholder: "tu usuario de Discord",
     emailLabel: "EMAIL",
     emailPlaceholder: "tu@ejemplo.com",
     noteLabel: "ALGO QUE DEBAMOS SABER",
@@ -520,7 +520,7 @@ const es: Dictionary = {
     s7b: "con el código que guardaste.",
     s8Title: "Editar después es automático",
     s8a: "Esa revisión a mano ocurre una sola vez. Una vez aprobada tu petición, el mismo código de seguimiento te deja cambiar tus canales, el tag de tu alianza y su nombre desde la página de estado — y el cambio se publica en el momento. Sin una segunda revisión, sin cola y sin esperar. Dejar un campo vacío lo quita.",
-    s8b: "Funciona así porque nada de eso se puede comprobar contra la API oficial: un handle de Twitch y un nombre de alianza son tan indemostrables el día que los editas como el día que se aprobaron, así que mandarlos de vuelta a la cola agregaría espera sin agregar certeza — y mientras tanto el dato viejo sigue en la tabla. Lo que la aprobación decidió fue quién eres, y cambiar un link no vuelve a abrir esa pregunta.",
+    s8b: "Funciona así porque nada de eso se puede comprobar contra la API oficial: un usuario de Twitch y un nombre de alianza son tan indemostrables el día que los editas como el día que se aprobaron, así que mandarlos de vuelta a la cola agregaría espera sin agregar certeza — y mientras tanto el dato viejo sigue en la tabla. Lo que la aprobación decidió fue quién eres, y cambiar un link no vuelve a abrir esa pregunta.",
     s8c: "Por eso vale la pena cuidar el código: quien lo tenga puede cambiar lo que se muestra junto a tu nombre. Cada edición queda fechada y contada, y se ve tanto en la página de estado como en el panel de revisión. La excepción es tu contacto y tu nombre de jugador: esos no se editan con el código, así que escríbenos si alguno tiene que cambiar.",
     legal:
       "Proyecto no oficial, sin afiliación con Second Dinner ni Nuverse. Marvel Snap y sus marcas pertenecen a sus respectivos dueños.",
