@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { OverlayBoard } from "@/components/OverlayBoard";
 import { getMergedLeaderboard } from "@/lib/merge";
-import { clampRows, windowAround } from "@/lib/overlay";
+import { clampRows, isLinked, windowAround } from "@/lib/overlay";
 import { toNameKey } from "@/lib/names";
 import "./overlay.css";
 
@@ -36,6 +36,13 @@ export default async function OverlayPage({
   const rows = clampRows(one(sp.rows));
   const rank = Number(one(sp.rank));
   const pinnedRank = Number.isInteger(rank) && rank > 0 ? rank : undefined;
+
+  /**
+   * Solo para vinculados. Ver `isLinked`: el corte es por cuota, no por
+   * secreto, y por eso el 404 llega antes de tocar el ladder — no tiene sentido
+   * pedirle las 1000 filas a la API oficial para después descartarlas.
+   */
+  if (!(await isLinked(nameKey))) notFound();
 
   const board = await getMergedLeaderboard(60);
   const win = windowAround(board.rows, nameKey, rows, pinnedRank);

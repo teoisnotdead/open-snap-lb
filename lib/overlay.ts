@@ -1,5 +1,37 @@
 import type { MergedLeaderboardRow } from "./types";
 
+/**
+ * Si este jugador pidió su ficha y se la dieron.
+ *
+ * El overlay está limitado a los vinculados, y el motivo es de cuota antes que
+ * de producto: cada capa abierta es una consulta por minuto contra las
+ * invocaciones de Vercel, y sin este corte cualquiera puede apuntar un overlay
+ * a cualquier fila del top 1000 y hacer correr esa cuenta. Pedir que la persona
+ * haya pasado por la revisión manual acota quién puede hacerlo a gente que ya
+ * conocemos.
+ *
+ * **Ante un error de base devuelve `true`, no `false`.** Va al revés que el resto
+ * del proyecto —donde sin configuración se cierra— porque acá no se protege
+ * nada secreto: el ladder es público y las filas ya salen de la API oficial, no
+ * de Mongo. Fallar cerrado dejaría la capa de un stream en vivo en negro
+ * durante un hipo de la base, que es mucho peor que servir unas filas públicas
+ * de más.
+ *
+ * El import va adentro para que `windowAround` y `clampRows` se puedan probar
+ * sin arrastrar el driver de Mongo. Mismo recurso que usa `lib/api.ts` con
+ * `admin-auth`.
+ */
+export async function isLinked(nameKey: string): Promise<boolean> {
+  try {
+    const { playersCollection } = await import("./db");
+    const players = await playersCollection();
+    return (await players.countDocuments({ nameKey }, { limit: 1 })) > 0;
+  } catch (err) {
+    console.error("No se pudo verificar si el jugador está vinculado:", err);
+    return true;
+  }
+}
+
 /** Filas del overlay. Cinco entran en cualquier layout de stream sin tapar el juego. */
 export const DEFAULT_ROWS = 5;
 export const MIN_ROWS = 3;

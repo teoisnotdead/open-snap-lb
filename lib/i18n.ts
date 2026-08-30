@@ -91,6 +91,17 @@ const en = {
     gapLead: "{n} SP ahead of #{rank}",
     alliance: "ALLIANCE",
   },
+  overlay: {
+    title: "Stream overlay",
+    body: "Your row and the ones around you, as a transparent layer for OBS. Add it as a Browser Source — it needs nothing from Twitch, and works the same on YouTube or Kick.",
+    how: "OBS → + → Browser, paste the URL, width 360. Add ?rows=7 for more rows.",
+    pinnedWarning:
+      "Your name is repeated in the ladder, so the URL carries your rank (#{rank}) to tell you apart. It stops matching if you change rank — come back and copy it again.",
+    teaserTitle: "Do you stream?",
+    teaserBody:
+      "Linked accounts get an overlay for OBS: your row and the ones around you, live on stream.",
+    teaserCta: "Link your account",
+  },
   chart: {
     spTitle: "{name}’s Snap Points",
     spSubtitle:
@@ -339,6 +350,17 @@ const es: Dictionary = {
     gapTied: "empatado con el #{rank}",
     gapLead: "{n} SP de ventaja sobre el #{rank}",
     alliance: "ALIANZA",
+  },
+  overlay: {
+    title: "Overlay para stream",
+    body: "Tu fila y las de alrededor, como capa transparente para OBS. Se agrega como Browser Source — no necesita nada de Twitch, y sirve igual en YouTube o Kick.",
+    how: "OBS → + → Browser, pegá la URL, ancho 360. Agregá ?rows=7 si querés más filas.",
+    pinnedWarning:
+      "Tu nombre está repetido en el ladder, así que la URL lleva tu puesto (#{rank}) para distinguirte. Deja de coincidir si cambiás de puesto — volvé y copiala de nuevo.",
+    teaserTitle: "¿Streameás?",
+    teaserBody:
+      "Las cuentas vinculadas se llevan un overlay para OBS: tu fila y las de alrededor, en vivo en el stream.",
+    teaserCta: "Vincula tu cuenta",
   },
   chart: {
     spTitle: "Snap Points de {name}",

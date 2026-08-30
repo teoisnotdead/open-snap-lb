@@ -1,5 +1,5 @@
 import { getMergedLeaderboard } from "@/lib/merge";
-import { clampRows, windowAround } from "@/lib/overlay";
+import { clampRows, isLinked, windowAround } from "@/lib/overlay";
 import { toNameKey } from "@/lib/names";
 import { apiError, json } from "@/lib/api";
 
@@ -28,6 +28,11 @@ export async function GET(
   const pinned = Number(params.get("rank"));
 
   try {
+    // Mismo corte que la página, y por el mismo motivo. Ver `isLinked`.
+    if (!(await isLinked(nameKey))) {
+      return apiError("El overlay es para cuentas vinculadas.", 404);
+    }
+
     /**
      * Los mismos 60 s de cache que la home. El overlay pregunta cada minuto,
      * así que en el peor caso muestra datos de dos minutos — y el ladder

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AllianceTag } from "@/components/AllianceTag";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProgressChart, type HistoryPoint } from "@/components/ProgressChart";
+import { OverlayLink } from "@/components/OverlayLink";
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -24,6 +26,23 @@ async function findPlayer(nameKey: string) {
   const players = await playersCollection();
   // Sin proyección: acá se excluía el código de verificación, que ya no existe.
   return players.findOne({ nameKey });
+}
+
+/**
+ * La URL absoluta del overlay, para que el streamer la pegue en OBS.
+ *
+ * El origen sale del header `host` y no de una variable de entorno: el sitio
+ * responde en el dominio de producción, en los preview de Vercel y en
+ * localhost, y una URL fija sería la incorrecta en dos de los tres. `x-
+ * forwarded-proto` lo pone el proxy de Vercel; en local no existe y hay que
+ * caer a http o el link no abre.
+ */
+async function overlayUrl(nameKey: string, pinnedRank?: number): Promise<string> {
+  const h = await headers();
+  const host = h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const path = `/overlay/${encodeURIComponent(nameKey)}` + (pinnedRank ? `?rank=${pinnedRank}` : "");
+  return `${proto}://${host}${path}`;
 }
 
 export default async function PlayerPage({
@@ -261,6 +280,25 @@ export default async function PlayerPage({
         ) : (
           <NotLinked lang={lang} t={t} />
         )}
+
+        {/*
+          El overlay está limitado a los vinculados (ver `lib/overlay.ts`), pero
+          la invitación se le muestra igual a quien no lo está: si solo lo viera
+          quien ya vinculó, nadie descubriría nunca esta razón para hacerlo.
+
+          El corte es `player` y no `player.verified`. Hoy son lo mismo —aprobar
+          es verificar— pero la regla que se le promete a la persona es "pediste
+          tu ficha y te la dimos", y esa es la que tiene que decidir.
+        */}
+        {player ? (
+          <OverlayLink
+            url={await overlayUrl(nameKey, live?.ambiguous ? live.rank : undefined)}
+            pinnedRank={live?.ambiguous ? live.rank : undefined}
+            t={t}
+          />
+        ) : (
+          <OverlayTeaser lang={lang} t={t} />
+        )}
       </div>
     </main>
   );
@@ -283,6 +321,27 @@ function NotLinked({ lang, t }: { lang: Lang; t: Dictionary }) {
         className="inline-block rounded-[7px] bg-accent px-5 py-[11px] text-[13.5px] font-semibold text-bg hover:bg-accent-bright"
       >
         {t.error.notFoundCta}
+      </Link>
+    </section>
+  );
+}
+
+/**
+ * La invitación para quien todavía no vinculó.
+ *
+ * Deliberadamente corta y sin la URL: prometer algo que no funciona todavía
+ * sería peor que no mencionarlo. Dice qué se gana y dónde se pide, nada más.
+ */
+function OverlayTeaser({ lang, t }: { lang: Lang; t: Dictionary }) {
+  return (
+    <section className="rounded-xl border border-line bg-surface px-5 py-4">
+      <h2 className="mb-1 text-[14px] font-semibold">{t.overlay.teaserTitle}</h2>
+      <p className="mb-3 text-[12.5px] leading-relaxed text-ink-3">{t.overlay.teaserBody}</p>
+      <Link
+        href={`/${lang}/link`}
+        className="inline-block rounded-[7px] border border-line-strong px-4 py-2 text-[12.5px] text-ink-2 transition-colors hover:border-line-bright hover:text-ink"
+      >
+        {t.overlay.teaserCta}
       </Link>
     </section>
   );

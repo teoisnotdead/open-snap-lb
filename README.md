@@ -250,6 +250,13 @@ No es una Twitch Extension y no lo necesita: no hay cuenta de desarrollador que
 sacar, ni revisión que esperar, y funciona igual en YouTube o Kick porque la
 capa se compone del lado del streamer.
 
+**Solo para cuentas vinculadas.** Un nombre que no está en `players` devuelve
+404, en la página y en la API. El motivo es de cuota antes que de producto:
+cada capa abierta es una consulta por minuto contra las invocaciones de Vercel,
+y sin el corte cualquiera puede apuntar un overlay a cualquier fila del top
+1000. La URL se la damos hecha al jugador en su ficha, con botón de copiar;
+a quien no vinculó se le muestra ahí mismo qué se está perdiendo.
+
 ```
 https://<tu-app>/overlay/730
 https://<tu-app>/overlay/730?rows=7
