@@ -268,8 +268,37 @@ https://<tu-app>/overlay/leaf?rank=211
 | `rows` | 5 | Filas visibles. Se recorta entre 3 y 11 |
 | `rank` | — | Desempata un nombre repetido eligiendo la fila por puesto |
 
-En OBS: **+ → Browser**, pegar la URL, ancho 360 y alto ~40 px por fila. No hace
-falta tocar el CSS personalizado — la página ya viene con el fondo transparente.
+En OBS: **+ → Browser**, pegar la URL y poner el tamaño. No hace falta tocar el
+CSS personalizado — la página ya viene con el fondo transparente.
+
+El ancho es fijo en **340 px** y cada fila mide **36**, así que el alto es
+`36 × filas + 1`:
+
+| `rows` | Tamaño |
+|---|---|
+| 3 | 340 × 109 |
+| **5** (default) | **340 × 181** |
+| 7 | 340 × 253 |
+| 11 | 340 × 397 |
+
+Conviene poner unos píxeles de más: si el alto queda corto OBS **recorta** la
+última fila, y si sobra el resto queda transparente y no se nota. Estirar el
+ancho del Browser Source no ensancha la tarjeta —los 340 px están en el CSS—
+solo agrega espacio vacío; para agrandarla se escala la capa en el canvas.
+
+### Cuando no hay overlay que mostrar
+
+En vez del 404 de Next —fondo blanco opaco y ningún dato útil— la página
+distingue las dos fallas y las dice:
+
+| Qué pasó | Qué se ve |
+|---|---|
+| El nombre no está en el top 1000 | "Revisa que esté escrito igual que en el ladder" |
+| Está en el ladder pero no vinculado | "Los overlays son para cuentas vinculadas" |
+
+Las dos comparten el diseño de la capa pero con borde rojizo, para que se lean
+como un error y no como parte del overlay: esto se compone sobre el stream, así
+que si alguien lo deja puesto queda al aire.
 
 ### Detalles que importan
 

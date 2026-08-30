@@ -96,3 +96,36 @@
   color: #ff7b6b;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
+
+/*
+ * El aviso de "acá no hay overlay". Comparte `.ov-card` para heredar el ancho,
+ * el fondo y el borde: si se viera distinto de la capa real, alguien podría
+ * pensar que es parte del diseño en vez de un error.
+ */
+.ov-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 13px 14px;
+
+  /* Borde rojizo, que es lo único que lo separa a simple vista de un overlay
+     que funciona. Sin esto se lee como una fila más. */
+  border-color: rgba(255, 123, 107, 0.4);
+}
+
+.ov-notice strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff7b6b;
+}
+
+.ov-notice span {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #9797a6;
+}
+
+.ov-notice em {
+  font-style: normal;
+  color: #c8c8d4;
+}

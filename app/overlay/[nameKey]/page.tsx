@@ -38,21 +38,20 @@ export default async function OverlayPage({
   const pinnedRank = Number.isInteger(rank) && rank > 0 ? rank : undefined;
 
   /**
-   * Solo para vinculados. Ver `isLinked`: el corte es por cuota, no por
-   * secreto, y por eso el 404 llega antes de tocar el ladder — no tiene sentido
-   * pedirle las 1000 filas a la API oficial para después descartarlas.
+   * El ladder va primero aunque el corte sea por estar vinculado, para poder
+   * separar dos fallas que dan la misma pantalla en blanco: un nombre que no
+   * existe en el top 1000 y uno que existe pero no pidió su ficha. Se arreglan
+   * distinto, así que decirlas distinto es la mitad del trabajo.
+   *
+   * Cuesta poco: `getMergedLeaderboard` está cacheado 60 s y lo comparte con la
+   * home, así que mil visitas en un minuto son una sola consulta a la API
+   * oficial.
    */
-  if (!(await isLinked(nameKey))) notFound();
-
   const board = await getMergedLeaderboard(60);
   const win = windowAround(board.rows, nameKey, rows, pinnedRank);
 
-  /**
-   * Un 404 y no una capa vacía: en OBS, "no se ve nada" puede ser el nombre
-   * mal escrito, el jugador fuera del top 1000 o la URL equivocada, y las tres
-   * se diagnostican distinto. La página de error al menos se ve.
-   */
-  if (!win) notFound();
+  if (!win) return <OverlayNotice motivo="ausente" />;
+  if (!(await isLinked(nameKey))) return <OverlayNotice motivo="sinVincular" />;
 
   return (
     <main className="ov-wrap">
@@ -72,5 +71,41 @@ export default async function OverlayPage({
         <p className="ov-warn">nombre repetido en el ladder — agrega &rank= a la URL</p>
       )}
     </main>
+  );
+}
+
+/**
+ * Lo que se ve cuando no hay overlay que mostrar.
+ *
+ * Reemplaza al 404, que en OBS es la peor pantalla posible: un error genérico
+ * de Next, con fondo blanco opaco, que no dice cuál de las tres cosas salió
+ * mal ni cómo arreglarla.
+ *
+ * Corto y con pinta de error a propósito. Esto se compone sobre el stream, así
+ * que si alguien lo deja puesto queda al aire: tiene que leerse como "acá falta
+ * configurar algo" en un vistazo, no como una pieza del overlay ni como
+ * publicidad.
+ */
+function OverlayNotice({ motivo }: { motivo: "ausente" | "sinVincular" }) {
+  return (
+    <div className="ov-card ov-notice">
+      {motivo === "ausente" ? (
+        <>
+          <strong>Ese nombre no está en el top 1000</strong>
+          <span>
+            Revisa que esté escrito igual que en el ladder. Solo entran los
+            1000 que devuelve la API oficial.
+          </span>
+        </>
+      ) : (
+        <>
+          <strong>Esta cuenta no tiene overlay todavía</strong>
+          <span>
+            Los overlays son para cuentas vinculadas. Se pide en el sitio,
+            en <em>Vincular cuenta</em>, y lo revisa una persona.
+          </span>
+        </>
+      )}
+    </div>
   );
 }
