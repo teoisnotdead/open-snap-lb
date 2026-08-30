@@ -45,7 +45,7 @@ export function AllianceTag({
 
   return (
     <span className="group relative inline-flex">
-      <span className={`${pill} cursor-help`}>{tag}</span>
+      <span className={pill}>{tag}</span>
 
       {/**
        * Se oculta con opacidad y no con `hidden`: así el nombre sigue en el

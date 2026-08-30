@@ -153,7 +153,7 @@ export function LeaderboardTable({
               {/* El span envuelve solo el texto: si el title fuera del div, el
                   tooltip saltaría también en el espacio vacío a la izquierda,
                   que en esta columna alineada a la derecha es casi toda ella. */}
-              <span className="cursor-help" title={t.table.deltaTooltip}>
+              <span title={t.table.deltaTooltip}>
                 {t.table.delta}
               </span>
             </div>
