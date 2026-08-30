@@ -94,7 +94,8 @@ const en = {
   overlay: {
     title: "Stream overlay",
     body: "Your row and the ones around you, as a transparent layer for OBS. Add it as a Browser Source — it needs nothing from Twitch, and works the same on YouTube or Kick.",
-    how: "OBS → + → Browser, paste the URL, width 360. Add ?rows=7 for more rows.",
+    how: "In OBS: + → Browser, paste the URL, and set the size to",
+    sizeNote: "Each row adds 36 px, so ?rows=7 means 340 × 253. Leave a few px spare — if it's short, OBS crops the last row.",
     pinnedWarning:
       "Your name is repeated in the ladder, so the URL carries your rank (#{rank}) to tell you apart. It stops matching if you change rank — come back and copy it again.",
     teaserTitle: "Do you stream?",
@@ -354,7 +355,8 @@ const es: Dictionary = {
   overlay: {
     title: "Overlay para stream",
     body: "Tu fila y las de alrededor, como capa transparente para OBS. Se agrega como Browser Source — no necesita nada de Twitch, y sirve igual en YouTube o Kick.",
-    how: "OBS → + → Browser, pega la URL, ancho 360. Agrega ?rows=7 si quieres más filas.",
+    how: "En OBS: + → Browser, pega la URL y pon el tamaño",
+    sizeNote: "Cada fila suma 36 px, así que con ?rows=7 son 340 × 253. Deja unos píxeles de más — si queda corto, OBS recorta la última fila.",
     pinnedWarning:
       "Tu nombre está repetido en el ladder, así que la URL lleva tu puesto (#{rank}) para distinguirte. Deja de coincidir si cambias de puesto — vuelve y cópiala de nuevo.",
     teaserTitle: "¿Haces streams?",

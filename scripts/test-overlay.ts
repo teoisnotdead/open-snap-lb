@@ -7,7 +7,15 @@
  * ve en desarrollo —el jugador de prueba está siempre en el medio del ladder—
  * así que va cubierto acá.
  */
-import { windowAround, clampRows, DEFAULT_ROWS, MIN_ROWS, MAX_ROWS } from "../lib/overlay";
+import {
+  windowAround,
+  clampRows,
+  overlayHeight,
+  OVERLAY_WIDTH,
+  DEFAULT_ROWS,
+  MIN_ROWS,
+  MAX_ROWS,
+} from "../lib/overlay";
 import type { MergedLeaderboardRow } from "../lib/types";
 
 const ok: string[] = [];
@@ -118,6 +126,23 @@ c("un decimal usa el default", clampRows("5.5"), DEFAULT_ROWS);
 c("recorta por abajo", clampRows("1"), MIN_ROWS);
 c("recorta por arriba", clampRows("99"), MAX_ROWS);
 c("un valor válido pasa tal cual", clampRows("7"), 7);
+
+// --- medidas para OBS ---
+/**
+ * Los valores de la derecha están MEDIDOS en el navegador, no calculados: se
+ * leyó `.ov-card` con distintas cantidades de filas. Están acá porque la ficha
+ * le dice el tamaño al streamer y OBS no perdona — si el alto queda corto,
+ * recorta la última fila y nadie se entera hasta que alguien lo ve al aire.
+ *
+ * Si alguien toca el padding de `.ov-row` en overlay.css, este test cae. Esa
+ * es exactamente su razón de existir: la constante vive en TS y el estilo en
+ * CSS, así que nada más los mantiene atados.
+ */
+c("ancho de la tarjeta", OVERLAY_WIDTH, 340);
+c("alto con 3 filas", overlayHeight(3), 109);
+c("alto con 5 filas (default)", overlayHeight(DEFAULT_ROWS), 181);
+c("alto con 7 filas", overlayHeight(7), 253);
+c("alto con 11 filas (el máximo)", overlayHeight(MAX_ROWS), 397);
 
 ok.forEach((t) => console.log("  [ok] " + t));
 bad.forEach((t) => console.log("  [XX] " + t));

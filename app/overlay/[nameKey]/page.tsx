@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { OverlayBoard } from "@/components/OverlayBoard";
 import { getMergedLeaderboard } from "@/lib/merge";
-import { clampRows, isLinked, windowAround } from "@/lib/overlay";
+import { clampRows, windowAround } from "@/lib/overlay";
+import { isLinked } from "@/lib/players";
 import { toNameKey } from "@/lib/names";
 import "./overlay.css";
 

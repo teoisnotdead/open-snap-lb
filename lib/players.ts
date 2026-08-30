@@ -27,3 +27,33 @@ export async function findSocialConflict(
   const players = await playersCollection();
   return players.findOne({ nameKey: { $ne: self }, $or: claimed });
 }
+
+/**
+ * Si este jugador pidió su ficha y se la dieron.
+ *
+ * Vive acá y no en `lib/overlay.ts` porque ese módulo lo importa un componente
+ * cliente: cualquier camino hacia el driver de Mongo, aunque sea un
+ * `await import()`, termina con el bundler pidiendo `child_process` en el
+ * navegador.
+ *
+ * El overlay está limitado a los vinculados, y el motivo es de cuota antes que
+ * de producto: cada capa abierta es una consulta por minuto contra las
+ * invocaciones de Vercel, y sin este corte cualquiera puede apuntar un overlay
+ * a cualquier fila del top 1000 y hacer correr esa cuenta.
+ *
+ * **Ante un error de base devuelve `true`, no `false`.** Va al revés que el
+ * resto del proyecto —donde sin configuración se cierra— porque acá no se
+ * protege nada secreto: el ladder es público y las filas ya salen del
+ * leaderboard oficial, no de Mongo. Fallar cerrado dejaría la capa de un stream
+ * en vivo en negro durante un hipo de la base, que es mucho peor que servir
+ * unas filas públicas de más.
+ */
+export async function isLinked(nameKey: string): Promise<boolean> {
+  try {
+    const players = await playersCollection();
+    return (await players.countDocuments({ nameKey }, { limit: 1 })) > 0;
+  } catch (err) {
+    console.error("No se pudo verificar si el jugador está vinculado:", err);
+    return true;
+  }
+}

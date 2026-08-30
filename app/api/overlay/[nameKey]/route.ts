@@ -1,5 +1,6 @@
 import { getMergedLeaderboard } from "@/lib/merge";
-import { clampRows, isLinked, windowAround } from "@/lib/overlay";
+import { clampRows, windowAround } from "@/lib/overlay";
+import { isLinked } from "@/lib/players";
 import { toNameKey } from "@/lib/names";
 import { apiError, json } from "@/lib/api";
 

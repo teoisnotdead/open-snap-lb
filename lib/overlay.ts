@@ -1,35 +1,30 @@
 import type { MergedLeaderboardRow } from "./types";
 
 /**
- * Si este jugador pidió su ficha y se la dieron.
+ * Este módulo tiene que quedarse PURO: nada de Mongo, nada de `next/*`.
  *
- * El overlay está limitado a los vinculados, y el motivo es de cuota antes que
- * de producto: cada capa abierta es una consulta por minuto contra las
- * invocaciones de Vercel, y sin este corte cualquiera puede apuntar un overlay
- * a cualquier fila del top 1000 y hacer correr esa cuenta. Pedir que la persona
- * haya pasado por la revisión manual acota quién puede hacerlo a gente que ya
- * conocemos.
- *
- * **Ante un error de base devuelve `true`, no `false`.** Va al revés que el resto
- * del proyecto —donde sin configuración se cierra— porque acá no se protege
- * nada secreto: el ladder es público y las filas ya salen de la API oficial, no
- * de Mongo. Fallar cerrado dejaría la capa de un stream en vivo en negro
- * durante un hipo de la base, que es mucho peor que servir unas filas públicas
- * de más.
- *
- * El import va adentro para que `windowAround` y `clampRows` se puedan probar
- * sin arrastrar el driver de Mongo. Mismo recurso que usa `lib/api.ts` con
- * `admin-auth`.
+ * Lo importan tres cosas con requisitos incompatibles — el componente cliente
+ * que muestra las medidas, las rutas del servidor, y `scripts/test-overlay.ts`.
+ * El gate por vinculación vivió acá un rato y rompió el build del cliente:
+ * aunque el `import("./db")` era perezoso, el bundler igual resolvía mongodb y
+ * terminaba pidiendo `child_process` en el navegador. Vive en `lib/players.ts`.
  */
-export async function isLinked(nameKey: string): Promise<boolean> {
-  try {
-    const { playersCollection } = await import("./db");
-    const players = await playersCollection();
-    return (await players.countDocuments({ nameKey }, { limit: 1 })) > 0;
-  } catch (err) {
-    console.error("No se pudo verificar si el jugador está vinculado:", err);
-    return true;
-  }
+
+/**
+ * Las medidas de la capa, en píxeles.
+ *
+ * Son un ESPEJO de `overlay.css` —`.ov-card { width }` y el alto de `.ov-row`—
+ * y están acá porque OBS pide el tamaño a mano: hay que poder decírselo al
+ * streamer en la ficha sin que el número se desfase del CSS la próxima vez que
+ * alguien toque un padding. `scripts/test-overlay.ts` fija la fórmula contra
+ * los valores medidos en el navegador.
+ */
+export const OVERLAY_WIDTH = 340;
+const ROW_HEIGHT = 36;
+
+/** Alto total para N filas. El +1 es el borde inferior de la tarjeta. */
+export function overlayHeight(rows: number): number {
+  return rows * ROW_HEIGHT + 1;
 }
 
 /** Filas del overlay. Cinco entran en cualquier layout de stream sin tapar el juego. */
