@@ -69,7 +69,7 @@ export default async function OverlayPage({
         tiene que agregar `&rank=` a la URL.
       */}
       {win.ambiguous && (
-        <p className="ov-warn">nombre repetido en el ladder — agregá &rank= a la URL</p>
+        <p className="ov-warn">nombre repetido en el ladder — agrega &rank= a la URL</p>
       )}
     </main>
   );

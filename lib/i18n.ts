@@ -354,10 +354,10 @@ const es: Dictionary = {
   overlay: {
     title: "Overlay para stream",
     body: "Tu fila y las de alrededor, como capa transparente para OBS. Se agrega como Browser Source — no necesita nada de Twitch, y sirve igual en YouTube o Kick.",
-    how: "OBS → + → Browser, pegá la URL, ancho 360. Agregá ?rows=7 si querés más filas.",
+    how: "OBS → + → Browser, pega la URL, ancho 360. Agrega ?rows=7 si quieres más filas.",
     pinnedWarning:
-      "Tu nombre está repetido en el ladder, así que la URL lleva tu puesto (#{rank}) para distinguirte. Deja de coincidir si cambiás de puesto — volvé y copiala de nuevo.",
-    teaserTitle: "¿Streameás?",
+      "Tu nombre está repetido en el ladder, así que la URL lleva tu puesto (#{rank}) para distinguirte. Deja de coincidir si cambias de puesto — vuelve y cópiala de nuevo.",
+    teaserTitle: "¿Haces streams?",
     teaserBody:
       "Las cuentas vinculadas se llevan un overlay para OBS: tu fila y las de alrededor, en vivo en el stream.",
     teaserCta: "Vincula tu cuenta",
@@ -447,7 +447,7 @@ const es: Dictionary = {
     afterTitle: "Una vez aprobada",
     after1: "Tus links aparecen junto a tu fila en la tabla.",
     after2: "Tu gráfica pasa de un punto por día a uno por hora.",
-    after3: "Tu fila se lleva el tick de verificado: acá aprobar es verificar.",
+    after3: "Tu fila se lleva el tick de verificado: aquí aprobar es verificar.",
     topOnly:
       "Solo se pueden pedir cuentas que estén en el top 1 000 del ladder, que es lo máximo que devuelve la API oficial.",
   },
@@ -469,7 +469,7 @@ const es: Dictionary = {
     contactHidden:
       "El contacto que nos dejaste no se muestra acá. Solo lo ve quien revisa, y nunca aparece en el sitio ni en la API pública.",
     notFound:
-      "No encontramos ninguna petición con ese código. Revisalo e intentá de nuevo — son 12 caracteres, y los guiones son opcionales.",
+      "No encontramos ninguna petición con ese código. Revísalo e intenta de nuevo — son 12 caracteres, y los guiones son opcionales.",
     lookupTitle: "Consulta tu petición",
     lookupSubtitle:
       "Pega el código de seguimiento que te dimos cuando enviaste la petición.",
