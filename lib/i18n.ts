@@ -68,6 +68,8 @@ const en = {
     ambiguousTooltip:
       "More than one player shares this name in the ladder. Without history we can't tell them apart, so we don't show links.",
     unknownDelta: "We don't know what this player had 24 h ago",
+    deltaTooltip:
+      "Snap Points gained or lost in the last 24 h. Δ is “delta”, the sign for a difference.",
   },
   footer: {
     ambiguity:
@@ -310,6 +312,8 @@ const es: Dictionary = {
     ambiguousTooltip:
       "Hay más de un jugador con este nombre en el ladder. Sin historial no podemos distinguirlos, así que no mostramos links.",
     unknownDelta: "No sabemos cuántos SP tenía este jugador hace 24 h",
+    deltaTooltip:
+      "Snap Points ganados o perdidos en las últimas 24 h. Δ es “delta”, el signo de una diferencia.",
   },
   footer: {
     ambiguity:

@@ -149,7 +149,14 @@ export function LeaderboardTable({
             <div>{t.table.player}</div>
             <div className="hidden sm:block">{t.table.alliance}</div>
             <div className="text-right">{t.table.snapPoints}</div>
-            <div className="hidden text-right sm:block">{t.table.delta}</div>
+            <div className="hidden text-right sm:block">
+              {/* El span envuelve solo el texto: si el title fuera del div, el
+                  tooltip saltaría también en el espacio vacío a la izquierda,
+                  que en esta columna alineada a la derecha es casi toda ella. */}
+              <span className="cursor-help" title={t.table.deltaTooltip}>
+                {t.table.delta}
+              </span>
+            </div>
             <div className="hidden text-right sm:block">{t.table.channels}</div>
           </div>
 
