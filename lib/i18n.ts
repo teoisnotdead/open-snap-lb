@@ -46,7 +46,7 @@ const en = {
   stats: {
     playersInLadder: "PLAYERS IN LADDER",
     visibleInTable: "SHOWN IN TABLE",
-    apiCap: "API cap",
+    apiCap: "official cap",
     maxSp: "TOP SNAP POINTS",
     verifiedAccounts: "VERIFIED ACCOUNTS",
   },
@@ -126,7 +126,7 @@ const en = {
   link: {
     title: "Request your listing",
     intro:
-      "Tell us what to show next to your name and we'll review it by hand. Nothing here can be read from the official API, so a person checks every request. We never ask for a password or access to anything.",
+      "Tell us what to show next to your name and we'll review it by hand. None of it is published in the official leaderboard, so a person checks every request. We never ask for a password or access to anything.",
     step1: "Your account",
     step2: "What we show",
     step3: "How we reach you",
@@ -151,10 +151,10 @@ const en = {
     alliancePlaceholder: "e.g. JOB",
     allianceNameLabel: "ALLIANCE NAME",
     allianceNamePlaceholder: "e.g. Job Enjoyers",
-    allianceHelp: "We can't read alliances from the official API, so this is up to you.",
+    allianceHelp: "Alliances aren't published in the official leaderboard, so this one is up to you.",
     contactTitle: "How we reach you",
     contactSubtitle:
-      "At least one. Private: only the reviewer sees it, and it never appears on the site or in the public API.",
+      "At least one. Private: only the reviewer sees it, and it never appears anywhere public.",
     discordLabel: "DISCORD",
     discordPlaceholder: "your Discord username",
     emailLabel: "EMAIL",
@@ -181,7 +181,7 @@ const en = {
     copied: "Copied",
     whyTitle: "Why it's reviewed by hand",
     why1:
-      "Channels, alliances and contact details don't exist in the official API, so there's nothing to check them against. A person reads every request.",
+      "Channels, alliances and contact details aren't published anywhere official, so there's nothing to check them against. A person reads every request.",
     why2:
       "That also means we can say no — to a link we won't publish, or to somebody claiming a name that isn't theirs.",
     afterTitle: "Once approved",
@@ -189,7 +189,7 @@ const en = {
     after2: "Your chart goes from one point a day to one every hour.",
     after3: "Your row gets the verified tick: here, approving is verifying.",
     topOnly:
-      "Only accounts in the top 1 000 of the ladder can be requested, which is the most the official API returns.",
+      "Only accounts in the top 1 000 of the ladder can be requested, which is as far as the official leaderboard goes.",
   },
   request: {
     title: "Your request",
@@ -207,7 +207,7 @@ const en = {
     tokenLabel: "Tracking code",
     whatYouAsked: "What you asked for",
     contactHidden:
-      "The contact you gave us isn't shown here. Only the reviewer sees it, and it never appears on the site or in the public API.",
+      "The contact you gave us isn't shown here. Only the reviewer sees it, and it never appears anywhere public.",
     notFound:
       "We couldn't find a request with that code. Check it and try again — the code is 12 characters, and the dashes are optional.",
     lookupTitle: "Check your request",
@@ -268,7 +268,7 @@ const en = {
   error: {
     boardTitle: "The official leaderboard isn't responding",
     boardBody:
-      "We read the live ranking from the official Marvel Snap site, so when that endpoint goes down we have nowhere to get it. It usually comes back on its own within a few minutes.",
+      "We read the live ranking from the official Marvel Snap site, so when that site is down we have nowhere to get it. It usually comes back on its own within a few minutes.",
     boardFallback: "We couldn't reach the official leaderboard.",
     degraded:
       "Our database isn't responding, so the ranking is showing without links, alliances or 24 h changes. The standings themselves are live and correct.",
@@ -306,7 +306,7 @@ const es: Dictionary = {
   stats: {
     playersInLadder: "JUGADORES EN EL LADDER",
     visibleInTable: "VISIBLES EN TABLA",
-    apiCap: "tope de la API",
+    apiCap: "tope oficial",
     maxSp: "SP MÁXIMO",
     verifiedAccounts: "CUENTAS VERIFICADAS",
   },
@@ -386,7 +386,7 @@ const es: Dictionary = {
   link: {
     title: "Pide tu ficha",
     intro:
-      "Cuéntanos qué mostrar junto a tu nombre y lo revisamos a mano. Nada de esto se puede leer de la API oficial, así que una persona revisa cada petición. Nunca pedimos contraseña ni acceso a nada.",
+      "Cuéntanos qué mostrar junto a tu nombre y lo revisamos a mano. Nada de esto se publica en el leaderboard oficial, así que una persona revisa cada petición. Nunca pedimos contraseña ni acceso a nada.",
     step1: "Tu cuenta",
     step2: "Qué mostramos",
     step3: "Cómo te contactamos",
@@ -411,10 +411,10 @@ const es: Dictionary = {
     alliancePlaceholder: "ej. JOB",
     allianceNameLabel: "NOMBRE DE LA ALIANZA",
     allianceNamePlaceholder: "ej. Job Enjoyers",
-    allianceHelp: "No podemos leer las alianzas de la API oficial, así que depende de ti.",
+    allianceHelp: "Las alianzas no se publican en el leaderboard oficial, así que esta la escribes tú.",
     contactTitle: "Cómo te contactamos",
     contactSubtitle:
-      "Al menos uno. Privado: solo lo ve quien revisa, y nunca aparece en el sitio ni en la API pública.",
+      "Al menos uno. Privado: solo lo ve quien revisa, y nunca aparece en ningún lado público.",
     discordLabel: "DISCORD",
     discordPlaceholder: "tu usuario de Discord",
     emailLabel: "EMAIL",
@@ -441,7 +441,7 @@ const es: Dictionary = {
     copied: "Copiado",
     whyTitle: "Por qué se revisa a mano",
     why1:
-      "Los canales, las alianzas y los datos de contacto no existen en la API oficial, así que no hay contra qué contrastarlos. Una persona lee cada petición.",
+      "Los canales, las alianzas y los datos de contacto no se publican en ningún lado oficial, así que no hay contra qué contrastarlos. Una persona lee cada petición.",
     why2:
       "Eso también nos permite decir que no — a un link que no vamos a publicar, o a alguien reclamando un nombre que no es suyo.",
     afterTitle: "Una vez aprobada",
@@ -449,7 +449,7 @@ const es: Dictionary = {
     after2: "Tu gráfica pasa de un punto por día a uno por hora.",
     after3: "Tu fila se lleva el tick de verificado: aquí aprobar es verificar.",
     topOnly:
-      "Solo se pueden pedir cuentas que estén en el top 1 000 del ladder, que es lo máximo que devuelve la API oficial.",
+      "Solo se pueden pedir cuentas que estén en el top 1 000 del ladder, que es hasta donde llega el leaderboard oficial.",
   },
   request: {
     title: "Tu petición",
@@ -467,7 +467,7 @@ const es: Dictionary = {
     tokenLabel: "Código de seguimiento",
     whatYouAsked: "Lo que pediste",
     contactHidden:
-      "El contacto que nos dejaste no se muestra acá. Solo lo ve quien revisa, y nunca aparece en el sitio ni en la API pública.",
+      "El contacto que nos dejaste no se muestra aquí. Solo lo ve quien revisa, y nunca aparece en ningún lado público.",
     notFound:
       "No encontramos ninguna petición con ese código. Revísalo e intenta de nuevo — son 12 caracteres, y los guiones son opcionales.",
     lookupTitle: "Consulta tu petición",
@@ -528,7 +528,7 @@ const es: Dictionary = {
   error: {
     boardTitle: "El leaderboard oficial no está respondiendo",
     boardBody:
-      "Leemos el ranking en vivo del sitio oficial de Marvel Snap, así que cuando ese endpoint se cae no tenemos de dónde sacarlo. Suele volver solo en unos minutos.",
+      "Leemos el ranking en vivo del sitio oficial de Marvel Snap, así que cuando ese sitio no responde no tenemos de dónde sacarlo. Suele volver solo en unos minutos.",
     boardFallback: "No pudimos comunicarnos con el leaderboard oficial.",
     degraded:
       "Nuestra base de datos no está respondiendo, así que el ranking se muestra sin links, alianzas ni cambios de 24 h. Las posiciones sí son en vivo y correctas.",
