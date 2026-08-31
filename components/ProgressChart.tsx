@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatScore, formatShortDate, formatDateTime } from "@/lib/format";
+import { formatScore, formatShortDate, formatDateTime, formatDay } from "@/lib/format";
 import { fill, type Dictionary, type Lang } from "@/lib/i18n";
 
 /**
@@ -40,6 +40,56 @@ export interface HistoryPoint {
   score: number;
   /** "YYYY-MM". Marca a qué ladder pertenece la medición. */
   season: string;
+  /**
+   * Si el punto sale del archivo diario del ladder en vez de una medición
+   * horaria. No es cosmético: decide dónde cae en el eje de tiempo y qué dice
+   * el tooltip. Ver `plot()`.
+   */
+  daily: boolean;
+}
+
+/**
+ * Dónde cae un punto en el eje de tiempo, que NO es lo mismo que el instante
+ * en que se midió.
+ *
+ * Un punto horario sí es un instante, y va en la hora local de quien mira: esa
+ * es la lectura correcta de "a las tres de la tarde tenía tantos SP".
+ *
+ * Un punto diario no. Representa un día entero del archivo del ladder, y la
+ * hora que lleva encima es el azar de cuándo corrió el cron esa jornada — el
+ * corte es por día UTC (ver `saveDaily`). Dibujarlo en hora local le inventa
+ * una precisión que no tiene y encima le erra a la fecha: la foto del 31 de
+ * agosto, tomada a la 01:17 UTC, caía en el eje como "30 ago" para cualquiera
+ * al oeste de Greenwich, y dos días seguidos salían con la MISMA etiqueta. Así
+ * que lo anclamos al arranque de ese día en el calendario de quien mira.
+ */
+function plot(p: HistoryPoint): number {
+  if (!p.daily) return new Date(p.timestamp).getTime();
+
+  // El ISO viene de `toISOString()`, así que sus diez primeros caracteres son
+  // exactamente el `day` UTC con el que se guardó la foto.
+  const [y, m, d] = p.timestamp.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+/**
+ * Pasa la serie al eje de tiempo del gráfico sin desordenarla.
+ *
+ * Anclar los puntos diarios los corre hasta medio día para cualquier lado
+ * según el huso de quien mira, y eso puede empujar al último de ellos por
+ * encima del primer punto horario — que en la base venía antes (ver el corte
+ * `before` en `lib/history.ts`). Una serie desordenada le dibuja al trazo un
+ * zigzag hacia atrás, así que recortamos de atrás para adelante: cada diario
+ * cede ante el que le sigue. En la práctica solo llega a tocar al del borde.
+ */
+function withPlotTimes(history: HistoryPoint[]): (HistoryPoint & { t: number })[] {
+  const out = history.map((p) => ({ ...p, t: plot(p) }));
+
+  for (let i = out.length - 2; i >= 0; i--) {
+    if (out[i].daily && out[i].t >= out[i + 1].t) out[i].t = out[i + 1].t - 1;
+  }
+
+  return out;
 }
 
 /** 7 y 30 son días; "season" es la temporada actual; "all" es todo. */
@@ -152,7 +202,7 @@ export function ProgressChart({
   const [range, setRange] = useState<Range>(30);
 
   const data = useMemo(() => {
-    const points = history.map((h) => ({ ...h, t: new Date(h.timestamp).getTime() }));
+    const points = withPlotTimes(history);
     if (points.length === 0) return points;
 
     if (range === "all") return breakOnSeasonChange(points);
@@ -387,8 +437,17 @@ export function ProgressChart({
 
 type TooltipProps = {
   active?: boolean;
-  payload?: { payload: { t: number; score: number; rank: number } }[];
+  payload?: { payload: { t: number; score: number; rank: number; daily: boolean } }[];
 };
+
+/**
+ * La fecha del tooltip: con hora para una medición horaria, sin ella para un
+ * punto del archivo diario, que es un día y no un momento. Ver `plot()`.
+ */
+function stamp(p: { t: number; daily: boolean }, lang: Lang): string {
+  const d = new Date(p.t);
+  return p.daily ? formatDay(d, lang) : formatDateTime(d, lang);
+}
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -403,7 +462,7 @@ function SpTooltip({ active, payload, lang, t }: TooltipProps & { lang: Lang; t:
   const p = payload[0].payload;
   return (
     <Shell>
-      <div className="mb-1 text-[11px] text-ink-3">{formatDateTime(new Date(p.t), lang)}</div>
+      <div className="mb-1 text-[11px] text-ink-3">{stamp(p, lang)}</div>
       <div className="num text-[15px] text-ink">{formatScore(p.score)} {t.chart.sp}</div>
     </Shell>
   );
@@ -414,7 +473,7 @@ function RankTooltip({ active, payload, lang, t }: TooltipProps & { lang: Lang; 
   const p = payload[0].payload;
   return (
     <Shell>
-      <div className="mb-1 text-[11px] text-ink-3">{formatDateTime(new Date(p.t), lang)}</div>
+      <div className="mb-1 text-[11px] text-ink-3">{stamp(p, lang)}</div>
       <div className="num text-[15px] text-ink">{t.chart.place} #{p.rank}</div>
     </Shell>
   );

@@ -114,6 +114,9 @@ export default async function PlayerPage({
     rank: h.rank,
     score: h.score,
     season: h.season,
+    // No es cosmético: decide dónde cae el punto en el eje de tiempo. Ver
+    // `plot()` en `ProgressChart`.
+    daily: h.daily,
   }));
 
   const displayName =

@@ -59,10 +59,22 @@ export function formatShortDate(date: Date | string, lang: Lang = "en"): string 
     : `${MONTHS.en[d.getMonth()]} ${d.getDate()}`;
 }
 
+/**
+ * "Aug 23 2026" / "23 ago 2026" — una fecha sin hora.
+ *
+ * Existe para los puntos del archivo diario: representan un día entero, no un
+ * instante, y colgarles una hora sería inventar precisión. Ver `plot()` en
+ * `ProgressChart`.
+ */
+export function formatDay(date: Date | string, lang: Lang = "en"): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return `${formatShortDate(d, lang)} ${d.getFullYear()}`;
+}
+
 /** "Aug 23 2026 · 14:30" / "23 ago 2026 · 14:30" */
 export function formatDateTime(date: Date | string, lang: Lang = "en"): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${formatShortDate(d, lang)} ${d.getFullYear()} · ${hh}:${mm}`;
+  return `${formatDay(d, lang)} · ${hh}:${mm}`;
 }
