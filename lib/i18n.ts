@@ -43,6 +43,11 @@ const en = {
     synced: "Synced",
     season: "SEASON",
   },
+  emptyBoard: {
+    title: "Nobody has hit Infinite yet",
+    body: "Season {season} just started, and the official leaderboard begins empty — it fills up as players reach Infinite rank. Nothing is broken on our end: the moment someone makes it, they show up here.",
+    note: "Seasons start on the first Tuesday of each month.",
+  },
   stats: {
     playersInLadder: "PLAYERS IN LADDER",
     visibleInTable: "SHOWN IN TABLE",
@@ -303,6 +308,11 @@ const es: Dictionary = {
   header: {
     synced: "Sincronizado",
     season: "TEMPORADA",
+  },
+  emptyBoard: {
+    title: "Todavía nadie llegó a Infinito",
+    body: "La temporada {season} acaba de empezar, y el leaderboard oficial arranca vacío: se va llenando a medida que los jugadores alcanzan rango Infinito. No es una falla del sitio — apenas entre el primero, aparece acá.",
+    note: "Las temporadas empiezan el primer martes de cada mes.",
   },
   stats: {
     playersInLadder: "JUGADORES EN EL LADDER",

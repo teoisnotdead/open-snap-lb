@@ -37,11 +37,54 @@ function seasonLabel(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
-/** Mes calendario con offset hacia atrás, manejando el cambio de año. */
-function monthWithOffset(offset: number): { year: number; month: number } {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1));
+/**
+ * Hora UTC a la que arranca una temporada nueva.
+ *
+ * Medido: la temporada de septiembre 2026 arrancó el martes 1 a las 15:00 de
+ * Chile, que con GMT-4 son las 19:00 UTC. El 6 de septiembre Chile pasa a
+ * GMT-3 y el arranque se lee como las 16:00 locales — o sea, las mismas 19:00
+ * UTC. Lo que se mueve es el reloj de Chile, no el del juego.
+ *
+ * ATENCIÓN, esto es una inferencia y no un dato confirmado: si el ancla real
+ * fuera hora del Pacífico (Second Dinner es de EE.UU.), el 1 de noviembre de
+ * 2026 —cuando allá terminan su horario de verano— este número tendría que
+ * pasar a 20. Hay que mirar ese día. Si falla, se corrige acá y en ningún
+ * otro lado.
+ */
+const SEASON_START_HOUR_UTC = 19;
+
+/** Mes calendario anterior a uno dado, manejando el cambio de año. */
+function monthBefore({ year, month }: { year: number; month: number }) {
+  const d = new Date(Date.UTC(year, month - 2, 1));
   return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+}
+
+/**
+ * Cuándo arranca la temporada de un mes: el PRIMER MARTES, a las 19:00 UTC.
+ *
+ * No es el día 1. En octubre de 2026 el primer martes es el 6, así que del 1
+ * al 6 la temporada que corre es todavía la de septiembre.
+ */
+export function seasonStart(year: number, month: number): Date {
+  const d = new Date(Date.UTC(year, month - 1, 1, SEASON_START_HOUR_UTC));
+  // getUTCDay(): 0 domingo, 2 martes.
+  d.setUTCDate(d.getUTCDate() + ((2 - d.getUTCDay() + 7) % 7));
+  return d;
+}
+
+/**
+ * Qué temporada está corriendo AHORA, que no siempre es el mes del calendario.
+ *
+ * Esta es la única función del proyecto que sabe cuándo cambia una temporada, y
+ * existe por una razón concreta: entre el día 1 y el primer martes, pedirle el
+ * mes corriente a la API devuelve vacío, y ese vacío es indistinguible del de
+ * una temporada recién arrancada donde nadie llegó a Infinito. La diferencia
+ * solo la da el calendario.
+ */
+function liveSeason(now: Date): { year: number; month: number } {
+  const calendar = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
+  if (now >= seasonStart(calendar.year, calendar.month)) return calendar;
+  return monthBefore(calendar);
 }
 
 interface FetchOpts {
@@ -106,44 +149,46 @@ function normalizeRow(raw: RawLeaderboardRow, index: number): LeaderboardRow {
 }
 
 /**
- * Trae el ladder vivo.
+ * Trae el ladder de la temporada que está corriendo.
  *
- * La API solo sirve el mes actual y el anterior. A principio de mes el mes
- * corriente puede venir vacío, así que caemos al anterior — igual que hace el
- * sitio original.
+ * Pide UNA temporada, la que `liveSeason` dice que corre ahora, y devuelve lo
+ * que haya — incluido `rows: []`.
+ *
+ * Ese array vacío es un estado con significado, no un fallo: la temporada
+ * arrancó y todavía nadie llegó a Infinito. Antes esta función caía al mes
+ * anterior cuando el corriente venía vacío, y eso escondía el arranque de
+ * temporada detrás del ladder viejo durante horas o días. La home ahora lo
+ * dice con todas las letras.
+ *
+ * El fallback que SÍ queda es para el desfase de relojes: cerca del cambio de
+ * mes la API puede todavía no considerar "actual" al mes que nosotros
+ * calculamos, y responde `invalid_month`. Eso es un problema de ventana, no de
+ * temporada, y ahí el mes anterior es la respuesta correcta.
  */
 export async function fetchLeaderboard(
-  opts: FetchOpts = {}
+  opts: FetchOpts = {},
+  now: Date = new Date()
 ): Promise<LeaderboardFetchResult> {
-  for (const offset of [0, 1]) {
-    const { year, month } = monthWithOffset(offset);
+  const live = liveSeason(now);
 
-    try {
-      const data = await fetchMonth(year, month, opts);
+  const build = (
+    data: RawLeaderboardResponse,
+    season: { year: number; month: number }
+  ): LeaderboardFetchResult => ({
+    rows: data.results.map(normalizeRow),
+    season: seasonLabel(season.year, season.month),
+    total: data.total,
+    fetchedAt: now,
+  });
 
-      if (data.results.length === 0 && offset === 0) {
-        continue; // mes recién arrancado y todavía sin datos
-      }
+  try {
+    return build(await fetchMonth(live.year, live.month, opts), live);
+  } catch (err) {
+    if (!(err instanceof LeaderboardError) || err.status !== 400) throw err;
 
-      return {
-        rows: data.results.map(normalizeRow),
-        season: seasonLabel(year, month),
-        total: data.total,
-        fetchedAt: new Date(),
-      };
-    } catch (err) {
-      const isMonthProblem =
-        err instanceof LeaderboardError && err.status === 400;
-      if (isMonthProblem && offset === 0) {
-        continue; // probamos el mes anterior
-      }
-      throw err;
-    }
+    const previous = monthBefore(live);
+    return build(await fetchMonth(previous.year, previous.month, opts), previous);
   }
-
-  throw new LeaderboardError(
-    "Ni el mes actual ni el anterior devolvieron datos."
-  );
 }
 
 /** "2026-07" -> { year: 2026, month: 7 }. Devuelve null si no tiene esa forma. */
@@ -167,9 +212,15 @@ export function previousSeason(season: string): string | null {
   return seasonLabel(d.getUTCFullYear(), d.getUTCMonth() + 1);
 }
 
-/** Temporada del mes corriente, según el reloj. */
-export function currentSeason(): string {
-  const { year, month } = monthWithOffset(0);
+/**
+ * La temporada que corre ahora, como etiqueta.
+ *
+ * Pasa por `liveSeason` y no por el mes del calendario: entre el día 1 y el
+ * primer martes son cosas distintas, y devolver el mes corriente ahí sería una
+ * trampa para quien la use.
+ */
+export function currentSeason(now: Date = new Date()): string {
+  const { year, month } = liveSeason(now);
   return seasonLabel(year, month);
 }
 

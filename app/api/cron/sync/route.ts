@@ -221,8 +221,21 @@ async function runSync(req: Request) {
      * Congelar una temporada no tiene nada que ver con cuánta gente se vinculó:
      * son los 1000 del ladder. Con este chequeo abajo, un mes sin nadie
      * vinculado perdía la temporada entera — y eso no se recupera.
+     *
+     * El `rows.length > 0` es la condición IMPORTANTE, y es deliberado que sea
+     * distinta de la que usa la home para su estado vacío.
+     *
+     * La home decide por reloj: si nuestra regla del primer martes está
+     * corrida, muestra "nadie llegó a Infinito" cuando no corresponde, alguien
+     * lo ve y se corrige. El archivado no perdona igual: congela la temporada
+     * anterior de forma DEFINITIVA —`isSeasonArchived` no reintenta— así que
+     * dispararlo por reloj significaría congelar un mes que todavía se está
+     * jugando y quedarnos con esa foto para siempre. Filas reales en el ladder
+     * nuevo es prueba de que el viejo terminó; el calendario es solo una
+     * predicción.
      */
-    const archived = await archivePreviousSeason(board.season);
+    const archived =
+      board.rows.length > 0 ? await archivePreviousSeason(board.season) : null;
 
     /**
      * También va ANTES del corte por "no hay trackeados", y por el mismo

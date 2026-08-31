@@ -5,7 +5,7 @@ import { WarningIcon } from "@/components/icons";
 import { getMergedLeaderboard } from "@/lib/merge";
 import { LeaderboardError } from "@/lib/leaderboard";
 import { formatScore } from "@/lib/format";
-import { getDictionary, isLang, type Dictionary, type Lang } from "@/lib/i18n";
+import { fill, getDictionary, isLang, type Dictionary, type Lang } from "@/lib/i18n";
 
 // El ladder cambia solo: nada que prerenderizar.
 export const dynamic = "force-dynamic";
@@ -25,6 +25,21 @@ export default async function LeaderboardPage({
     board = await getMergedLeaderboard(60);
   } catch (err) {
     return <BoardUnavailable error={err} lang={lang} t={t} />;
+  }
+
+  /**
+   * Ladder vacío: la temporada arrancó y todavía nadie llegó a Infinito.
+   *
+   * No es un error y por eso no reusa `BoardUnavailable`: la API respondió
+   * perfecto, lo que no hay es gente. `fetchLeaderboard` ya no cae al mes
+   * anterior en este caso justamente para que se pueda decir.
+   *
+   * Sale antes de las métricas a propósito: una fila de ceros con "SP MÁXIMO 0"
+   * se lee como un sitio roto, que es exactamente lo que este estado existe
+   * para evitar.
+   */
+  if (board.rows.length === 0) {
+    return <SeasonJustStarted season={board.season} lang={lang} t={t} />;
   }
 
   const verified = board.rows.filter((r) => r.verified).length;
@@ -91,6 +106,44 @@ function Stat({
         {note && <span className="text-[11.5px] text-ink-4">{note}</span>}
       </div>
     </div>
+  );
+}
+
+/**
+ * Arranque de temporada: el ladder existe pero está vacío.
+ *
+ * Pasa cada primer martes del mes, desde que la temporada empieza hasta que el
+ * primer jugador llega a Infinito. Puede durar horas.
+ *
+ * El texto dice explícitamente que no es una falla nuestra, porque una tabla
+ * vacía sin explicación se lee como un sitio roto — y el reflejo de la persona
+ * es recargar, no esperar. La cabecera se mantiene con el chip de temporada:
+ * es lo que deja ver DE QUÉ temporada está hablando.
+ */
+function SeasonJustStarted({
+  season,
+  lang,
+  t,
+}: {
+  season: string;
+  lang: Lang;
+  t: Dictionary;
+}) {
+  return (
+    <main className="flex min-h-screen flex-col">
+      <SiteHeader lang={lang} t={t} active="leaderboard" season={season} />
+      <div className="flex grow items-center justify-center px-4 py-16 sm:px-8">
+        <div className="max-w-[520px] text-center">
+          <h1 className="mb-3 font-display text-2xl font-bold tracking-[-0.02em]">
+            {t.emptyBoard.title}
+          </h1>
+          <p className="mb-5 text-sm leading-relaxed text-ink-3">
+            {fill(t.emptyBoard.body, { season })}
+          </p>
+          <p className="text-xs text-ink-4">{t.emptyBoard.note}</p>
+        </div>
+      </div>
+    </main>
   );
 }
 
