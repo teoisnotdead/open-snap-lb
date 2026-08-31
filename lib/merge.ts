@@ -18,13 +18,24 @@ interface Baseline {
  *
  * Devuelve null cuando todavía no hay ninguno de hace un día, que es el estado
  * normal durante las primeras 24 h de vida de la colección.
+ *
+ * El filtro por `season` es lo que impide el peor número que este sitio podría
+ * mostrar. El ladder resetea cada temporada —que arranca el primer martes del
+ * mes, no el día 1— y los SP vuelven a empezar de cero. Sin este filtro, la
+ * primera corrida que ve la temporada nueva compara contra el baseline de la
+ * vieja y le cuelga a TODAS las filas una caída de cinco cifras: el #1 pasaría
+ * de 10 408 a 200 y la tabla anunciaría "−10 208" como si se hubiera
+ * desplomado, cuando lo único que pasó es que empezó el mes.
+ *
+ * Que devuelva null durante las primeras 24 h de cada temporada es exactamente
+ * lo correcto: no hay contra qué comparar todavía, y la UI muestra un guión.
  */
-async function loadBaseline(): Promise<Baseline | null> {
+async function loadBaseline(season: string): Promise<Baseline | null> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const col = await boardBaselinesCollection();
 
   const doc = await col.findOne<Pick<BoardBaselineDoc, "rows" | "timestamp">>(
-    { timestamp: { $lte: cutoff } },
+    { timestamp: { $lte: cutoff }, season },
     { sort: { timestamp: -1 }, projection: { rows: 1, timestamp: 1 } }
   );
 
@@ -120,7 +131,7 @@ export async function getMergedLeaderboard(
      * justamente el punto. El delta dejó de ser un privilegio de los
      * vinculados.
      */
-    baseline = await loadBaseline();
+    baseline = await loadBaseline(board.season);
   } catch (err) {
     console.error("Mongo no respondió; sirvo el ladder sin enriquecer:", err);
     enriched = false;

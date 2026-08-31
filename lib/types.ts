@@ -314,6 +314,15 @@ export interface BoardDailyDoc {
   /** Jugadores en TODO el ladder, no solo los 1000 de `rows`. */
   total: number;
   /**
+   * Cuántas filas trae esta foto, o sea `rows.length`. NO es lo mismo que
+   * `total`, que es el ladder entero.
+   *
+   * Existe para poder comparar dos corridas del mismo día y quedarse con la
+   * más completa: ver `saveDaily`. Guardarlo redundante es lo que permite que
+   * la comparación sea una condición del filtro y no una lectura previa.
+   */
+  rowCount: number;
+  /**
    * Mismo formato que `BoardBaselineDoc.rows` y por las mismas razones: `n` es
    * el nameKey, `s` el score, y el orden ES el rank, así que el puesto sale
    * del índice del array sin ocupar un campo por fila.
