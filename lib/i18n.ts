@@ -30,18 +30,34 @@ const en = {
     linkTitle: "Link your account — OpenSnap LB",
     linkDescription:
       "Ask for your channels and alliance to show up next to your row in the leaderboard.",
+    lastSeasonTitle: "Last season — OpenSnap LB",
+    lastSeasonDescription:
+      "Final standings of the last closed Marvel Snap season, archived before the official API stopped serving it.",
     howTitle: "How it works — OpenSnap LB",
     howDescription:
       "Where the data comes from, what we store, and what the official leaderboard can't tell us.",
   },
   nav: {
     leaderboard: "Leaderboard",
+    lastSeason: "Last season",
     link: "Link account",
     how: "How it works",
   },
   header: {
     synced: "Synced",
     season: "SEASON",
+  },
+  lastSeason: {
+    title: "Season {season}",
+    closed: "closed",
+    subtitle:
+      "Final standings, exactly as the ladder left them. {total} players took part; the official API only ever serves the top {shown}.",
+    capturedAt: "Archived {when}",
+    emptyTitle: "No season archived yet",
+    emptyBody:
+      "We freeze each season the moment the next one starts, because the official API drops it soon after. The first one lands here as soon as a season ends.",
+    backToLive: "Back to the live leaderboard",
+    fromEmpty: "See how last season ended",
   },
   emptyBoard: {
     title: "Nobody has hit Infinite yet",
@@ -296,18 +312,34 @@ const es: Dictionary = {
     linkTitle: "Vincula tu cuenta — OpenSnap LB",
     linkDescription:
       "Pide que tus canales y tu alianza aparezcan junto a tu fila en el leaderboard.",
+    lastSeasonTitle: "Temporada pasada — OpenSnap LB",
+    lastSeasonDescription:
+      "Clasificación final de la última temporada cerrada de Marvel Snap, archivada antes de que la API oficial dejara de servirla.",
     howTitle: "Cómo funciona — OpenSnap LB",
     howDescription:
       "De dónde salen los datos, qué guardamos y qué no puede decirnos el leaderboard oficial.",
   },
   nav: {
     leaderboard: "Leaderboard",
+    lastSeason: "Temporada pasada",
     link: "Vincular cuenta",
     how: "Cómo funciona",
   },
   header: {
     synced: "Sincronizado",
     season: "TEMPORADA",
+  },
+  lastSeason: {
+    title: "Temporada {season}",
+    closed: "cerrada",
+    subtitle:
+      "La clasificación final, tal como la dejó el ladder. Participaron {total} jugadores; la API oficial nunca sirve más que el top {shown}.",
+    capturedAt: "Archivada {when}",
+    emptyTitle: "Todavía no archivamos ninguna temporada",
+    emptyBody:
+      "Congelamos cada temporada apenas empieza la siguiente, porque la API oficial la deja de servir poco después. La primera va a aparecer acá en cuanto termine una.",
+    backToLive: "Volver al leaderboard en vivo",
+    fromEmpty: "Ver cómo terminó la temporada pasada",
   },
   emptyBoard: {
     title: "Todavía nadie llegó a Infinito",

@@ -43,17 +43,40 @@ const PAGE = 100;
  * pulgar hacia abajo; obligar a barrer de costado para ver el puntaje lo
  * vuelve incómodo justo en lo que importa.
  */
-const GRID =
-  "grid grid-cols-[46px_minmax(0,1fr)_auto] sm:grid-cols-[86px_minmax(0,1fr)_104px_148px_122px_128px] items-center gap-3 pl-2 pr-3 sm:gap-4 sm:pl-3 sm:pr-5";
+const GRID_BASE =
+  "grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 pl-2 pr-3 sm:gap-4 sm:pl-3 sm:pr-5";
+
+/**
+ * Las dos variantes van escritas enteras y no armadas por concatenación: el
+ * scanner de Tailwind lee este archivo como texto, y una clase construida en
+ * runtime nunca llegaría al CSS.
+ *
+ * Sin la columna Δ son cinco, y el ancho que sobra se reparte entre las que
+ * quedan: en una temporada cerrada no hay “últimas 24 h” que mostrar.
+ */
+const GRID_COLS = {
+  withDelta: "sm:grid-cols-[86px_minmax(0,1fr)_104px_148px_122px_128px]",
+  withoutDelta: "sm:grid-cols-[86px_minmax(0,1fr)_120px_164px_150px]",
+} as const;
+
+function grid(showDelta: boolean): string {
+  return `${GRID_BASE} ${showDelta ? GRID_COLS.withDelta : GRID_COLS.withoutDelta}`;
+}
 
 export function LeaderboardTable({
   rows,
   lang,
   t,
+  showDelta = true,
 }: {
   rows: MergedLeaderboardRow[];
   lang: Lang;
   t: Dictionary;
+  /**
+   * La columna Δ 24 h. Se apaga en las temporadas archivadas, donde no hay un
+   * “ayer” contra el que comparar y la columna solo mostraría guiones.
+   */
+  showDelta?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -143,20 +166,21 @@ export function LeaderboardTable({
       <section className="px-4 pb-6 sm:px-8">
         <div className="overflow-hidden rounded-[10px] border border-line bg-[#0b0b0f]">
           <div
-            className={`${GRID} h-10 border-b border-line bg-surface-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-4`}
+            className={`${grid(showDelta)} h-10 border-b border-line bg-surface-2 text-[10.5px] font-semibold tracking-[0.13em] text-ink-4`}
           >
             <div className="pl-1 sm:pl-2">{t.table.rank}</div>
             <div>{t.table.player}</div>
             <div className="hidden sm:block">{t.table.alliance}</div>
             <div className="text-right">{t.table.snapPoints}</div>
-            <div className="hidden text-right sm:block">
-              {/* El span envuelve solo el texto: si el title fuera del div, el
-                  tooltip saltaría también en el espacio vacío a la izquierda,
-                  que en esta columna alineada a la derecha es casi toda ella. */}
-              <span title={t.table.deltaTooltip}>
-                {t.table.delta}
-              </span>
-            </div>
+            {showDelta && (
+              <div className="hidden text-right sm:block">
+                {/* El span envuelve solo el texto: si el title fuera del div,
+                    el tooltip saltaría también en el espacio vacío a la
+                    izquierda, que en esta columna alineada a la derecha es
+                    casi toda ella. */}
+                <span title={t.table.deltaTooltip}>{t.table.delta}</span>
+              </div>
+            )}
             <div className="hidden text-right sm:block">{t.table.channels}</div>
           </div>
 
@@ -169,7 +193,13 @@ export function LeaderboardTable({
             </p>
           ) : (
             visible.map((row) => (
-              <Row key={`${row.rank}-${row.nameKey}`} row={row} lang={lang} t={t} />
+              <Row
+                key={`${row.rank}-${row.nameKey}`}
+                row={row}
+                lang={lang}
+                t={t}
+                showDelta={showDelta}
+              />
             ))
           )}
         </div>
@@ -221,17 +251,19 @@ function Row({
   row,
   lang,
   t,
+  showDelta,
 }: {
   row: MergedLeaderboardRow;
   lang: Lang;
   t: Dictionary;
+  showDelta: boolean;
 }) {
   const podium = PODIUM[row.rank];
 
   return (
     <Link
       href={`/${lang}/player/${encodeURIComponent(row.nameKey)}`}
-      className={`${GRID} h-14 border-b border-l-3 border-l-transparent border-b-line-soft last:border-b-0 hover:bg-surface-2 ${
+      className={`${grid(showDelta)} h-14 border-b border-l-3 border-l-transparent border-b-line-soft last:border-b-0 hover:bg-surface-2 ${
         podium ? `${podium.bar} ${podium.row}` : ""
       }`}
     >
@@ -275,12 +307,14 @@ function Row({
         {formatScore(row.score)}
       </div>
 
-      <div
-        className={`num hidden text-right text-[13.5px] sm:block ${deltaColor(row.delta24h)}`}
-        title={row.delta24h === undefined ? t.table.unknownDelta : undefined}
-      >
-        {row.delta24h === undefined ? "—" : formatDelta(row.delta24h)}
-      </div>
+      {showDelta && (
+        <div
+          className={`num hidden text-right text-[13.5px] sm:block ${deltaColor(row.delta24h)}`}
+          title={row.delta24h === undefined ? t.table.unknownDelta : undefined}
+        >
+          {row.delta24h === undefined ? "—" : formatDelta(row.delta24h)}
+        </div>
+      )}
 
       <div className="hidden items-center justify-end gap-2.5 text-ink-3 sm:flex">
         {row.twitch && <TwitchIcon />}

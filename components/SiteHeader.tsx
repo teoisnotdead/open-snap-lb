@@ -3,16 +3,22 @@ import { LogoMark } from "./icons";
 import { formatRelative } from "@/lib/format";
 import { LANGS, type Dictionary, type Lang } from "@/lib/i18n";
 
-type Nav = "leaderboard" | "link" | "how";
+type Nav = "leaderboard" | "lastSeason" | "link" | "how";
 
 /** Las rutas son siempre en inglés; solo cambia el segmento de idioma. */
 const PATHS: Record<Nav, string> = {
   leaderboard: "",
+  lastSeason: "/last-season",
   link: "/link",
   how: "/how-it-works",
 };
 
-const ITEMS: Nav[] = ["leaderboard", "link", "how"];
+/**
+ * "Temporada pasada" va segundo, pegado al leaderboard: son la misma tabla en
+ * dos momentos distintos, y separarlos con "Vincular cuenta" en el medio los
+ * desemparejaría.
+ */
+const ITEMS: Nav[] = ["leaderboard", "lastSeason", "link", "how"];
 
 /**
  * En móvil el header se parte en dos filas: arriba logo e idioma, abajo la

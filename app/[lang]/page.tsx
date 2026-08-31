@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
@@ -140,7 +141,15 @@ function SeasonJustStarted({
           <p className="mb-5 text-sm leading-relaxed text-ink-3">
             {fill(t.emptyBoard.body, { season })}
           </p>
-          <p className="text-xs text-ink-4">{t.emptyBoard.note}</p>
+          <p className="mb-6 text-xs text-ink-4">{t.emptyBoard.note}</p>
+          {/* El momento exacto en que a alguien le interesa la temporada
+              pasada es este: entró a ver el ladder y no hay nadie. */}
+          <Link
+            href={`/${lang}/last-season`}
+            className="inline-block rounded-[7px] border border-line-strong px-4 py-2 text-[12.5px] text-ink-2 transition-colors hover:border-line-bright hover:text-ink"
+          >
+            {t.lastSeason.fromEmpty}
+          </Link>
         </div>
       </div>
     </main>

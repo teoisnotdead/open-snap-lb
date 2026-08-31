@@ -1,6 +1,6 @@
-import { seasonResultsCollection } from "./db";
+import { playersCollection, seasonResultsCollection } from "./db";
 import { fetchSeason } from "./leaderboard";
-import type { SeasonResultDoc } from "./types";
+import type { MergedLeaderboardRow, PlayerDoc, SeasonResultDoc } from "./types";
 
 /**
  * Archivo de temporadas cerradas.
@@ -113,4 +113,110 @@ export async function listArchivedSeasons(): Promise<string[]> {
   const col = await seasonResultsCollection();
   const seasons = await col.distinct("season");
   return seasons.sort().reverse();
+}
+
+export interface ArchivedBoard {
+  season: string;
+  rows: MergedLeaderboardRow[];
+  /** Jugadores en TODA la temporada, no solo los 1000 archivados. */
+  total: number;
+  /** Cuándo congelamos esta foto. */
+  capturedAt: Date;
+}
+
+/**
+ * La última temporada cerrada, lista para la tabla.
+ *
+ * Devuelve null cuando todavía no archivamos ninguna, que es el estado de un
+ * despliegue nuevo hasta el primer cambio de temporada.
+ *
+ * Sale de `seasonResults` y NO de la API, aunque el endpoint oficial todavía
+ * sirva el mes anterior. Son dos cosas distintas: la API te da lo que le queda
+ * en su ventana de dos meses, y esto es nuestro archivo, que existe justamente
+ * para cuando esa ventana se cierre. Leer del archivo es además lo que hace que
+ * la página siga funcionando igual dentro de un año.
+ */
+export async function loadLatestArchivedSeason(): Promise<ArchivedBoard | null> {
+  const [season] = await listArchivedSeasons();
+  if (!season) return null;
+
+  const col = await seasonResultsCollection();
+  const docs = await col
+    .find({ season }, { projection: { _id: 0 } })
+    .sort({ rank: 1 })
+    .toArray();
+
+  if (docs.length === 0) return null;
+
+  /**
+   * Los homónimos se cuentan DENTRO de la temporada archivada, no contra el
+   * ladder de hoy: "Leaf" pudo estar repetido en julio y ser uno solo ahora, o
+   * al revés. Lo que decide si esa fila es ambigua es lo que pasaba entonces.
+   */
+  const veces = new Map<string, number>();
+  for (const d of docs) veces.set(d.nameKey, (veces.get(d.nameKey) ?? 0) + 1);
+
+  /**
+   * El enriquecido es un extra: si Mongo falla acá, la tabla se dibuja igual
+   * con puesto, nombre y SP, que es el archivo en sí. Mismo criterio que
+   * `getMergedLeaderboard`.
+   */
+  let byKey = new Map<string, PlayerDoc>();
+  try {
+    const players = await playersCollection();
+    const docsPlayers = await players
+      .find(
+        { nameKey: { $in: [...veces.keys()] } },
+        {
+          projection: {
+            nameKey: 1,
+            patchedName: 1,
+            twitch: 1,
+            youtube: 1,
+            untapped: 1,
+            alliance: 1,
+            allianceName: 1,
+            verified: 1,
+          },
+        }
+      )
+      .toArray();
+    byKey = new Map(docsPlayers.map((d) => [d.nameKey, d]));
+  } catch (err) {
+    console.error("No se pudo enriquecer la temporada archivada:", err);
+  }
+
+  const rows: MergedLeaderboardRow[] = docs.map((d) => {
+    const ambiguous = (veces.get(d.nameKey) ?? 0) > 1;
+    const doc = byKey.get(d.nameKey);
+
+    /**
+     * Con el nombre repetido no mostramos nada, sin intentar desempatar.
+     *
+     * En la tabla viva el desempate usa `lastRank`, pero acá ese dato es del
+     * ladder de HOY y no dice nada sobre quién era quién en una temporada que
+     * ya cerró. Preferimos el hueco antes que colgarle el Twitch de alguien a
+     * la persona equivocada — mismo criterio que el resto del proyecto.
+     */
+    const owned = doc !== undefined && !ambiguous;
+
+    return {
+      rank: d.rank,
+      playerName: d.playerName,
+      nameKey: d.nameKey,
+      score: d.score,
+      displayName: (owned && doc?.patchedName) || d.playerName,
+      twitch: owned ? doc?.twitch : undefined,
+      youtube: owned ? doc?.youtube : undefined,
+      untapped: owned ? doc?.untapped : undefined,
+      alliance: owned ? doc?.alliance : undefined,
+      allianceName: owned ? doc?.allianceName : undefined,
+      verified: owned ? doc?.verified === true : false,
+      ambiguous,
+      // Una temporada congelada no tiene "últimas 24 h". La columna no va.
+      delta24h: undefined,
+    };
+  });
+
+  return { season, rows, total: docs[0].total, capturedAt: docs[0].capturedAt };
 }
