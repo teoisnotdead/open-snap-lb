@@ -37,22 +37,6 @@ function seasonLabel(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
-/**
- * Hora UTC a la que arranca una temporada nueva.
- *
- * Medido: la temporada de septiembre 2026 arrancó el martes 1 a las 15:00 de
- * Chile, que con GMT-4 son las 19:00 UTC. El 6 de septiembre Chile pasa a
- * GMT-3 y el arranque se lee como las 16:00 locales — o sea, las mismas 19:00
- * UTC. Lo que se mueve es el reloj de Chile, no el del juego.
- *
- * ATENCIÓN, esto es una inferencia y no un dato confirmado: si el ancla real
- * fuera hora del Pacífico (Second Dinner es de EE.UU.), el 1 de noviembre de
- * 2026 —cuando allá terminan su horario de verano— este número tendría que
- * pasar a 20. Hay que mirar ese día. Si falla, se corrige acá y en ningún
- * otro lado.
- */
-const SEASON_START_HOUR_UTC = 19;
-
 /** Mes calendario anterior a uno dado, manejando el cambio de año. */
 function monthBefore({ year, month }: { year: number; month: number }) {
   const d = new Date(Date.UTC(year, month - 2, 1));
@@ -60,31 +44,32 @@ function monthBefore({ year, month }: { year: number; month: number }) {
 }
 
 /**
- * Cuándo arranca la temporada de un mes: el PRIMER MARTES, a las 19:00 UTC.
+ * Qué tabla está corriendo AHORA: **el mes del calendario, y nada más**.
  *
- * No es el día 1. En octubre de 2026 el primer martes es el 6, así que del 1
- * al 6 la temporada que corre es todavía la de septiembre.
- */
-export function seasonStart(year: number, month: number): Date {
-  const d = new Date(Date.UTC(year, month - 1, 1, SEASON_START_HOUR_UTC));
-  // getUTCDay(): 0 domingo, 2 martes.
-  d.setUTCDate(d.getUTCDate() + ((2 - d.getUTCDay() + 7) % 7));
-  return d;
-}
-
-/**
- * Qué temporada está corriendo AHORA, que no siempre es el mes del calendario.
+ * Acá vivió durante un tiempo una inferencia equivocada: que la tabla cambiaba
+ * con la temporada del juego, o sea el primer martes del mes a las 19:00 UTC, y
+ * que entre el día 1 y ese martes la tabla vigente era todavía la del mes
+ * anterior.
  *
- * Esta es la única función del proyecto que sabe cuándo cambia una temporada, y
- * existe por una razón concreta: entre el día 1 y el primer martes, pedirle el
- * mes corriente a la API devuelve vacío, y ese vacío es indistinguible del de
- * una temporada recién arrancada donde nadie llegó a Infinito. La diferencia
- * solo la da el calendario.
+ * Es falso, y se midió: el 1 de septiembre de 2026 a las 18:50 UTC —diez
+ * minutos ANTES de ese supuesto arranque— la página oficial ya mostraba
+ * "September 2026", vacía. Si se guiara por el primer martes habría seguido
+ * mostrando agosto. El selector de la tabla oficial son meses de calendario; la
+ * temporada del juego es otra cosa y no manda acá.
+ *
+ * El daño de la inferencia vieja no se veía este mes, donde el primer martes
+ * cayó el día 1. En octubre de 2026 el primer martes es el 6: habríamos servido
+ * la tabla de septiembre como si fuera la vigente durante SEIS DÍAS, mientras la
+ * oficial ya mostraba octubre.
+ *
+ * Lo que se pierde al sacarla: entre el día 1 y el primer jugador en Infinito,
+ * la tabla del mes viene vacía y no hay forma de distinguir ese vacío del de una
+ * falla. Se acepta, porque es exactamente lo que muestra la página oficial — y
+ * porque la home ya tiene un estado que lo dice con todas las letras en vez de
+ * dibujar una tabla en cero.
  */
 function liveSeason(now: Date): { year: number; month: number } {
-  const calendar = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
-  if (now >= seasonStart(calendar.year, calendar.month)) return calendar;
-  return monthBefore(calendar);
+  return { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
 }
 
 interface FetchOpts {

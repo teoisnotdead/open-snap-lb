@@ -62,7 +62,7 @@ const en = {
   emptyBoard: {
     title: "Nobody has hit Infinite yet",
     body: "Season {season} just started, and the official leaderboard begins empty — it fills up as players reach Infinite rank. Nothing is broken on our end: the moment someone makes it, they show up here.",
-    note: "Seasons start on the first Tuesday of each month.",
+    note: "The official table resets on the 1st of each month, so it starts from scratch every month.",
   },
   stats: {
     playersInLadder: "PLAYERS IN LADDER",
@@ -391,7 +391,7 @@ const es: Dictionary = {
   emptyBoard: {
     title: "Todavía nadie llegó a Infinito",
     body: "La temporada {season} acaba de empezar, y el leaderboard oficial arranca vacío: se va llenando a medida que los jugadores alcanzan rango Infinito. No es una falla del sitio — apenas entre el primero, aparece acá.",
-    note: "Las temporadas empiezan el primer martes de cada mes.",
+    note: "La tabla oficial cambia de mes el día 1, así que cada mes arranca de cero.",
   },
   stats: {
     playersInLadder: "JUGADORES EN EL LADDER",

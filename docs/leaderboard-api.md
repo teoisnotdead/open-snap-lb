@@ -32,6 +32,17 @@ curl "https://marvelsnap.com/wp-json/api/v1/leaderboard?month=8&year=2026&region
 | Param | ¿Se respeta? | Notas |
 |---|---|---|
 | `month` | **SÍ** | Único parámetro funcional. Solo acepta **mes actual o mes anterior**. Cualquier otro → HTTP 400. |
+
+> **"Mes actual" es el MES DEL CALENDARIO**, no la temporada del juego. Se midió
+> el 1 de septiembre de 2026 a las 18:50 UTC: la página oficial ya mostraba
+> "September 2026" vacía, diez minutos ANTES de que arrancara la temporada de
+> septiembre (primer martes, 19:00 UTC). Y ese mismo día la ventana de la API ya
+> era `{8, 9}` — julio devolvía `invalid_month`.
+>
+> Importa porque el proyecto llegó a modelar el cambio con el primer martes.
+> Este mes no se notaba (cayó el día 1), pero en octubre de 2026 el primer
+> martes es el 6: habríamos servido septiembre como tabla vigente durante seis
+> días. Ver `liveSeason` en `lib/leaderboard.ts`.
 | `year` | **NO** | Ignorado por completo. `year=2026`, `year=126`, `year=0` y `year=abc` devuelven todos idéntico resultado. |
 | `region` | **NO** | Ignorado. `global`, `us`, `eu`, `na`, `ap`, `oceania` y hasta `bogusregion` devuelven el **mismo dataset global**. Ver el bug de `region=asia` abajo. |
 | `offset` | **NO** | Se acepta y se **refleja en la respuesta**, pero no pagina. Siempre devuelve `offset: 0`. |

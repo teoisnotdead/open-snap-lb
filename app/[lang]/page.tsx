@@ -113,8 +113,12 @@ function Stat({
 /**
  * Arranque de temporada: el ladder existe pero está vacío.
  *
- * Pasa cada primer martes del mes, desde que la temporada empieza hasta que el
+ * Pasa el día 1 de cada mes, desde que la tabla cambia de mes hasta que el
  * primer jugador llega a Infinito. Puede durar horas.
+ *
+ * El día 1 y no el primer martes: la tabla oficial se guía por el MES DEL
+ * CALENDARIO, no por la temporada del juego. Medido el 1/9/2026 — ver
+ * `liveSeason` en lib/leaderboard.ts.
  *
  * El texto dice explícitamente que no es una falla nuestra, porque una tabla
  * vacía sin explicación se lee como un sitio roto — y el reflejo de la persona
