@@ -44,7 +44,7 @@ const PAGE = 100;
  * vuelve incómodo justo en lo que importa.
  */
 const GRID_BASE =
-  "grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 pl-2 pr-3 sm:gap-4 sm:pl-3 sm:pr-5";
+  "grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 pl-2 pr-3 sm:gap-2.5 sm:pl-2.5 sm:pr-4 lg:gap-4 lg:pl-3 lg:pr-5";
 
 /**
  * Las dos variantes van escritas enteras y no armadas por concatenación: el
@@ -53,10 +53,18 @@ const GRID_BASE =
  *
  * Sin la columna Δ son cinco, y el ancho que sobra se reparte entre las que
  * quedan: en una temporada cerrada no hay “últimas 24 h” que mostrar.
+ *
+ * Hay DOS juegos de anchos porque los de `lg` no entran en un teléfono
+ * horizontal (~780 px): ahí las seis columnas fijas se comían el contenedor
+ * entero, el `1fr` del jugador colapsaba a 19 px y el nombre se dibujaba
+ * encima de la alianza. Los de `sm` son los mismos anchos apretados hasta que
+ * la columna del nombre vuelva a ser la que se queda con lo que sobra.
  */
 const GRID_COLS = {
-  withDelta: "sm:grid-cols-[86px_minmax(0,1fr)_104px_148px_122px_128px]",
-  withoutDelta: "sm:grid-cols-[86px_minmax(0,1fr)_120px_164px_150px]",
+  withDelta:
+    "sm:grid-cols-[62px_minmax(0,1fr)_74px_102px_68px_68px] lg:grid-cols-[86px_minmax(0,1fr)_104px_148px_122px_128px]",
+  withoutDelta:
+    "sm:grid-cols-[62px_minmax(0,1fr)_86px_110px_80px] lg:grid-cols-[86px_minmax(0,1fr)_120px_164px_150px]",
 } as const;
 
 function grid(showDelta: boolean): string {
@@ -115,9 +123,14 @@ export function LeaderboardTable({
   return (
     <>
       <section className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-8 sm:py-[22px]">
-        <div className="flex grow flex-col gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-          {/* `w-full` con `sm:w-[380px]`: el ancho fijo desbordaba la pantalla. */}
-          <label className="flex h-[42px] w-full items-center gap-2.5 rounded-lg border border-line-strong bg-surface-2 px-3.5 focus-within:border-accent sm:w-[380px]">
+        <div className="flex min-w-0 grow flex-col gap-3 sm:flex-row sm:items-center sm:gap-3.5">
+          {/* `w-full` con `sm:w-[380px]`: el ancho fijo desbordaba la pantalla.
+              `sm:min-w-0` es lo que deja que esos 380 px SE ACHIQUEN: sin él, el
+              `min-width: auto` de un ítem flex se planta en el min-content del
+              input y la fila entera —búsqueda, filtros, contador y CTA— empujaba
+              el documento a 855 px dentro de una pantalla de 785. Eso era el
+              scroll horizontal de todo el sitio en un teléfono horizontal. */}
+          <label className="flex h-[42px] w-full items-center gap-2.5 rounded-lg border border-line-strong bg-surface-2 px-3.5 focus-within:border-accent sm:w-[380px] sm:min-w-0">
             <SearchIcon className="shrink-0 text-ink-4" />
             {/* `focus-ring-none`: el borde ámbar del label YA es el indicador de
                 foco. Sin esto el outline global dibuja un segundo recuadro, y

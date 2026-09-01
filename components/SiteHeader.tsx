@@ -21,12 +21,18 @@ const PATHS: Record<Nav, string> = {
 const ITEMS: Nav[] = ["leaderboard", "lastSeason", "link", "how"];
 
 /**
- * En móvil el header se parte en dos filas: arriba logo e idioma, abajo la
- * navegación. En una sola fila los tres links no entran y terminaban cortados
+ * Hasta `lg` el header se parte en dos filas: arriba logo e idioma, abajo la
+ * navegación. En una sola fila los cuatro links no entran y terminaban cortados
  * por el borde de la pantalla.
  *
- * El "sincronizado" y la temporada solo aparecen desde `lg`: son contexto útil
- * pero no accionable, y en 390 px compiten con lo que sí importa.
+ * El corte es `lg` y no `sm` por el teléfono horizontal (~780 px): ahí la nav
+ * en línea pide 470 px y solo tiene 423, y como sus ítems son `shrink-0` no se
+ * achicaban — se dibujaban ENCIMA del switcher de idioma. Dos filas entran
+ * siempre; una sola recién desde 1024.
+ *
+ * El "sincronizado" y la temporada esperan a `xl` por la misma razón: sumados a
+ * la nav en línea no entran en 1024, y volvían a producir el mismo choque.
+ * Son contexto útil pero no accionable, así que son lo primero que cede.
  */
 export function SiteHeader({
   lang,
@@ -58,12 +64,12 @@ export function SiteHeader({
             </span>
           </Link>
 
-          <Nav lang={lang} t={t} active={active} className="hidden sm:flex" />
+          <Nav lang={lang} t={t} active={active} className="hidden lg:flex" />
         </div>
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-5">
           {syncedAt && (
-            <div className="hidden items-center gap-2 lg:flex">
+            <div className="hidden items-center gap-2 xl:flex">
               <span className="size-1.5 rounded-full bg-pos shadow-[0_0_0_3px_rgba(92,217,166,0.14)]" />
               <span className="text-[12.5px] text-ink-3">
                 {t.header.synced} {formatRelative(syncedAt, lang)}
@@ -72,7 +78,7 @@ export function SiteHeader({
           )}
 
           {season && (
-            <div className="num hidden rounded border border-line-strong px-2.5 py-[5px] text-[11px] font-semibold tracking-[0.1em] text-ink-3 lg:block">
+            <div className="num hidden rounded border border-line-strong px-2.5 py-[5px] text-[11px] font-semibold tracking-[0.1em] text-ink-3 xl:block">
               {t.header.season} {season}
             </div>
           )}
@@ -94,13 +100,13 @@ export function SiteHeader({
         </div>
       </div>
 
-      {/* Segunda fila, solo móvil. Scrollea sola si algún idioma alarga los
+      {/* Segunda fila, hasta `lg`. Scrollea sola si algún idioma alarga los
           textos más de lo que entra. */}
       <Nav
         lang={lang}
         t={t}
         active={active}
-        className="flex gap-6 overflow-x-auto px-4 pb-2.5 sm:hidden"
+        className="flex gap-6 overflow-x-auto px-4 pb-2.5 sm:px-8 lg:hidden"
       />
     </header>
   );
