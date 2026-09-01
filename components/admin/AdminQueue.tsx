@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AllianceQueue, type AllianceRow } from "@/components/admin/AllianceQueue";
 import type { SubmissionStatus, SubmissionView } from "@/lib/types";
 
 const TABS: { key: SubmissionStatus; label: string }[] = [
@@ -16,12 +17,14 @@ export function AdminQueue({
   counts,
   submissions,
   dbError,
+  alliances,
 }: {
   user: string;
   status: SubmissionStatus;
   counts: Record<SubmissionStatus, number>;
   submissions: SubmissionView[];
   dbError: string | null;
+  alliances: AllianceRow[];
 }) {
   const router = useRouter();
 
@@ -47,6 +50,8 @@ export function AdminQueue({
           Salir
         </button>
       </header>
+
+      <AllianceQueue alliances={alliances} />
 
       <nav className="mb-6 flex gap-1.5 overflow-x-auto">
         {TABS.map((tab) => (

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AllianceSelect } from "@/components/AllianceSelect";
 import { CheckIcon } from "@/components/icons";
 import type { Dictionary } from "@/lib/i18n";
 
@@ -24,7 +25,6 @@ export interface EditableValues {
   youtube: string;
   untapped: string;
   allianceTag: string;
-  allianceName: string;
 }
 
 export function SelfEditForm({
@@ -143,25 +143,15 @@ export function SelfEditForm({
         </Field>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[160px_minmax(0,1fr)]">
-        <Field label={t.link.allianceLabel}>
-          <input
-            value={values.allianceTag}
-            onChange={set("allianceTag")}
-            placeholder={t.link.alliancePlaceholder}
-            maxLength={5}
-            className={INPUT}
-          />
-        </Field>
-        <Field label={t.link.allianceNameLabel}>
-          <input
-            value={values.allianceName}
-            onChange={set("allianceName")}
-            placeholder={t.link.allianceNamePlaceholder}
-            maxLength={40}
-            className={INPUT}
-          />
-        </Field>
+      <div className="mt-4">
+        <span className="mb-1.5 block text-[10.5px] font-semibold tracking-[0.08em] text-ink-4">
+          {t.link.allianceLabel}
+        </span>
+        <AllianceSelect
+          t={t}
+          value={values.allianceTag}
+          onChange={(tag) => setValues((v) => ({ ...v, allianceTag: tag }))}
+        />
       </div>
 
       <p className="mt-2.5 text-[12px] leading-relaxed text-ink-4">

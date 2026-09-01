@@ -152,7 +152,6 @@ export default async function RequestStatusPage({
                     youtube: doc.youtube ?? "",
                     untapped: doc.untapped ?? "",
                     allianceTag: doc.allianceTag ?? "",
-                    allianceName: doc.allianceName ?? "",
                   }}
                 />
 

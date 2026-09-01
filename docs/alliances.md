@@ -1,10 +1,10 @@
 # Alianzas como entidad
 
-> **Estado: paso 1 de 5 implementado.** Existen la colección `alliances` con sus
-> índices, el backfill y `GET /api/alliances`. **Ninguna escritura existente
-> cambió**: el formulario sigue tomando el tag como texto libre, y no hay
-> líderes ni códigos todavía. El resto sigue siendo propuesta a discutir. Ver
-> "Orden sugerido" al final.
+> **Estado: pasos 1 y 2 de 5 implementados.** Existen la colección `alliances` con sus
+> índices, el backfill, el selector del formulario y la cola de alianzas del
+> panel. **No hay líderes ni códigos de invitación todavía** (pasos 3 a 5), así
+> que las secciones que hablan de expulsar, rotar y la credencial del líder
+> siguen siendo propuesta a discutir. Ver "Orden sugerido" al final.
 
 Hoy la alianza son **dos strings sueltos por jugador**: `alliance` (tag) y
 `allianceName`, declarados en la petición y copiados a `players` al aprobar.
@@ -88,7 +88,8 @@ siempre el que nadie mira.
 
 ```js
 { key: { tag: 1 },      name: "uniq_tag",       unique: true }
-{ key: { joinCode: 1 }, name: "uniq_join_code", unique: true }
+{ key: { joinCode: 1 }, name: "uniq_join_code", unique: true,
+  partialFilterExpression: { joinCode: { $exists: true } } }
 { key: { status: 1, createdAt: 1 }, name: "queue" }
 { key: { leaderNameKey: 1 },        name: "by_leader" }
 ```
@@ -99,6 +100,12 @@ que vuelve **imposible** que existan dos `JOB`, en vez de improbable.
 `uniq_join_code` cubre el mismo caso que `uniq_status_token`: una colisión
 metería a alguien en la alianza equivocada. Con 30^8 ≈ 6.6 × 10^11 es
 improbable; el índice lo vuelve imposible y cuesta nada.
+
+**Es PARCIAL**, y eso se descubrió implementándolo: la mayoría de las alianzas
+no tiene código —las del backfill no tienen líder, y sin líder no hay código— y
+un único común trata los campos ausentes como `null`, así que deja pasar **una
+sola** alianza sin código y la segunda explota con un duplicate key que no tiene
+nada que ver con lo que se quiso impedir.
 
 ### Cambios en las colecciones que ya existen
 
@@ -318,9 +325,17 @@ Cada paso deja el sitio funcionando.
    **Hecho.** El backfill corrió en producción: un solo tag en uso (`CHM`), sin
    nombres divergentes todavía. Se corre con `npm run db:backfill-alliances`
    —dry run— y `-- --write` para escribir; es idempotente.
-2. El selector reemplaza al input libre de tag y nombre. **Acá ya se terminó la
+2. ~~El selector reemplaza al input libre de tag y nombre. **Acá ya se terminó la
    divergencia de nombres**, que es el bug visible hoy, y todavía no hay
-   códigos en juego.
+   códigos en juego.~~ **Hecho.** `players.alliance` solo puede guardar una
+   alianza aprobada, y el nombre sale de la entidad — el `allianceName` del
+   cliente dejó de leerse. El "mi alianza no está" deja una pendiente en el
+   panel; no publica nada.
+
+   Se decidió así porque un selector cerrado rompía el formulario el día uno
+   (había UNA alianza en la lista) y un fallback de texto libre devolvía el bug
+   entero. Pedirla encaja con lo que el sistema ya hacía: la petición es una
+   petición y el admin resuelve.
 3. Creación de alianzas con líder + cola en el panel + `joinCode` al aprobar.
 4. El código en `POST` y `PATCH`: entrar a una alianza.
 5. Pantalla del líder: miembros, expulsar, rotar.
