@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LeaderPanel } from "@/components/LeaderPanel";
 import { SelfEditForm } from "@/components/SelfEditForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
 import { WarningIcon } from "@/components/icons";
+import { alliancesCollection, playersCollection } from "@/lib/db";
 import { findSubmissionByToken } from "@/lib/submissions";
 import { formatStatusToken } from "@/lib/tokens";
 import { getDictionary, isLang, type Lang } from "@/lib/i18n";
@@ -33,9 +35,40 @@ export default async function RequestStatusPage({
 
   let doc: SubmissionDoc | null = null;
   let dbDown = false;
+  /**
+   * La alianza que lidera quien abrió esta página, si lidera alguna.
+   *
+   * Se lee acá, en el servidor, y no por la API: el `joinCode` es un secreto y
+   * no tiene por qué existir en ninguna respuesta pública. Esta página ya está
+   * detrás del `statusToken` y lleva `noindex` por la misma razón.
+   */
+  let led: { tag: string; name: string; joinCode: string; members: number } | null = null;
 
   try {
     doc = await findSubmissionByToken(token);
+
+    if (doc) {
+      const alliances = await alliancesCollection();
+      const mine = await alliances.findOne({
+        leaderNameKey: doc.nameKey,
+        status: "approved",
+      });
+
+      /**
+       * Sin `joinCode` no hay nada que mostrar: la alianza está aprobada pero
+       * el código todavía no se generó, que pasa si alguien la reclamó después
+       * de que ya estuviera aprobada. Es un estado válido, no un error.
+       */
+      if (mine?.joinCode) {
+        const players = await playersCollection();
+        led = {
+          tag: mine.tag,
+          name: mine.name,
+          joinCode: mine.joinCode,
+          members: await players.countDocuments({ alliance: mine.tag }),
+        };
+      }
+    }
   } catch (err) {
     console.error("No se pudo leer la petición:", err);
     dbDown = true;
@@ -139,6 +172,16 @@ export default async function RequestStatusPage({
               </p>
             </section>
 
+            {led && (
+              <LeaderPanel
+                t={t}
+                tag={led.tag}
+                name={led.name}
+                joinCode={led.joinCode}
+                members={led.members}
+              />
+            )}
+
             {/* La edición solo existe sobre una aprobada, que es la misma
                 condición que aplica `PATCH /api/submissions/[token]`. Si no,
                 no hay nada publicado que editar. */}
@@ -152,6 +195,15 @@ export default async function RequestStatusPage({
                     youtube: doc.youtube ?? "",
                     untapped: doc.untapped ?? "",
                     allianceTag: doc.allianceTag ?? "",
+                    /**
+                     * Vacío SIEMPRE, incluso si ya está adentro de la alianza.
+                     * El código no se guarda con la ficha —no es un dato del
+                     * jugador, es la llave de otro— así que no hay de dónde
+                     * traerlo. Si vuelve a elegir una alianza con líder, lo
+                     * tiene que poner de nuevo, que es lo correcto: lo que se
+                     * prueba es la pertenencia de hoy.
+                     */
+                    allianceCode: "",
                   }}
                 />
 

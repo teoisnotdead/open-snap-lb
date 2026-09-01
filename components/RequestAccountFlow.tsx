@@ -304,6 +304,7 @@ function FormStep({
     youtube: "",
     untapped: "",
     allianceTag: "",
+    allianceCode: "",
     discord: "",
     email: "",
     note: "",
@@ -386,7 +387,9 @@ function FormStep({
           <AllianceSelect
             t={t}
             value={values.allianceTag}
-            onChange={(tag) => setValues((v) => ({ ...v, allianceTag: tag }))}
+            onChange={(tag) => setValues((v) => ({ ...v, allianceTag: tag, allianceCode: "" }))}
+            code={values.allianceCode}
+            onCodeChange={(c) => setValues((v) => ({ ...v, allianceCode: c }))}
           />
         </div>
         <p className="mt-2.5 text-[12px] text-ink-4">{t.link.allianceHelp}</p>

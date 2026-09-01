@@ -1,10 +1,11 @@
 # Alianzas como entidad
 
-> **Estado: pasos 1 y 2 de 5 implementados.** Existen la colección `alliances` con sus
-> índices, el backfill, el selector del formulario y la cola de alianzas del
-> panel. **No hay líderes ni códigos de invitación todavía** (pasos 3 a 5), así
-> que las secciones que hablan de expulsar, rotar y la credencial del líder
-> siguen siendo propuesta a discutir. Ver "Orden sugerido" al final.
+> **Estado: pasos 1 a 4 de 5 implementados.** Existen la colección `alliances` con sus
+> índices, el backfill, el selector, la cola del panel, el reclamo de liderazgo,
+> el código de invitación y la pantalla donde el líder lo ve. **Falta el paso 5**:
+> la lista de miembros, expulsar y rotar el código. `bannedNameKeys` ya se
+> respeta al entrar, pero todavía no hay forma de escribirlo desde ninguna
+> pantalla. Ver "Orden sugerido" al final.
 
 Hoy la alianza son **dos strings sueltos por jugador**: `alliance` (tag) y
 `allianceName`, declarados en la petición y copiados a `players` al aprobar.
@@ -336,8 +337,19 @@ Cada paso deja el sitio funcionando.
    (había UNA alianza en la lista) y un fallback de texto libre devolvía el bug
    entero. Pedirla encaja con lo que el sistema ya hacía: la petición es una
    petición y el admin resuelve.
-3. Creación de alianzas con líder + cola en el panel + `joinCode` al aprobar.
-4. El código en `POST` y `PATCH`: entrar a una alianza.
+3. ~~Creación de alianzas con líder + cola en el panel + `joinCode` al aprobar.~~
+   **Hecho.** Reclamar el liderazgo exige el `statusToken` de una petición ya
+   APROBADA: liderar habilita repartir el código y expulsar, así que no puede
+   apoyarse en una identidad que nadie miró. El código se genera al aprobar.
+4. ~~El código en `POST` y `PATCH`: entrar a una alianza.~~ **Hecho**, con dos
+   reglas que aparecieron implementando:
+   - El código se pide al **entrar**, no al quedarse. Sin eso, quien ya es
+     miembro tendría que reponerlo cada vez que corrige su Twitch, porque el
+     formulario abre con el campo vacío — el código no es un dato suyo que
+     podamos guardar.
+   - Una alianza **sin líder queda abierta**. No hay nadie que pueda responder
+     por sus miembros, así que exigir un código que nadie reparte la dejaría
+     muerta en vez de protegida. Es también el incentivo para reclamarla.
 5. Pantalla del líder: miembros, expulsar, rotar.
 
 Si el paso 2 tarda en dar problemas, los pasos 3 a 5 pueden esperar: el 1 y el

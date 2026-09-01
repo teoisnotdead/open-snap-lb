@@ -17,6 +17,8 @@ import { alliancesCollection, playersCollection, submissionsCollection } from ".
 import { parseProfileFields } from "../lib/profile-fields";
 import { generateStatusToken } from "../lib/tokens";
 import { parseJoinCode, formatJoinCode, generateJoinCode } from "../lib/alliances";
+import { JOIN_CODE_ALPHABET } from "../lib/join-code";
+import { ALPHABET } from "../lib/tokens";
 import { toNameKey } from "../lib/names";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
@@ -77,6 +79,12 @@ async function main() {
     "RECHAZA un statusToken de 12 (el largo distinto es a propósito)",
     parseJoinCode(generateStatusToken()) === null
   );
+  /**
+   * El alfabeto está escrito dos veces —lib/join-code.ts no puede importar de
+   * lib/tokens.ts sin arrastrar node:crypto al bundle del cliente— así que la
+   * única forma de que no se separen en silencio es preguntarlo acá.
+   */
+  check("el alfabeto no se separó del del statusToken", JOIN_CODE_ALPHABET === ALPHABET);
 
   // --- pedir una alianza ---
   console.log("\nPOST /api/alliances/request:");
@@ -150,6 +158,73 @@ async function main() {
 
   const empty = await parseProfileFields({});
   check("sigue exigiendo algo que publicar", !empty.ok, empty);
+
+  // --- el código de invitación como prueba de pertenencia ---
+  console.log("\ncódigo de alianza:");
+
+  // Le ponemos líder y código, que es lo que hace el panel al aprobar.
+  const theCode = generateJoinCode();
+  await alliances.updateOne(
+    { tag: TAG },
+    { $set: { leaderNameKey: "alguien", joinCode: theCode } }
+  );
+
+  const noCode = await parseProfileFields({ allianceTag: TAG });
+  check(
+    "con líder, NO se entra sin código",
+    !noCode.ok && String((noCode as { error: string }).error).includes("hace falta el código"),
+    noCode
+  );
+
+  const wrong = await parseProfileFields({ allianceTag: TAG, allianceCode: "AAAA2345" });
+  check("rechaza un código que no es", !wrong.ok, wrong);
+
+  const right = await parseProfileFields({ allianceTag: TAG, allianceCode: theCode });
+  check("entra con el código correcto", right.ok, right);
+
+  const messy = await parseProfileFields({
+    allianceTag: TAG,
+    allianceCode: formatJoinCode(theCode).toLowerCase(),
+  });
+  check("acepta el código con guiones y en minúscula", messy.ok, messy);
+
+  /**
+   * El caso que hace usable la edición: quien YA está adentro no tiene que
+   * reponer el código para tocar su Twitch. El formulario abre con el campo
+   * vacío porque el código no es un dato suyo que podamos guardar.
+   */
+  const staying = await parseProfileFields(
+    { allianceTag: TAG },
+    { currentAllianceTag: TAG }
+  );
+  check("quedarse en la alianza NO pide el código", staying.ok, staying);
+
+  // --- el veto ---
+  console.log("\nexpulsados:");
+  await alliances.updateOne({ tag: TAG }, { $set: { bannedNameKeys: [nameKey] } });
+
+  const banned = await parseProfileFields(
+    { allianceTag: TAG, allianceCode: theCode },
+    { nameKey }
+  );
+  check("un expulsado no entra ni con el código correcto", !banned.ok, banned);
+  check(
+    "y NO se le dice que el código está mal",
+    !banned.ok && !String((banned as { error: string }).error).includes("código"),
+    banned
+  );
+
+  const bannedStaying = await parseProfileFields(
+    { allianceTag: TAG },
+    { nameKey, currentAllianceTag: TAG }
+  );
+  check("al expulsado tampoco lo salva ya haber estado adentro", !bannedStaying.ok, bannedStaying);
+
+  const other = await parseProfileFields(
+    { allianceTag: TAG, allianceCode: theCode },
+    { nameKey: "otra persona" }
+  );
+  check("el veto es por persona, no para todos", other.ok, other);
 
   await cleanup();
   await (await getClient()).close();

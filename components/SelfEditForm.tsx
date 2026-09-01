@@ -25,6 +25,7 @@ export interface EditableValues {
   youtube: string;
   untapped: string;
   allianceTag: string;
+  allianceCode: string;
 }
 
 export function SelfEditForm({
@@ -150,7 +151,9 @@ export function SelfEditForm({
         <AllianceSelect
           t={t}
           value={values.allianceTag}
-          onChange={(tag) => setValues((v) => ({ ...v, allianceTag: tag }))}
+          onChange={(tag) => setValues((v) => ({ ...v, allianceTag: tag, allianceCode: "" }))}
+          code={values.allianceCode}
+          onCodeChange={(c) => setValues((v) => ({ ...v, allianceCode: c }))}
         />
       </div>
 

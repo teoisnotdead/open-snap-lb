@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { alliancesCollection, playersCollection } from "@/lib/db";
 import { apiError, json, readJson, requireAdminAuth } from "@/lib/api";
 import { getAdminSession } from "@/lib/admin-auth";
+import { generateJoinCode } from "@/lib/alliances";
 import { parseAllianceName } from "@/lib/socials";
 
 export const dynamic = "force-dynamic";
@@ -78,12 +79,27 @@ export async function POST(
     const now = new Date();
     const session = await getAdminSession();
 
+    /**
+     * El código se genera ACÁ y no al pedir la alianza: uno entregado antes de
+     * la revisión ya circula si la alianza termina rechazada.
+     *
+     * Solo si alguien la lidera. Una alianza sin líder queda ABIERTA —cualquiera
+     * la puede elegir del selector— porque no hay nadie que pueda responder por
+     * sus miembros, y un código que nadie reparte la dejaría muerta en vez de
+     * protegida. Es también el incentivo para que alguien la reclame.
+     */
+    const joinCode =
+      action === "approve" && doc.leaderNameKey && !doc.joinCode
+        ? generateJoinCode()
+        : undefined;
+
     await alliances.updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
           status: action === "approve" ? "approved" : "rejected",
           ...(name ? { name } : {}),
+          ...(joinCode ? { joinCode } : {}),
           ...(action === "reject" ? { rejectionReason: reason } : {}),
           reviewedAt: now,
           reviewedBy: session?.user ?? "admin",
@@ -113,6 +129,10 @@ export async function POST(
       name: name ?? doc.name,
       status: action === "approve" ? "approved" : "rejected",
       propagated,
+      // El código NO se devuelve: lo ve quien lidera en su página de estado, que
+      // es donde puede volver a mirarlo. Mandarlo al panel lo dejaría en el
+      // historial de una pantalla que no es de su dueño.
+      gotJoinCode: Boolean(joinCode),
     });
   } catch (err) {
     console.error("POST /api/admin/alliances/[id] falló:", err);

@@ -187,6 +187,13 @@ const en = {
     allianceRequested:
       "Requested. Once we approve it, it shows up on the list and you can pick it with your code.",
     allianceRequestFailed: "We couldn't register the alliance. Try again in a moment.",
+    allianceCodeLabel: "ALLIANCE CODE",
+    allianceCodePlaceholder: "The code your alliance lead gave you",
+    allianceCodeHelp:
+      "This alliance has a lead, so joining takes their code. Ask them for it — it's the only thing that proves you belong.",
+    allianceLeadQuestion: "Do you lead this alliance?",
+    allianceLeadHelp:
+      "If you do, request it with your tracking code and we'll hand you the join code once we approve it.",
     contactTitle: "How we reach you",
     contactSubtitle:
       "At least one. Private: only the reviewer sees it, and it never appears anywhere public.",
@@ -225,6 +232,19 @@ const en = {
     after3: "Your row gets the verified tick: here, approving is verifying.",
     topOnly:
       "Only accounts in the top 1 000 of the ladder can be requested, which is as far as the official leaderboard goes.",
+  },
+  leader: {
+    title: "You lead",
+    body: "Share this code with your alliance — it's what lets them join without us checking each one by hand.",
+    membersOne: "1 player is in it right now.",
+    membersMany: "{n} players are in it right now.",
+    codeLabel: "Alliance join code",
+    show: "Show",
+    hide: "Hide",
+    copy: "Copy",
+    copied: "Copied",
+    warning:
+      "Anyone holding it can join your alliance, so share it where only your people see it.",
   },
   request: {
     title: "Your request",
@@ -482,6 +502,13 @@ const es: Dictionary = {
     allianceRequested:
       "Pedida. Cuando la aprobemos aparece en la lista y la puedes elegir con tu código.",
     allianceRequestFailed: "No pudimos registrar la alianza. Prueba de nuevo en un momento.",
+    allianceCodeLabel: "CÓDIGO DE LA ALIANZA",
+    allianceCodePlaceholder: "El código que te dio quien la lidera",
+    allianceCodeHelp:
+      "Esta alianza tiene líder, así que para entrar hace falta su código. Pídeselo: es lo único que prueba que perteneces.",
+    allianceLeadQuestion: "¿Lideras esta alianza?",
+    allianceLeadHelp:
+      "Si es así, pídela con tu código de seguimiento y te entregamos el código de invitación cuando la aprobemos.",
     contactTitle: "Cómo te contactamos",
     contactSubtitle:
       "Al menos uno. Privado: solo lo ve quien revisa, y nunca aparece en ningún lado público.",
@@ -520,6 +547,19 @@ const es: Dictionary = {
     after3: "Tu fila se lleva el tick de verificado: aquí aprobar es verificar.",
     topOnly:
       "Solo se pueden pedir cuentas que estén en el top 1 000 del ladder, que es hasta donde llega el leaderboard oficial.",
+  },
+  leader: {
+    title: "Lideras",
+    body: "Comparte este código con tu alianza — es lo que les permite entrar sin que revisemos uno por uno.",
+    membersOne: "Hay 1 jugador dentro ahora mismo.",
+    membersMany: "Hay {n} jugadores dentro ahora mismo.",
+    codeLabel: "Código de invitación de la alianza",
+    show: "Ver",
+    hide: "Ocultar",
+    copy: "Copiar",
+    copied: "Copiado",
+    warning:
+      "Cualquiera que lo tenga puede entrar a tu alianza, así que compártelo donde solo lo vea tu gente.",
   },
   request: {
     title: "Tu petición",

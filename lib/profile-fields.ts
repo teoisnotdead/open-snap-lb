@@ -1,4 +1,4 @@
-import { findAllianceByTag } from "./alliances";
+import { findAllianceByTag, parseJoinCode } from "./alliances";
 import { SOCIAL_PARSERS, parseAlliance } from "./socials";
 import type { SocialField } from "./types";
 
@@ -29,6 +29,13 @@ export interface ProfileFieldsInput {
    * se publicaba con tres nombres distintos — el bug entero.
    */
   allianceTag?: string;
+
+  /**
+   * El código que reparte quien lidera la alianza. Prueba la PERTENENCIA, no la
+   * identidad —de eso se sigue encargando el ojo humano del panel— y solo hace
+   * falta si la alianza tiene líder.
+   */
+  allianceCode?: string;
 }
 
 export interface ProfileFields {
@@ -46,9 +53,31 @@ export type ProfileFieldsResult =
  * la petición inicial son lo mismo, y para la edición los dos significan
  * "sacalo" (ver la ruta PATCH, que reemplaza el bloque entero).
  */
+export interface ProfileFieldsContext {
+  /**
+   * Quién está pidiendo, para poder aplicar el veto de la alianza. Opcional
+   * porque no siempre se conoce, y en ese caso el veto simplemente no corre:
+   * las dos rutas que llaman acá SÍ lo tienen.
+   */
+  nameKey?: string;
+
+  /**
+   * La alianza que esta persona YA tiene publicada, si tiene alguna.
+   *
+   * Existe para que el código se pida al ENTRAR y no al quedarse. Sin esto,
+   * alguien que ya es miembro y solo quiere corregir su Twitch tendría que
+   * reponer el código de la alianza en cada edición —el formulario abre con el
+   * campo vacío, porque el código no es un dato suyo que podamos guardar— y la
+   * edición se volvería un trámite que necesita a un tercero.
+   */
+  currentAllianceTag?: string;
+}
+
 export async function parseProfileFields(
-  input: ProfileFieldsInput | null | undefined
+  input: ProfileFieldsInput | null | undefined,
+  ctx: ProfileFieldsContext = {}
 ): Promise<ProfileFieldsResult> {
+  const { nameKey, currentAllianceTag } = ctx;
   const socials: Partial<Record<SocialField, string>> = {};
   for (const field of SOCIAL_FIELDS) {
     const value = input?.[field]?.trim();
@@ -86,6 +115,58 @@ export async function parseProfileFields(
         error:
           "Esa alianza no existe todavía. Elegí una de la lista, o pedí que la creemos.",
       };
+    }
+
+    /**
+     * El veto va ANTES del código, y el orden importa: si se chequeara después,
+     * a alguien expulsado se le diría "código incorrecto" y volvería a pedírselo
+     * al líder que lo echó a propósito.
+     *
+     * Se chequea aunque la alianza no tenga código: una alianza sin líder no
+     * tiene quién vete a nadie, pero puede haber tenido uno antes.
+     */
+    if (nameKey && alliance.bannedNameKeys.includes(nameKey)) {
+      return {
+        ok: false,
+        error: `No podés entrar a ${alliance.tag}. Si es un error, habla con quien la lidera.`,
+      };
+    }
+
+    /**
+     * El código es lo único que prueba la pertenencia.
+     *
+     * Solo se exige si la alianza TIENE código, o sea si alguien la lidera. Una
+     * alianza sin líder queda abierta porque no hay nadie que pueda responder
+     * por sus miembros: pedir un código que nadie puede dar dejaría la alianza
+     * muerta en vez de protegida.
+     *
+     * La comparación es sobre el valor normalizado, así que da igual si lo
+     * pegaron con guiones o en minúscula.
+     */
+    /**
+     * Solo se pide el código si la alianza CAMBIA. Quedarse donde ya estabas no
+     * es entrar, y el veto de arriba sigue corriendo igual: a un expulsado no lo
+     * salva haber estado adentro.
+     */
+    const joining = alliance.tag !== currentAllianceTag;
+
+    if (alliance.joinCode && joining) {
+      const given = input.allianceCode?.trim()
+        ? parseJoinCode(input.allianceCode.trim())
+        : null;
+
+      if (!given) {
+        return {
+          ok: false,
+          error: `Para entrar a ${alliance.tag} hace falta el código que reparte quien la lidera.`,
+        };
+      }
+      if (given !== alliance.joinCode) {
+        return {
+          ok: false,
+          error: `Ese código no es el de ${alliance.tag}. Pedile el actual a quien la lidera: puede haber cambiado.`,
+        };
+      }
     }
 
     allianceTag = alliance.tag;

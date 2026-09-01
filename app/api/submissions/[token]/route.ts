@@ -72,10 +72,6 @@ export async function PATCH(
     return apiError("Body inválido.");
   }
 
-  const parsed = await parseProfileFields(body);
-  if (!parsed.ok) return apiError(parsed.error);
-  const { socials, allianceTag, allianceName } = parsed.fields;
-
   try {
     const doc = await findSubmissionByToken(token);
 
@@ -91,6 +87,21 @@ export async function PATCH(
         409
       );
     }
+
+    /**
+     * Se valida DESPUÉS de encontrar la petición, y no antes como haría el
+     * instinto de rechazar barato: `parseProfileFields` necesita el `nameKey`
+     * para aplicar el veto de la alianza, y acá es donde se sabe cuál es.
+     *
+     * Sin ese dato, esta ruta —que es justamente la que usaría alguien recién
+     * expulsado— sería el agujero por el que volver a entrar.
+     */
+    const parsed = await parseProfileFields(body, {
+      nameKey: doc.nameKey,
+      currentAllianceTag: doc.allianceTag,
+    });
+    if (!parsed.ok) return apiError(parsed.error);
+    const { socials, allianceTag, allianceName } = parsed.fields;
 
     const conflict = await findSocialConflict(socials, doc.nameKey);
     if (conflict) {

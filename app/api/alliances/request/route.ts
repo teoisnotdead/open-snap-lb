@@ -1,6 +1,7 @@
 import { apiError, json, readJson } from "@/lib/api";
 import { alliancesCollection } from "@/lib/db";
 import { parseAlliance, parseAllianceName, CONTACT_PARSERS } from "@/lib/socials";
+import { findSubmissionByToken } from "@/lib/submissions";
 import type { AllianceDoc } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,16 @@ interface Body {
   name?: string;
   discord?: string;
   email?: string;
+  /**
+   * El `statusToken` de quien reclama liderarla.
+   *
+   * Opcional: se puede pedir una alianza sin liderarla. Si viene, tiene que
+   * corresponder a una petición APROBADA — o sea, a alguien cuya identidad ya
+   * validó un humano. Liderar es la afirmación más fuerte del sistema (habilita
+   * repartir el código y, más adelante, expulsar), así que no puede apoyarse en
+   * una identidad que nadie miró.
+   */
+  statusToken?: string;
 }
 
 /**
@@ -62,6 +73,26 @@ export async function POST(req: Request) {
   }
 
   try {
+    /**
+     * El reclamo de liderazgo. El código NO se genera acá: la alianza todavía
+     * está pendiente, y un código entregado antes de la revisión ya circula si
+     * la alianza termina rechazada. Se genera al aprobar.
+     */
+    let leaderNameKey: string | undefined;
+    if (body.statusToken?.trim()) {
+      const sub = await findSubmissionByToken(body.statusToken.trim());
+      if (!sub) {
+        return apiError("Ese código de seguimiento no corresponde a ninguna petición.", 404);
+      }
+      if (sub.status !== "approved") {
+        return apiError(
+          "Para liderar una alianza tu ficha tiene que estar aprobada. Esperá a que la revisemos.",
+          409
+        );
+      }
+      leaderNameKey = sub.nameKey;
+    }
+
     const alliances = await alliancesCollection();
 
     /**
@@ -88,11 +119,15 @@ export async function POST(req: Request) {
       status: "pending",
       createdAt: now,
       updatedAt: now,
+      ...(leaderNameKey ? { leaderNameKey } : {}),
       ...contact,
     };
 
     await alliances.insertOne(doc);
-    return json({ ok: true, tag: doc.tag, name: doc.name, status: doc.status }, 201);
+    return json(
+      { ok: true, tag: doc.tag, name: doc.name, status: doc.status, claimedLead: Boolean(leaderNameKey) },
+      201
+    );
   } catch (err) {
     if ((err as { code?: number }).code === 11000) {
       return apiError("Esa alianza acaba de ser pedida por otra persona.", 409);

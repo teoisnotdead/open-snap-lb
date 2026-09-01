@@ -22,17 +22,23 @@ interface Alliance {
   name: string;
   members: number;
   hasLeader: boolean;
+  requiresCode: boolean;
 }
 
 export function AllianceSelect({
   t,
   value,
   onChange,
+  code,
+  onCodeChange,
 }: {
   t: Dictionary;
   /** El tag elegido, o "" para "ninguna". */
   value: string;
   onChange: (tag: string) => void;
+  /** El código de invitación, solo si la alianza elegida lo pide. */
+  code: string;
+  onCodeChange: (code: string) => void;
 }) {
   const [alliances, setAlliances] = useState<Alliance[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -56,7 +62,8 @@ export function AllianceSelect({
    * alianza a alguien en silencio — el body reemplaza el bloque entero.
    */
   const options = alliances ?? [];
-  const orphan = value && !options.some((a) => a.tag === value);
+  const chosen = options.find((a) => a.tag === value);
+  const orphan = value && !chosen;
 
   if (failed) {
     return (
@@ -86,6 +93,28 @@ export function AllianceSelect({
           </option>
         ))}
       </select>
+
+      {/**
+       * El código solo aparece si la alianza elegida lo pide, o sea si alguien
+       * la lidera. Una alianza sin líder queda abierta —no hay nadie que pueda
+       * responder por sus miembros— y pedir ahí un código que nadie reparte la
+       * dejaría muerta en vez de protegida.
+       */}
+      {chosen?.requiresCode && (
+        <div className="flex flex-col gap-1.5">
+          <input
+            value={code}
+            onChange={(e) => onCodeChange(e.target.value)}
+            placeholder={t.link.allianceCodePlaceholder}
+            aria-label={t.link.allianceCodeLabel}
+            autoComplete="off"
+            className="w-full min-w-0 rounded-lg border border-line-strong bg-bg px-3.5 py-2.5 text-[13.5px] tracking-[0.08em] outline-none focus:border-accent"
+          />
+          <p className="text-[12px] leading-relaxed text-ink-4">
+            {t.link.allianceCodeHelp}
+          </p>
+        </div>
+      )}
 
       {/* Se ofrece pedirla en vez de dejar escribir el tag a mano: un campo
           libre de salida devolvería exactamente el problema que el selector

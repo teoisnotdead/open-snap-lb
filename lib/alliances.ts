@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { alliancesCollection, playersCollection } from "./db";
-import { ALPHABET } from "./tokens";
+import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from "./join-code";
 import type { AllianceDoc } from "./types";
 
 /**
@@ -13,45 +13,20 @@ import type { AllianceDoc } from "./types";
  */
 
 /**
- * Longitud del código de invitación.
- *
- * OCHO, contra los doce del `statusToken`, y la diferencia es funcional: los
- * dos códigos van a circular por el mismo Discord, y `parseStatusToken` exige
- * exactamente 12 caracteres. Con largos distintos, un código pegado en el campo
- * equivocado se rechaza por estructura —sin tocar la base— y se le puede decir
- * a la persona CUÁL de los dos puso mal. Con largos iguales, ese error termina
- * en un 404 genérico y en un mensaje preguntando qué pasó.
- *
- * 30^8 ≈ 6.6 × 10^11. Es menos que el token de estado, y está bien que lo sea:
- * el token es la llave de UNA ficha y es el único factor; el código solo suma
- * pertenencia a una alianza sobre una identidad que ya validó un humano.
+ * Genera un código de invitación. Vive de este lado y no en `lib/join-code.ts`
+ * porque usa `node:crypto`, y ese módulo tiene que poder importarse desde el
+ * cliente — la pantalla del líder muestra el código.
  */
-export const JOIN_CODE_LENGTH = 8;
-
-/** Mismo alfabeto Crockford del `statusToken`: ver el porqué en lib/tokens.ts. */
 export function generateJoinCode(): string {
   let out = "";
   for (let i = 0; i < JOIN_CODE_LENGTH; i++) {
-    out += ALPHABET[randomInt(ALPHABET.length)];
+    out += JOIN_CODE_ALPHABET[randomInt(JOIN_CODE_ALPHABET.length)];
   }
   return out;
 }
 
-/** Para mostrar: `K7M2-QW9X`. Los guiones no se guardan. */
-export function formatJoinCode(code: string): string {
-  return (code.match(/.{1,4}/g) ?? []).join("-");
-}
-
-/**
- * Normaliza lo que la persona pega: acepta guiones, espacios y minúscula.
- * Devuelve null si no puede ser un código, para no ir a la base al pedo.
- */
-export function parseJoinCode(input: string): string | null {
-  const cleaned = input.trim().toUpperCase().replace(/[\s-]/g, "");
-  if (cleaned.length !== JOIN_CODE_LENGTH) return null;
-  if (![...cleaned].every((ch) => ALPHABET.includes(ch))) return null;
-  return cleaned;
-}
+// Reexportadas para que quien ya importaba de acá no tenga que saber del corte.
+export { JOIN_CODE_LENGTH, formatJoinCode, parseJoinCode } from "./join-code";
 
 /** Una alianza tal como la ve el público. Sin `joinCode`, obviamente. */
 export interface AlliancePublic {
@@ -68,6 +43,20 @@ export interface AlliancePublic {
    * como el `nameKey` del líder porque para eso alcanza.
    */
   hasLeader: boolean;
+
+  /**
+   * Si hace falta el código del líder para entrar.
+   *
+   * Es lo mismo que tener líder, y va como campo aparte igual porque es lo que
+   * la UI necesita saber: si pedir el código o no. Que hoy coincidan es una
+   * consecuencia —solo una alianza con líder tiene código— y no algo en lo que
+   * el formulario deba apoyarse.
+   *
+   * Una alianza SIN líder queda abierta, y no es un descuido: no hay nadie que
+   * pueda responder por quién pertenece a ella, así que exigir un código sería
+   * pedir algo que nadie puede dar. Es también el incentivo para reclamarla.
+   */
+  requiresCode: boolean;
 }
 
 /**
@@ -88,7 +77,7 @@ export async function listApprovedAlliances(): Promise<AlliancePublic[]> {
     alliances
       .find(
         { status: "approved" },
-        { projection: { tag: 1, name: 1, leaderNameKey: 1 } }
+        { projection: { tag: 1, name: 1, leaderNameKey: 1, joinCode: 1 } }
       )
       .sort({ tag: 1 })
       .toArray(),
@@ -107,6 +96,7 @@ export async function listApprovedAlliances(): Promise<AlliancePublic[]> {
     name: d.name,
     members: byTag.get(d.tag) ?? 0,
     hasLeader: Boolean(d.leaderNameKey),
+    requiresCode: Boolean(d.joinCode),
   }));
 }
 
