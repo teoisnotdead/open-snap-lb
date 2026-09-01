@@ -1,6 +1,7 @@
 import type { Collection, IndexDescription } from "mongodb";
 import { getDb } from "./mongodb";
 import type {
+  AllianceDoc,
   PlayerDoc,
   SnapshotDoc,
   SubmissionDoc,
@@ -16,6 +17,7 @@ export const COLLECTIONS = {
   seasonResults: "seasonResults",
   boardBaselines: "boardBaselines",
   boardDailies: "boardDailies",
+  alliances: "alliances",
 } as const;
 
 export async function playersCollection(): Promise<Collection<PlayerDoc>> {
@@ -41,6 +43,11 @@ export async function submissionsCollection(): Promise<Collection<SubmissionDoc>
 export async function boardBaselinesCollection(): Promise<Collection<BoardBaselineDoc>> {
   const db = await getDb();
   return db.collection<BoardBaselineDoc>(COLLECTIONS.boardBaselines);
+}
+
+export async function alliancesCollection(): Promise<Collection<AllianceDoc>> {
+  const db = await getDb();
+  return db.collection<AllianceDoc>(COLLECTIONS.alliances);
 }
 
 export async function boardDailiesCollection(): Promise<Collection<BoardDailyDoc>> {
@@ -185,6 +192,41 @@ export const SUBMISSION_INDEXES: IndexDescription[] = [
   },
 ];
 
+export const ALLIANCE_INDEXES: IndexDescription[] = [
+  /**
+   * El índice que hace que toda la entidad valga la pena: es lo que vuelve
+   * IMPOSIBLE que existan dos "JOB", en vez de improbable. Sin esto, `alliances`
+   * es una tabla más donde el mismo tag se puede escribir dos veces y volvemos
+   * al problema que la colección vino a resolver.
+   */
+  { key: { tag: 1 }, name: "uniq_tag", unique: true },
+
+  /**
+   * Mismo caso que `uniq_status_token`: una colisión metería a alguien en la
+   * alianza equivocada. Con 30^8 ≈ 6.6 × 10^11 es improbable; el índice lo
+   * vuelve imposible.
+   *
+   * PARCIAL, y no es un detalle: la mayoría de las alianzas NO tiene código —
+   * las que crea el backfill no tienen líder, y sin líder no hay código. Un
+   * índice único común trata los campos ausentes como `null` y deja pasar UN
+   * solo documento sin código, así que la segunda alianza sin líder explotaría
+   * con un duplicate key que no tiene nada que ver con lo que se quiso impedir.
+   */
+  {
+    key: { joinCode: 1 },
+    name: "uniq_join_code",
+    unique: true,
+    partialFilterExpression: { joinCode: { $exists: true } },
+  },
+
+  // La cola del panel: pendientes primero, más viejas arriba. Igual que en
+  // `submissions`, porque es la misma pantalla con otra entidad.
+  { key: { status: 1, createdAt: 1 }, name: "queue" },
+
+  // Para la pantalla del líder: "¿de qué alianza soy dueño?".
+  { key: { leaderNameKey: 1 }, name: "by_leader" },
+];
+
 export const SNAPSHOT_INDEXES: IndexDescription[] = [
   // Query principal: el histórico de un jugador para la gráfica de recharts.
   { key: { nameKey: 1, timestamp: -1 }, name: "player_history" },
@@ -208,6 +250,7 @@ export async function ensureIndexes(): Promise<void> {
   const seasonResults = await seasonResultsCollection();
   const baselines = await boardBaselinesCollection();
   const dailies = await boardDailiesCollection();
+  const alliances = await alliancesCollection();
 
   await players.createIndexes(PLAYER_INDEXES);
   await snapshots.createIndexes(SNAPSHOT_INDEXES);
@@ -215,4 +258,5 @@ export async function ensureIndexes(): Promise<void> {
   await seasonResults.createIndexes(SEASON_RESULT_INDEXES);
   await baselines.createIndexes(BOARD_BASELINE_INDEXES);
   await dailies.createIndexes(BOARD_DAILY_INDEXES);
+  await alliances.createIndexes(ALLIANCE_INDEXES);
 }

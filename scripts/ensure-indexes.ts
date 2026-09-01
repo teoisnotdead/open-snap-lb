@@ -15,6 +15,7 @@ import {
   seasonResultsCollection,
   boardBaselinesCollection,
   boardDailiesCollection,
+  alliancesCollection,
 } from "../lib/db";
 
 /**
@@ -57,6 +58,7 @@ async function main() {
     seasonResults: (await seasonResultsCollection()) as unknown as Collection<Document>,
     boardBaselines: (await boardBaselinesCollection()) as unknown as Collection<Document>,
     boardDailies: (await boardDailiesCollection()) as unknown as Collection<Document>,
+    alliances: (await alliancesCollection()) as unknown as Collection<Document>,
   };
 
   for (const { collection, index } of OBSOLETE) {

@@ -391,7 +391,7 @@ filtrado.
 | [`docs/api.md`](docs/api.md) | Las rutas propias, la cola de revisión y las decisiones de seguridad |
 | [`docs/frontend.md`](docs/frontend.md) | Rutas, i18n, gráficas y las trampas encontradas |
 | [`docs/troubleshooting-dns.md`](docs/troubleshooting-dns.md) | El problema de SRV/c-ares y cómo distinguirlo del de access list |
-| [`docs/alliances.md`](docs/alliances.md) | **Propuesta**, sin implementar: alianzas como entidad, con líder y código de invitación |
+| [`docs/alliances.md`](docs/alliances.md) | Alianzas como entidad, con líder y código de invitación. Paso 1 de 5 implementado |
 
 ---
 

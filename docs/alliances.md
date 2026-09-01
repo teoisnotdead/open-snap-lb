@@ -1,8 +1,10 @@
 # Alianzas como entidad
 
-> **Estado: propuesta.** Nada de esto está implementado. El objetivo del
-> documento es que las decisiones se discutan antes de que haya código que
-> defender.
+> **Estado: paso 1 de 5 implementado.** Existen la colección `alliances` con sus
+> índices, el backfill y `GET /api/alliances`. **Ninguna escritura existente
+> cambió**: el formulario sigue tomando el tag como texto libre, y no hay
+> líderes ni códigos todavía. El resto sigue siendo propuesta a discutir. Ver
+> "Orden sugerido" al final.
 
 Hoy la alianza son **dos strings sueltos por jugador**: `alliance` (tag) y
 `allianceName`, declarados en la petición y copiados a `players` al aprobar.
@@ -311,8 +313,11 @@ script sería inventar una validación que nunca ocurrió.
 
 Cada paso deja el sitio funcionando.
 
-1. `alliances` + índices + backfill + `GET /api/alliances`. Sin cambiar
-   ninguna escritura: solo aparece la entidad y se ve que los datos cierran.
+1. ~~`alliances` + índices + backfill + `GET /api/alliances`. Sin cambiar
+   ninguna escritura: solo aparece la entidad y se ve que los datos cierran.~~
+   **Hecho.** El backfill corrió en producción: un solo tag en uso (`CHM`), sin
+   nombres divergentes todavía. Se corre con `npm run db:backfill-alliances`
+   —dry run— y `-- --write` para escribir; es idempotente.
 2. El selector reemplaza al input libre de tag y nombre. **Acá ya se terminó la
    divergencia de nombres**, que es el bug visible hoy, y todavía no hay
    códigos en juego.

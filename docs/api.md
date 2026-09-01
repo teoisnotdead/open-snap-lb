@@ -99,6 +99,37 @@ almacenamiento en `data-model.md`).
 
 ---
 
+## `GET /api/alliances`
+
+Las alianzas aprobadas. Alimenta el selector que va a reemplazar al input de
+texto libre donde hoy cada persona escribe el nombre de su alianza como se le
+ocurre — que es el bug que motivó la entidad (ver [`alliances.md`](alliances.md)).
+
+```jsonc
+{
+  "count": 1,
+  "alliances": [
+    { "tag": "CHM", "name": "Chamosquitos", "members": 1, "hasLeader": false }
+  ]
+}
+```
+
+`members` sale de agrupar `players` por `alliance`, no de un contador guardado:
+la membresía vive en `players` y un contador denormalizado sería el mismo dato en
+dos lugares. `players` solo tiene a los jugadores **aprobados**, no a los 1000
+del ladder, así que agrupar la colección entera es barato.
+
+`hasLeader` distingue dos cosas que si no se ven igual: una alianza a la que se
+puede entrar con su código, y una que salió del backfill y a la que **no se puede
+entrar** hasta que alguien la reclame y un admin se lo apruebe.
+
+Es pública a propósito: los tags ya se ven en la tabla del leaderboard, así que
+la lista no revela nada nuevo. Lo único que no puede salir de acá es el
+`joinCode`, y por eso la respuesta se arma campo por campo en
+`listApprovedAlliances` en vez de devolver los documentos.
+
+---
+
 ## `POST /api/submissions`
 
 Crea una petición. **No publica nada**: deja un documento `pending`.

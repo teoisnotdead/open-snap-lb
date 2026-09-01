@@ -1,7 +1,8 @@
 # Modelo de datos
 
 Base: `opensnaplb` en el cluster `snap-lb` (Atlas M0, 512 MB).
-Cuatro colecciones: `players`, `snapshots`, `submissions` y `seasonResults`.
+Siete colecciones: `players`, `snapshots`, `submissions`, `alliances`,
+`seasonResults`, `boardBaselines` y `boardDailies`.
 
 > Jerarquía de Atlas, que confunde: **proyecto** `open-snap-lb` → **cluster**
 > `snap-lb` → **base** `opensnaplb` → colecciones. La base no se crea desde la
@@ -169,6 +170,56 @@ El tercero es el que importa: **una sola petición pendiente por nombre.** Sin �
 cualquiera puede mandar cien peticiones del mismo jugador y dejar el panel
 inusable. El filtro parcial es lo que permite que sí convivan varias
 aprobadas/rechazadas históricas del mismo nombre — solo las pendientes compiten.
+
+---
+
+## `alliances`
+
+Un doc por alianza. La entidad que antes no existía: la alianza eran **dos
+strings sueltos por jugador**, así que cada miembro guardaba su propia copia del
+nombre y la misma alianza terminaba publicada escrita de tres formas.
+
+> **Parcialmente implementada.** Hoy existen la colección, sus índices, el
+> backfill y `GET /api/alliances`. El líder, el código de invitación y el
+> selector del formulario todavía no: el plan completo y sus decisiones están
+> en [`alliances.md`](alliances.md).
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `tag` | string | 2–5 alfanuméricos, mayúsculas. **Único.** Clave de identidad |
+| `name` | string | Nombre largo, ≤40 chars. Acá vive el único canónico |
+| `leaderNameKey?` | string | Quién la lidera. Su `statusToken` es la credencial |
+| `joinCode?` | string | 8 caracteres. Se genera al **aprobar**, no al pedir |
+| `joinCodeRotatedAt?` | Date | Deja ver si el líder ya rotó, y cuándo |
+| `bannedNameKeys` | string[] | Expulsados. No pueden volver aunque tengan un código válido |
+| `status` | `pending`/`approved`/`rejected` | Crear una alianza pasa por el panel |
+| `rejectionReason?` `reviewedAt?` `reviewedBy?` | | Igual que en `submissions` |
+| `createdAt` `updatedAt` | Date | |
+
+**La membresía no vive acá.** Sigue en `players.alliance`, que ahora referencia
+un tag que existe en vez de ser texto libre. Guardar además un array de miembros
+sería el mismo dato en dos lugares, y el que se desincroniza es siempre el que
+nadie mira.
+
+`players.allianceName` queda como **copia denormalizada**, y es una decisión: el
+merge del leaderboard —la ruta más caliente del sitio— sigue siendo una sola
+lectura de `players`, sin join. Se paga al renombrar una alianza, que obliga a un
+`updateMany` sobre sus miembros; es una escritura rara y sobre pocos docs.
+
+### Índices
+
+```js
+{ tag: 1 } unique                                  // que no existan dos "JOB"
+{ joinCode: 1 } unique, partial: {$exists: true}   // ver abajo
+{ status: 1, createdAt: 1 }                        // la cola del panel
+{ leaderNameKey: 1 }                               // "¿de qué alianza soy dueño?"
+```
+
+**`uniq_join_code` es PARCIAL, y no es un detalle.** La mayoría de las alianzas
+no tiene código: las que crea el backfill no tienen líder, y sin líder no hay
+código. Un índice único común trata los campos ausentes como `null` y deja pasar
+**un solo** documento sin código, así que la segunda alianza sin líder explotaría
+con un duplicate key que no tiene nada que ver con lo que se quiso impedir.
 
 ---
 

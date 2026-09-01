@@ -100,6 +100,78 @@ export interface PlayerDoc {
 export type SubmissionStatus = "pending" | "approved" | "rejected";
 
 /**
+ * Una alianza, como entidad con dueño.
+ *
+ * Existe porque antes no existía: la alianza eran DOS STRINGS SUELTOS por
+ * jugador (`players.alliance` y `players.allianceName`), así que cada miembro
+ * guardaba su propia copia del nombre y la misma alianza terminaba escrita de
+ * tres formas distintas. El índice único sobre `tag` es lo que vuelve eso
+ * IMPOSIBLE en vez de improbable.
+ *
+ * Sigue siendo un dato indemostrable —la API oficial no expone alianzas, ver
+ * docs/leaderboard-api.md §3— y por eso crearla pasa por el panel. Lo que
+ * cambia es la escala de esa revisión: una vez por alianza, no una por
+ * jugador. El plan completo está en docs/alliances.md.
+ *
+ * La MEMBRESÍA no vive acá: sigue en `players.alliance`, que ahora referencia
+ * un `tag` que existe en vez de ser texto libre. Guardar además un array de
+ * miembros sería el mismo dato en dos lugares, y el que se desincroniza es
+ * siempre el que nadie mira.
+ */
+export interface AllianceDoc {
+  _id?: ObjectId;
+
+  /** Tag corto en mayúsculas (ej. "JOB"). Único: es la clave de identidad. */
+  tag: string;
+
+  /** Nombre largo, tal cual lo escribieron. Acá vive el único canónico. */
+  name: string;
+
+  /**
+   * El `nameKey` de quien la lidera, si alguien la reclamó.
+   *
+   * Opcional porque el backfill crea las alianzas que ya estaban cargadas como
+   * texto libre, y a esa gente no la verificó nadie. Una alianza sin líder no
+   * tiene código, así que no se puede entrar hasta que alguien la reclame y un
+   * admin se lo apruebe.
+   *
+   * Su `statusToken` es la credencial del líder: no hay un tercer secreto. El
+   * costo de esa decisión está en docs/alliances.md.
+   */
+  leaderNameKey?: string;
+
+  /**
+   * Código de invitación que el líder reparte. 8 caracteres, contra los 12 del
+   * `statusToken`: pegar uno donde va el otro se rechaza por estructura, y se
+   * puede decir CUÁL de los dos códigos está mal en vez de un 404 genérico.
+   *
+   * Se genera al APROBAR la alianza, nunca al pedirla: un código entregado
+   * antes de la revisión ya circula si la alianza termina rechazada.
+   */
+  joinCode?: string;
+  joinCodeRotatedAt?: Date;
+
+  /**
+   * Expulsados. No pueden volver a entrar aunque tengan un código válido.
+   *
+   * Sin esta lista, expulsar no expulsa a nadie: el echado todavía tiene el
+   * código y vuelve a entrar en diez segundos. La alternativa era que expulsar
+   * forzara a rotar, y eso le cambia el código a los otros treinta miembros
+   * para sacar a uno — con ese precio, nadie echa a nadie nunca.
+   */
+  bannedNameKeys: string[];
+
+  /** La creación pasa por el panel, igual que una petición. */
+  status: SubmissionStatus;
+  rejectionReason?: string;
+  reviewedAt?: Date;
+  reviewedBy?: string;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
  * Una petición para aparecer en la tabla con links, alianza y demás.
  *
  * El modelo es de PETICIÓN, no de reclamo: entrar acá no publica nada. Un admin
