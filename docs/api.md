@@ -101,15 +101,16 @@ almacenamiento en `data-model.md`).
 
 ## `GET /api/alliances`
 
-Las alianzas aprobadas. Alimenta el selector que va a reemplazar al input de
-texto libre donde hoy cada persona escribe el nombre de su alianza como se le
-ocurre — que es el bug que motivó la entidad (ver [`alliances.md`](alliances.md)).
+Las alianzas aprobadas. Alimenta el selector que reemplazó al input de texto
+libre donde cada persona escribía el nombre de su alianza como se le ocurría —
+el bug que motivó la entidad (ver [`alliances.md`](alliances.md)).
 
 ```jsonc
 {
   "count": 1,
   "alliances": [
-    { "tag": "CHM", "name": "Chamosquitos", "members": 1, "hasLeader": false }
+    { "tag": "CHM", "name": "Chamosquitos", "members": 1,
+      "hasLeader": false, "requiresCode": false }
   ]
 }
 ```
@@ -119,14 +120,70 @@ la membresía vive en `players` y un contador denormalizado sería el mismo dato
 dos lugares. `players` solo tiene a los jugadores **aprobados**, no a los 1000
 del ladder, así que agrupar la colección entera es barato.
 
-`hasLeader` distingue dos cosas que si no se ven igual: una alianza a la que se
-puede entrar con su código, y una que salió del backfill y a la que **no se puede
-entrar** hasta que alguien la reclame y un admin se lo apruebe.
+`requiresCode` es lo que el formulario necesita: si pedir o no el código del
+líder. Una alianza **sin líder queda abierta** —no hay nadie que pueda responder
+por sus miembros, y exigir un código que nadie reparte la dejaría muerta en vez
+de protegida—, así que hoy `requiresCode` coincide con `hasLeader`. Van como
+campos separados porque esa coincidencia es una consecuencia, no algo en lo que
+el formulario deba apoyarse.
 
 Es pública a propósito: los tags ya se ven en la tabla del leaderboard, así que
 la lista no revela nada nuevo. Lo único que no puede salir de acá es el
 `joinCode`, y por eso la respuesta se arma campo por campo en
 `listApprovedAlliances` en vez de devolver los documentos.
+
+---
+
+## `POST /api/alliances/request`
+
+Pide que se cree una alianza. **No publica nada**: deja una `pending` para el
+panel, igual que una petición de jugador.
+
+Va en `/request` y no como `POST` sobre `/api/alliances` para no dejar el
+permiso de escritura pegado al de lectura de la lista pública.
+
+Acepta un `statusToken` opcional: es el reclamo de liderazgo. Tiene que
+corresponder a una petición **aprobada** — liderar habilita repartir el código y
+expulsar, así que no puede apoyarse en una identidad que nadie miró. El
+`joinCode` **no** se genera acá: uno entregado antes de la revisión ya circula
+si la alianza termina rechazada.
+
+---
+
+## `POST /api/alliances/[tag]/members`
+
+El líder expulsa (`action: "kick"`) o readmite (`action: "unban"`). La
+credencial es su propio `statusToken`, en el body.
+
+Es la única escritura pública sobre la ficha de OTRA persona. Queda acotada a
+`alliance` y `allianceName`, no toca identidad ni canales ni contacto, y el
+`updateOne` filtra por `alliance: <tag>` — sin esa condición un líder podría
+despublicarle la alianza a cualquiera mandando un `nameKey` al azar.
+
+Expulsar deja rastro sobre la **persona** (`bannedNameKeys`), no sobre el
+código. Sin esa lista, expulsar no expulsaría a nadie: el echado todavía tiene el
+código y vuelve a entrar en diez segundos.
+
+El líder no se puede expulsar solo (409): dejaría un líder vetado de su propia
+alianza, un estado que ninguna pantalla sabe explicar.
+
+---
+
+## `POST /api/alliances/[tag]/rotate`
+
+Código de invitación nuevo. Misma credencial.
+
+**No expulsa a los que ya están adentro.** La membresía es un estado, no una
+sesión: si rotar vaciara la alianza sería un botón que nadie se anima a tocar
+—lo mismo que no tenerlo— justo el día que hace falta. Para sacar a alguien está
+`kick`, que es quirúrgico y no le cambia el código a los demás.
+
+### Sobre el 401/403 de las tres
+
+Un token inexistente, uno de una petición no aprobada y uno de alguien que no
+lidera esa alianza dan **todos el mismo 403**. Distinguirlos convertiría la ruta
+en un oráculo: con un token cualquiera se podría averiguar si existe, si está
+aprobado y qué alianza lidera.
 
 ---
 

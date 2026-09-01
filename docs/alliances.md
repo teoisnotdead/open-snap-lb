@@ -1,11 +1,9 @@
 # Alianzas como entidad
 
-> **Estado: pasos 1 a 4 de 5 implementados.** Existen la colección `alliances` con sus
-> índices, el backfill, el selector, la cola del panel, el reclamo de liderazgo,
-> el código de invitación y la pantalla donde el líder lo ve. **Falta el paso 5**:
-> la lista de miembros, expulsar y rotar el código. `bannedNameKeys` ya se
-> respeta al entrar, pero todavía no hay forma de escribirlo desde ninguna
-> pantalla. Ver "Orden sugerido" al final.
+> **Estado: implementado.** Existen la colección `alliances` con sus
+> Los cinco pasos están hechos. Lo que sigue describiendo el documento es lo que
+> el código hace, salvo donde diga lo contrario. Las decisiones que aparecieron
+> recién al implementar están marcadas en "Orden sugerido", al final.
 
 Hoy la alianza son **dos strings sueltos por jugador**: `alliance` (tag) y
 `allianceName`, declarados en la petición y copiados a `players` al aprobar.
@@ -350,8 +348,24 @@ Cada paso deja el sitio funcionando.
    - Una alianza **sin líder queda abierta**. No hay nadie que pueda responder
      por sus miembros, así que exigir un código que nadie reparte la dejaría
      muerta en vez de protegida. Es también el incentivo para reclamarla.
-5. Pantalla del líder: miembros, expulsar, rotar.
+5. ~~Pantalla del líder: miembros, expulsar, rotar.~~ **Hecho.** Tres cosas que
+   no estaban previstas y salieron implementando:
+   - **La lista de miembros no necesita ruta.** La página de estado ya está
+     detrás del `statusToken` y se renderiza en el servidor, así que se lee de
+     `players` ahí mismo. Una ruta habría hecho viajar el token para leer algo
+     que la página ya tiene.
+   - **El líder no se puede expulsar solo** (409). Es el primer botón que
+     alguien aprieta para probar, y dejaría un líder vetado de su propia
+     alianza: un estado que ninguna pantalla sabe explicar.
+   - **El `updateOne` del expulsado filtra por `alliance: <tag>`.** Sin esa
+     condición, un líder podía despublicarle la alianza a cualquiera mandando
+     un `nameKey` al azar, incluido alguien de otra alianza.
 
-Si el paso 2 tarda en dar problemas, los pasos 3 a 5 pueden esperar: el 1 y el
-2 solos ya arreglan lo que hoy está mal, y no agregan un solo secreto nuevo al
-sistema.
+   El 401/403 no distingue entre token inexistente, petición no aprobada y no
+   liderar: con tres respuestas distintas, la ruta sería un oráculo para saber
+   si un token existe y qué alianza lidera.
+
+Lo que queda pendiente y no es de estos cinco pasos: **transferir el liderazgo**
+sigue siendo una operación de admin, y no hay pantalla para reasignarlo desde el
+panel. Mientras tanto un líder que abandona el juego deja su alianza sin quién
+rote el código — la alianza sigue funcionando, pero nadie puede echar a nadie.

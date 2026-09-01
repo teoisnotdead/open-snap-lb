@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LeaderPanel } from "@/components/LeaderPanel";
+import { LeaderPanel, type Member } from "@/components/LeaderPanel";
 import { SelfEditForm } from "@/components/SelfEditForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
 import { WarningIcon } from "@/components/icons";
-import { alliancesCollection, playersCollection } from "@/lib/db";
+import { listAllianceMembers } from "@/lib/alliances";
+import { alliancesCollection } from "@/lib/db";
 import { findSubmissionByToken } from "@/lib/submissions";
 import { formatStatusToken } from "@/lib/tokens";
 import { getDictionary, isLang, type Lang } from "@/lib/i18n";
@@ -42,7 +43,13 @@ export default async function RequestStatusPage({
    * no tiene por qué existir en ninguna respuesta pública. Esta página ya está
    * detrás del `statusToken` y lleva `noindex` por la misma razón.
    */
-  let led: { tag: string; name: string; joinCode: string; members: number } | null = null;
+  let led: {
+    tag: string;
+    name: string;
+    joinCode: string;
+    members: Member[];
+    banned: string[];
+  } | null = null;
 
   try {
     doc = await findSubmissionByToken(token);
@@ -60,12 +67,12 @@ export default async function RequestStatusPage({
        * de que ya estuviera aprobada. Es un estado válido, no un error.
        */
       if (mine?.joinCode) {
-        const players = await playersCollection();
         led = {
           tag: mine.tag,
           name: mine.name,
           joinCode: mine.joinCode,
-          members: await players.countDocuments({ alliance: mine.tag }),
+          members: await listAllianceMembers(mine.tag),
+          banned: mine.bannedNameKeys ?? [],
         };
       }
     }
@@ -179,6 +186,8 @@ export default async function RequestStatusPage({
                 name={led.name}
                 joinCode={led.joinCode}
                 members={led.members}
+                banned={led.banned}
+                statusToken={doc.statusToken}
               />
             )}
 

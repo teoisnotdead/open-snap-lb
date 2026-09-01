@@ -245,6 +245,20 @@ const en = {
     copied: "Copied",
     warning:
       "Anyone holding it can join your alliance, so share it where only your people see it.",
+    rotate: "New code",
+    rotating: "Generating…",
+    rotateHelp:
+      "Rotate it if it leaked. Nobody already in gets removed — it only cuts off whoever hadn't joined yet.",
+    membersTitle: "Who's in",
+    kick: "Remove",
+    kicking: "Removing…",
+    kickConfirm: "Remove {name} from the alliance?",
+    kickHelp:
+      "Removing takes the tag off their row and stops them rejoining, even with a valid code. You can undo it.",
+    bannedTitle: "Removed",
+    unban: "Let back in",
+    empty: "Nobody has joined with your code yet.",
+    failed: "That didn't go through. Try again in a moment.",
   },
   request: {
     title: "Your request",
@@ -560,6 +574,20 @@ const es: Dictionary = {
     copied: "Copiado",
     warning:
       "Cualquiera que lo tenga puede entrar a tu alianza, así que compártelo donde solo lo vea tu gente.",
+    rotate: "Código nuevo",
+    rotating: "Generando…",
+    rotateHelp:
+      "Rótalo si se filtró. No saca a nadie que ya esté dentro — solo corta a quien todavía no había entrado.",
+    membersTitle: "Quiénes están",
+    kick: "Sacar",
+    kicking: "Sacando…",
+    kickConfirm: "¿Sacar a {name} de la alianza?",
+    kickHelp:
+      "Sacar a alguien le quita el tag de su fila y le impide volver a entrar, aunque tenga un código válido. Se puede deshacer.",
+    bannedTitle: "Fuera",
+    unban: "Dejar entrar",
+    empty: "Todavía no entró nadie con tu código.",
+    failed: "No se pudo. Prueba de nuevo en un momento.",
   },
   request: {
     title: "Tu petición",

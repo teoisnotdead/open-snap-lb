@@ -16,7 +16,12 @@ import { getClient } from "../lib/mongodb";
 import { alliancesCollection, playersCollection, submissionsCollection } from "../lib/db";
 import { parseProfileFields } from "../lib/profile-fields";
 import { generateStatusToken } from "../lib/tokens";
-import { parseJoinCode, formatJoinCode, generateJoinCode } from "../lib/alliances";
+import {
+  parseJoinCode,
+  formatJoinCode,
+  generateJoinCode,
+  listAllianceMembers,
+} from "../lib/alliances";
 import { JOIN_CODE_ALPHABET } from "../lib/join-code";
 import { ALPHABET } from "../lib/tokens";
 import { toNameKey } from "../lib/names";
@@ -26,7 +31,9 @@ const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const TAG = "ZQT";
 const TAG2 = "ZQT2";
 const NAME = "AllianceTestPlayer";
+const LEADER = "AllianceTestLeader";
 const nameKey = toNameKey(NAME);
+const leaderKey = toNameKey(LEADER);
 
 let pass = 0;
 let fail = 0;
@@ -50,13 +57,22 @@ async function requestAlliance(body: Record<string, string>) {
   return { status: res.status, body: await res.json() };
 }
 
+async function post(path: string, body: Record<string, unknown>) {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return { status: res.status, body: await res.json() };
+}
+
 async function cleanup() {
   const alliances = await alliancesCollection();
   const players = await playersCollection();
   const submissions = await submissionsCollection();
   await alliances.deleteMany({ tag: { $in: [TAG, TAG2] } });
-  await players.deleteMany({ nameKey });
-  await submissions.deleteMany({ nameKey });
+  await players.deleteMany({ nameKey: { $in: [nameKey, leaderKey] } });
+  await submissions.deleteMany({ nameKey: { $in: [nameKey, leaderKey] } });
 }
 
 async function main() {
@@ -225,6 +241,118 @@ async function main() {
     { nameKey: "otra persona" }
   );
   check("el veto es por persona, no para todos", other.ok, other);
+
+  // --- expulsar y rotar, contra las rutas reales ---
+  console.log("\nel líder: expulsar y rotar:");
+
+  const players = await playersCollection();
+  const submissions = await submissionsCollection();
+  const leaderToken = generateStatusToken();
+  const memberToken = generateStatusToken();
+  const now = new Date();
+
+  // Un líder y un miembro, aprobados y publicados, como los deja el panel.
+  await alliances.updateOne(
+    { tag: TAG },
+    { $set: { leaderNameKey: leaderKey, joinCode: theCode, bannedNameKeys: [] } }
+  );
+  await submissions.insertMany([
+    { statusToken: leaderToken, nameKey: leaderKey, playerName: LEADER, discord: "x", status: "approved" as const, createdAt: now, updatedAt: now },
+    { statusToken: memberToken, nameKey: nameKey, playerName: NAME, allianceTag: TAG, allianceName: "Zeta Quest", discord: "x", status: "approved" as const, createdAt: now, updatedAt: now },
+  ]);
+  await players.insertMany([
+    { nameKey: leaderKey, playerName: LEADER, alliance: TAG, allianceName: "Zeta Quest", verified: true, createdAt: now, updatedAt: now },
+    { nameKey, playerName: NAME, alliance: TAG, allianceName: "Zeta Quest", verified: true, createdAt: now, updatedAt: now },
+  ]);
+
+  const members = await listAllianceMembers(TAG);
+  check("lista los dos miembros publicados", members.length === 2, members);
+
+  // Sin credencial, y con la de alguien que no lidera.
+  const noAuth = await post(`/api/alliances/${TAG}/rotate`, {});
+  check("rotar sin token da 401", noAuth.status === 401, noAuth);
+
+  const notLeader = await post(`/api/alliances/${TAG}/rotate`, { statusToken: memberToken });
+  check("un miembro no puede rotar (403)", notLeader.status === 403, notLeader);
+
+  const kickByMember = await post(`/api/alliances/${TAG}/members`, {
+    statusToken: memberToken,
+    nameKey: leaderKey,
+    action: "kick",
+  });
+  check("un miembro no puede expulsar (403)", kickByMember.status === 403, kickByMember);
+  check(
+    "y el 403 no revela si el token existe",
+    String(kickByMember.body?.error) === "No lideras esa alianza.",
+    kickByMember.body
+  );
+
+  const selfKick = await post(`/api/alliances/${TAG}/members`, {
+    statusToken: leaderToken,
+    nameKey: leaderKey,
+    action: "kick",
+  });
+  check("el líder no se puede expulsar solo (409)", selfKick.status === 409, selfKick);
+
+  // El camino real.
+  const kick = await post(`/api/alliances/${TAG}/members`, {
+    statusToken: leaderToken,
+    nameKey,
+    action: "kick",
+  });
+  check("el líder expulsa (200)", kick.status === 200, kick);
+
+  const kicked = await players.findOne({ nameKey });
+  check(
+    "al expulsado se le despublica la alianza",
+    kicked?.alliance === undefined && kicked?.allianceName === undefined,
+    { alliance: kicked?.alliance, allianceName: kicked?.allianceName }
+  );
+  const kickedSub = await submissions.findOne({ statusToken: memberToken });
+  check(
+    "y también en lo que ve como 'lo que pediste'",
+    kickedSub?.allianceTag === undefined,
+    kickedSub?.allianceTag
+  );
+  const leaderRow = await players.findOne({ nameKey: leaderKey });
+  check("al líder no se le tocó nada", leaderRow?.alliance === TAG, leaderRow?.alliance);
+
+  const reentry = await parseProfileFields(
+    { allianceTag: TAG, allianceCode: theCode },
+    { nameKey }
+  );
+  check("el expulsado NO vuelve a entrar con el código que tiene", !reentry.ok, reentry);
+
+  // Rotar no vacía la alianza: es la decisión que hace usable el botón.
+  const rotated = await post(`/api/alliances/${TAG}/rotate`, { statusToken: leaderToken });
+  check("el líder rota el código (200)", rotated.status === 200, rotated);
+  check("y el código cambió", rotated.body?.joinCode !== theCode, rotated.body?.joinCode);
+
+  const stillIn = await players.findOne({ nameKey: leaderKey });
+  check("rotar NO saca a los que ya estaban dentro", stillIn?.alliance === TAG, stillIn?.alliance);
+
+  const oldCode = await parseProfileFields({ allianceTag: TAG, allianceCode: theCode });
+  check("el código viejo deja de servir", !oldCode.ok, oldCode);
+
+  const newCode = await parseProfileFields({
+    allianceTag: TAG,
+    allianceCode: rotated.body.joinCode,
+  });
+  check("el nuevo sirve", newCode.ok, newCode);
+
+  // Readmitir: es lo que hace reversible al daño de un token filtrado.
+  const unban = await post(`/api/alliances/${TAG}/members`, {
+    statusToken: leaderToken,
+    nameKey,
+    action: "unban",
+  });
+  check("el líder readmite (200)", unban.status === 200, unban);
+
+  const backIn = await parseProfileFields(
+    { allianceTag: TAG, allianceCode: rotated.body.joinCode },
+    { nameKey }
+  );
+  check("y el readmitido puede volver a entrar", backIn.ok, backIn);
 
   await cleanup();
   await (await getClient()).close();

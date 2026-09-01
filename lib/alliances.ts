@@ -105,3 +105,68 @@ export async function findAllianceByTag(tag: string): Promise<AllianceDoc | null
   const alliances = await alliancesCollection();
   return alliances.findOne({ tag, status: "approved" });
 }
+
+/**
+ * La alianza que lidera el dueño de este `statusToken`, o un motivo.
+ *
+ * La credencial del líder es su propio token de seguimiento: no hay un tercer
+ * secreto. La decisión y su costo —un token filtrado pasa a poder tocar también
+ * la alianza— están en docs/alliances.md. Lo que la hace aceptable es que el
+ * daño es reversible: a un expulsado se lo puede readmitir.
+ *
+ * Vive acá y no en cada ruta por el mismo motivo que `parseProfileFields`: si
+ * cada una resolviera el permiso por su cuenta, alcanzaría con que UNA lo
+ * hiciera distinto para que se pueda expulsar sin liderar.
+ */
+export async function findLedAlliance(
+  tag: string,
+  statusToken: string | undefined
+): Promise<{ ok: true; alliance: AllianceDoc } | { ok: false; error: string; status: number }> {
+  if (!statusToken?.trim()) {
+    return { ok: false, error: "Falta tu código de seguimiento.", status: 401 };
+  }
+
+  const { findSubmissionByToken } = await import("./submissions");
+  const sub = await findSubmissionByToken(statusToken.trim());
+
+  /**
+   * Un token inexistente, uno de una petición no aprobada y uno de alguien que
+   * no lidera esta alianza dan TODOS el mismo 403.
+   *
+   * Distinguirlos convertiría esta ruta en un oráculo: con un token cualquiera
+   * se podría averiguar si existe, si está aprobado y qué alianza lidera. El
+   * mensaje es peor para depurar y es lo correcto para una ruta pública.
+   */
+  const alliance = await findAllianceByTag(tag);
+  if (!sub || sub.status !== "approved" || !alliance || alliance.leaderNameKey !== sub.nameKey) {
+    return { ok: false, error: "No lideras esa alianza.", status: 403 };
+  }
+
+  return { ok: true, alliance };
+}
+
+/**
+ * Los miembros publicados de una alianza: quiénes tienen ese tag en `players`.
+ *
+ * No hay una lista de miembros guardada en la alianza —la membresía vive en
+ * `players.alliance`— así que esto ES la lista. Ver `AllianceDoc`.
+ */
+export async function listAllianceMembers(
+  tag: string
+): Promise<{ nameKey: string; playerName: string; lastRank?: number }[]> {
+  const players = await playersCollection();
+  return players
+    .find(
+      { alliance: tag },
+      { projection: { nameKey: 1, playerName: 1, patchedName: 1, lastRank: 1 } }
+    )
+    .sort({ lastRank: 1 })
+    .toArray()
+    .then((docs) =>
+      docs.map((d) => ({
+        nameKey: d.nameKey,
+        playerName: d.patchedName ?? d.playerName,
+        lastRank: d.lastRank,
+      }))
+    );
+}
