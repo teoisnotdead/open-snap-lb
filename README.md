@@ -235,6 +235,9 @@ anulen; está verificado con GET y POST seguidos.
 | `npm run db:seed-demo` | Siembra un jugador con historial sintético |
 | `npm run db:seed-demo -- --clean` | Lo borra |
 | `npm run db:delete-player -- "Nombre"` | Borra un jugador y su historial |
+| `npm run db:backfill-alliances` | Crea `alliances` desde los tags ya cargados. Dry run; `-- --write` escribe |
+| `npm run db:set-alliance-leader -- TAG "Nombre"` | Cambia el líder de una alianza. Dry run; `--write` escribe, `--clear` la deja sin líder |
+| `npm run test:alliances` | Alianzas de punta a punta: códigos, expulsados, permisos del líder |
 
 > ⚠️ `db:seed-demo` escribe datos **inventados** en la base a la que apunte
 > `MONGODB_URI`. Nunca contra producción.

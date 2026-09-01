@@ -365,7 +365,31 @@ Cada paso deja el sitio funcionando.
    liderar: con tres respuestas distintas, la ruta sería un oráculo para saber
    si un token existe y qué alianza lidera.
 
-Lo que queda pendiente y no es de estos cinco pasos: **transferir el liderazgo**
-sigue siendo una operación de admin, y no hay pantalla para reasignarlo desde el
-panel. Mientras tanto un líder que abandona el juego deja su alianza sin quién
-rote el código — la alianza sigue funcionando, pero nadie puede echar a nadie.
+## Transferir el liderazgo
+
+Es un **script**, no una pantalla: `npm run db:set-alliance-leader`. Dry run por
+defecto, `--write` para escribir, `--clear` para dejar la alianza sin líder.
+
+La decisión de no hacer la UI: la cola del panel solo muestra alianzas
+PENDIENTES, así que reasignar exigiría una vista nueva de aprobadas con su
+búsqueda. La ruta sería barata; la pantalla no. Y la operación es rara.
+
+Lo que sí urgía es que la alternativa a tener el script no era "no hacer nada",
+era **escribir un update a mano con el problema encima** — el peor momento para
+acordarse de validar que el nuevo líder tenga ficha aprobada. El script aplica
+la MISMA regla que el reclamo por la ruta pública, así que no es una puerta de
+atrás a ella.
+
+Dos comportamientos que conviene tener presentes:
+
+- **Darle líder a una alianza abierta le genera código**, o sea que pasa a
+  pedirlo para entrar. Es el mismo gesto que hace la aprobación en el panel.
+- **Un traspaso NO rota el código**: el líder nuevo hereda el que ya circulaba.
+  Es lo correcto —cambiarlo dejaría a treinta personas afuera por un traspaso
+  amistoso— pero si el líder viejo no es de confianza, hay que rotar aparte.
+- **`--clear` borra el código junto con el líder** y deja la alianza abierta.
+  Es un cambio de régimen, no una limpieza. La alternativa —dejar un código sin
+  líder— es el peor estado posible: exige algo que ya nadie puede rotar si se
+  filtra.
+
+Sigue sin haber pantalla, y está bien: que espere a doler.
