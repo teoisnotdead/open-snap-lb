@@ -9,7 +9,7 @@
  * puede pasar otra base con BASE_URL.
  */
 import { getClient } from "../lib/mongodb";
-import { playersCollection, submissionsCollection } from "../lib/db";
+import { alliancesCollection, playersCollection, submissionsCollection } from "../lib/db";
 import { generateStatusToken } from "../lib/tokens";
 import { toNameKey } from "../lib/names";
 
@@ -45,8 +45,10 @@ async function patch(token: string, body: Record<string, string>) {
 async function cleanup() {
   const players = await playersCollection();
   const submissions = await submissionsCollection();
+  const alliances = await alliancesCollection();
   await players.deleteMany({ nameKey: { $in: [nameKey, otherKey] } });
   await submissions.deleteMany({ nameKey: { $in: [nameKey, otherKey] } });
+  await alliances.deleteMany({ tag: { $in: ["OLD", "NEW"] } });
 }
 
 async function main() {
@@ -54,7 +56,18 @@ async function main() {
 
   const players = await playersCollection();
   const submissions = await submissionsCollection();
+  const alliances = await alliancesCollection();
   const now = new Date();
+
+  /**
+   * Las dos alianzas tienen que EXISTIR y estar aprobadas: desde que la alianza
+   * es una entidad, un tag de texto libre ya no se publica. Ver
+   * docs/alliances.md.
+   */
+  await alliances.insertMany([
+    { tag: "OLD", name: "Old Alliance", bannedNameKeys: [], status: "approved" as const, createdAt: now, updatedAt: now },
+    { tag: "NEW", name: "Nueva Alianza", bannedNameKeys: [], status: "approved" as const, createdAt: now, updatedAt: now },
+  ]);
 
   const token = generateStatusToken();
   const pendingToken = generateStatusToken();
@@ -117,7 +130,6 @@ async function main() {
     youtube: "@selfedit",
     untapped: "",
     allianceTag: "NEW",
-    allianceName: "Nueva Alianza",
   });
   check("200 al editar una aprobada", r.status === 200, r);
 
@@ -126,7 +138,7 @@ async function main() {
   check("el youtube nuevo quedó publicado", player?.youtube === "selfedit", player?.youtube);
   check("el tag de alianza cambió", player?.alliance === "NEW", player?.alliance);
   check(
-    "el nombre de alianza cambió",
+    "el nombre de alianza salió de la ENTIDAD, no del cliente",
     player?.allianceName === "Nueva Alianza",
     player?.allianceName
   );
@@ -145,17 +157,16 @@ async function main() {
     twitch: "selfedit_new",
     youtube: "",
     untapped: "",
-    allianceTag: "NEW",
-    allianceName: "",
+    allianceTag: "",
   });
   check("200 al vaciar campos", r.status === 200, r);
 
   player = await players.findOne({ nameKey });
   check("el youtube se borró de players", player?.youtube === undefined, player?.youtube);
   check(
-    "el nombre de alianza se borró de players",
-    player?.allianceName === undefined,
-    player?.allianceName
+    "sacar el tag se lleva el nombre con él",
+    player?.alliance === undefined && player?.allianceName === undefined,
+    { alliance: player?.alliance, allianceName: player?.allianceName }
   );
 
   sub = await submissions.findOne({ statusToken: token });
@@ -179,8 +190,13 @@ async function main() {
   r = await patch(token, { twitch: "", youtube: "", untapped: "", allianceTag: "" });
   check("no deja vaciar la ficha entera", r.status === 400, r);
 
-  r = await patch(token, { allianceName: "Sin tag" });
-  check("rechaza nombre de alianza sin tag", r.status === 400, r);
+  r = await patch(token, { allianceTag: "GHOST" });
+  check("rechaza una alianza que no existe", r.status === 400, r);
+  check(
+    "y lo dice sin culpar al formato",
+    typeof r.data.error === "string" && r.data.error.includes("no existe todavía"),
+    r.data.error
+  );
 
   r = await patch(token, { twitch: "taken_handle" });
   check("rechaza un canal de otra cuenta", r.status === 409, r);

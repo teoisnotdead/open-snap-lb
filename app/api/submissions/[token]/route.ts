@@ -33,7 +33,7 @@ export async function GET(
 }
 
 /** Campos que el jugador edita solo. El contacto NO está: ver abajo. */
-const EDITABLE = ["twitch", "youtube", "untapped", "allianceTag", "allianceName"] as const;
+const EDITABLE = ["twitch", "youtube", "untapped", "allianceTag"] as const;
 
 /**
  * PATCH /api/submissions/[token] — el jugador corrige sus propios datos.
@@ -72,7 +72,7 @@ export async function PATCH(
     return apiError("Body inválido.");
   }
 
-  const parsed = parseProfileFields(body);
+  const parsed = await parseProfileFields(body);
   if (!parsed.ok) return apiError(parsed.error);
   const { socials, allianceTag, allianceName } = parsed.fields;
 
@@ -162,10 +162,11 @@ export async function PATCH(
      */
     const unsetSubmission: Record<string, ""> = {};
     for (const f of EDITABLE) {
-      const value =
-        f === "allianceTag" ? allianceTag : f === "allianceName" ? allianceName : socials[f];
+      const value = f === "allianceTag" ? allianceTag : socials[f];
       if (!value) unsetSubmission[f] = "";
     }
+    // `allianceName` no es editable: se deriva del tag. Se va con él.
+    if (!allianceTag) unsetSubmission.allianceName = "";
 
     const submissions = await submissionsCollection();
     await submissions.updateOne(

@@ -161,6 +161,18 @@ export interface AllianceDoc {
    */
   bannedNameKeys: string[];
 
+  /**
+   * DATOS DE CONTACTO DE QUIEN LA PIDIÓ — PRIVADOS.
+   *
+   * Mismo criterio que en `SubmissionDoc`: son datos personales de terceros y
+   * nunca pueden salir por una ruta pública. `GET /api/alliances` arma su
+   * respuesta campo por campo justamente para que esto no se escape solo.
+   *
+   * Ausentes en las alianzas que creó el backfill: nadie las pidió.
+   */
+  discord?: string;
+  email?: string;
+
   /** La creación pasa por el panel, igual que una petición. */
   status: SubmissionStatus;
   rejectionReason?: string;

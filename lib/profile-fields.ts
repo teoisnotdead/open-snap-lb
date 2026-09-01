@@ -1,4 +1,5 @@
-import { SOCIAL_PARSERS, parseAlliance, parseAllianceName } from "./socials";
+import { findAllianceByTag } from "./alliances";
+import { SOCIAL_PARSERS, parseAlliance } from "./socials";
 import type { SocialField } from "./types";
 
 /**
@@ -20,8 +21,14 @@ export interface ProfileFieldsInput {
   twitch?: string;
   youtube?: string;
   untapped?: string;
+  /**
+   * El tag de una alianza que YA EXISTE y está aprobada. Sale del selector.
+   *
+   * Ya no viene un `allianceName` del cliente: el nombre vive en la alianza y
+   * se copia desde ahí. Mientras lo escribiera cada persona, la misma alianza
+   * se publicaba con tres nombres distintos — el bug entero.
+   */
   allianceTag?: string;
-  allianceName?: string;
 }
 
 export interface ProfileFields {
@@ -39,9 +46,9 @@ export type ProfileFieldsResult =
  * la petición inicial son lo mismo, y para la edición los dos significan
  * "sacalo" (ver la ruta PATCH, que reemplaza el bloque entero).
  */
-export function parseProfileFields(
+export async function parseProfileFields(
   input: ProfileFieldsInput | null | undefined
-): ProfileFieldsResult {
+): Promise<ProfileFieldsResult> {
   const socials: Partial<Record<SocialField, string>> = {};
   for (const field of SOCIAL_FIELDS) {
     const value = input?.[field]?.trim();
@@ -51,26 +58,38 @@ export function parseProfileFields(
     socials[field] = parsed.value!;
   }
 
+  /**
+   * La alianza YA NO ES TEXTO LIBRE: el tag tiene que corresponder a una
+   * alianza aprobada, y el nombre sale de ella.
+   *
+   * Es la invariante que arregla el bug original — cada jugador guardaba su
+   * propia copia del nombre, así que la misma alianza se publicaba escrita de
+   * tres formas. Mientras el nombre venga del cliente, no hay validación que
+   * lo impida; con la entidad como única fuente, deja de poder pasar.
+   *
+   * Por eso esta función se volvió async: la resolución tiene que vivir ACÁ y
+   * no en cada ruta. Es lo mismo que dice el comentario de arriba — si las dos
+   * entradas validaran por separado, se podría colar por edición un valor que
+   * la petición rechaza.
+   */
   let allianceTag: string | undefined;
+  let allianceName: string | undefined;
+
   if (input?.allianceTag?.trim()) {
     const parsed = parseAlliance(input.allianceTag.trim());
     if (!parsed.ok) return { ok: false, error: `allianceTag: ${parsed.error}` };
-    allianceTag = parsed.value;
-  }
 
-  let allianceName: string | undefined;
-  if (input?.allianceName?.trim()) {
-    const parsed = parseAllianceName(input.allianceName.trim());
-    if (!parsed.ok) return { ok: false, error: `allianceName: ${parsed.error}` };
-    allianceName = parsed.value;
-  }
+    const alliance = await findAllianceByTag(parsed.value!);
+    if (!alliance) {
+      return {
+        ok: false,
+        error:
+          "Esa alianza no existe todavía. Elegí una de la lista, o pedí que la creemos.",
+      };
+    }
 
-  // Un nombre de alianza sin tag es dato huérfano: la tabla muestra el tag.
-  if (allianceName && !allianceTag) {
-    return {
-      ok: false,
-      error: "Si indicás el nombre de la alianza, indicá también el tag.",
-    };
+    allianceTag = alliance.tag;
+    allianceName = alliance.name;
   }
 
   // Tiene que haber algo que publicar. Vale igual para la edición: dejar la

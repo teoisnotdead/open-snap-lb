@@ -46,7 +46,7 @@ export async function POST(req: Request) {
    * código (`PATCH /api/submissions/[token]`), incluida la regla de "algo que
    * publicar": lo que no se puede pedir tampoco se puede colar editando.
    */
-  const profile = parseProfileFields(body);
+  const profile = await parseProfileFields(body);
   if (!profile.ok) return apiError(profile.error);
   const { socials, allianceTag, allianceName } = profile.fields;
 
