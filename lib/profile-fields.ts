@@ -113,7 +113,7 @@ export async function parseProfileFields(
       return {
         ok: false,
         error:
-          "Esa alianza no existe todavía. Elegí una de la lista, o pedí que la creemos.",
+          "Esa alianza no existe todavía. Elige una de la lista, o pide que la creemos.",
       };
     }
 
@@ -128,7 +128,7 @@ export async function parseProfileFields(
     if (nameKey && alliance.bannedNameKeys.includes(nameKey)) {
       return {
         ok: false,
-        error: `No podés entrar a ${alliance.tag}. Si es un error, habla con quien la lidera.`,
+        error: `No puedes entrar a ${alliance.tag}. Si es un error, habla con quien la lidera.`,
       };
     }
 
@@ -164,7 +164,7 @@ export async function parseProfileFields(
       if (given !== alliance.joinCode) {
         return {
           ok: false,
-          error: `Ese código no es el de ${alliance.tag}. Pedile el actual a quien la lidera: puede haber cambiado.`,
+          error: `Ese código no es el de ${alliance.tag}. Pídele el actual a quien la lidera: puede haber cambiado.`,
         };
       }
     }
@@ -177,7 +177,7 @@ export async function parseProfileFields(
   // ficha sin una sola red ni alianza no es editarla, es vaciarla — y para eso
   // hay que hablar con un humano, no apretar Guardar.
   if (Object.keys(socials).length === 0 && !allianceTag) {
-    return { ok: false, error: "Indicá al menos una red o el tag de tu alianza." };
+    return { ok: false, error: "Indica al menos una red o el tag de tu alianza." };
   }
 
   return { ok: true, fields: { socials, allianceTag, allianceName } };

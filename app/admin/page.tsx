@@ -109,7 +109,7 @@ export default async function AdminPage({
     }
   } catch (err) {
     console.error("El panel no pudo leer Mongo:", err);
-    dbError = "No se pudo leer la base. Revisá MONGODB_URI y el access list de Atlas.";
+    dbError = "No se pudo leer la base. Revisa MONGODB_URI y el access list de Atlas.";
   }
 
   return (

@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   // Mismo motivo que en `POST /api/submissions`: sin cuentas ni notificaciones,
   // el contacto es el único canal para rechazar o repreguntar.
   if (Object.keys(contact).length === 0) {
-    return apiError("Dejá al menos un contacto (Discord o email) para poder responderte.");
+    return apiError("Deja al menos un contacto (Discord o email) para poder responderte.");
   }
 
   try {
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
       }
       if (sub.status !== "approved") {
         return apiError(
-          "Para liderar una alianza tu ficha tiene que estar aprobada. Esperá a que la revisemos.",
+          "Para liderar una alianza tu ficha tiene que estar aprobada. Espera a que la revisemos.",
           409
         );
       }

@@ -58,7 +58,7 @@ export async function POST(
       }
     }
 
-    return apiError("No se pudo generar un código nuevo. Probá de nuevo.", 500);
+    return apiError("No se pudo generar un código nuevo. Prueba de nuevo.", 500);
   } catch (err) {
     console.error("POST /api/alliances/[tag]/rotate falló:", err);
     return apiError("No se pudo rotar el código.", 500);

@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   // hace falta alguna forma de contactarte: si hay que rechazar o repreguntar
   // no existe otro canal, porque no hay cuentas ni notificaciones en el sitio.
   if (Object.keys(contact).length === 0) {
-    return apiError("Dejá al menos un contacto (Discord o email) para poder responderte.");
+    return apiError("Deja al menos un contacto (Discord o email) para poder responderte.");
   }
 
   try {
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         }
 
         return apiError(
-          "Ya hay una petición pendiente para esa cuenta. Si perdiste tu código de seguimiento, escribinos.",
+          "Ya hay una petición pendiente para esa cuenta. Si perdiste tu código de seguimiento, escríbenos.",
           409
         );
       }

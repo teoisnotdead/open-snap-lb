@@ -266,7 +266,7 @@ los tags ya se ven en la tabla del leaderboard.
   el tag, y el `nameKey` no puede estar en `bannedNameKeys`.
 
 Los dos errores tienen que decir cosas distintas: *"Ese código no corresponde a
-esa alianza"* y *"No podés entrar a esa alianza"*. Colapsarlos en uno solo
+esa alianza"* y *"No puedes entrar a esa alianza"*. Colapsarlos en uno solo
 manda a la persona a pedirle el código de nuevo al líder que la echó a propósito.
 
 ### Panel

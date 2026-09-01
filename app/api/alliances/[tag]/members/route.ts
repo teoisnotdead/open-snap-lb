@@ -64,7 +64,7 @@ export async function POST(
      */
     if (action === "kick" && target === alliance.leaderNameKey) {
       return apiError(
-        "No podés expulsarte de tu propia alianza. Si querés dejar de liderarla, escribinos.",
+        "No puedes expulsarte de tu propia alianza. Si quieres dejar de liderarla, escríbenos.",
         409
       );
     }

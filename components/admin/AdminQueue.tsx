@@ -223,7 +223,7 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
           {mustChoose && !rejecting && (
             <fieldset>
               <legend className="mb-2 text-[12.5px] text-ink-3">
-                Hay {candidates.length} jugadores con este nombre en el ladder. Elegí
+                Hay {candidates.length} jugadores con este nombre en el ladder. Elige
                 cuál es antes de aprobar: al que elijas se le pegan los links.
               </legend>
               <div className="flex flex-wrap gap-2">
@@ -266,7 +266,7 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
               onClick={() => review("approve")}
               disabled={busy !== null || rejecting || (mustChoose && rank === null)}
               title={
-                mustChoose && rank === null ? "Elegí primero de qué fila se trata" : undefined
+                mustChoose && rank === null ? "Elige primero de qué fila se trata" : undefined
               }
               className="rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-bg transition-colors hover:bg-accent-bright disabled:opacity-40"
             >

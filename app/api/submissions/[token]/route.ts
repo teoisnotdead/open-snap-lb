@@ -83,7 +83,7 @@ export async function PATCH(
       return apiError(
         doc.status === "pending"
           ? "Tu petición todavía está en revisión. Vas a poder editarla cuando se apruebe."
-          : "Esta petición no fue aprobada, así que no hay nada publicado para editar. Enviá una nueva.",
+          : "Esta petición no fue aprobada, así que no hay nada publicado para editar. Envía una nueva.",
         409
       );
     }
@@ -106,7 +106,7 @@ export async function PATCH(
     const conflict = await findSocialConflict(socials, doc.nameKey);
     if (conflict) {
       return apiError(
-        `Ese canal ya está asignado a "${conflict.playerName}". Si es tuyo, escribinos: hay que resolverlo a mano.`,
+        `Ese canal ya está asignado a "${conflict.playerName}". Si es tuyo, escríbenos: hay que resolverlo a mano.`,
         409
       );
     }
@@ -148,7 +148,7 @@ export async function PATCH(
       // El índice único, cubriendo la carrera entre el chequeo de arriba y esto.
       if ((err as { code?: number }).code === 11000) {
         return apiError(
-          "Ese canal acaba de quedar asignado a otra cuenta. Recargá y revisá.",
+          "Ese canal acaba de quedar asignado a otra cuenta. Recarga y revisa.",
           409
         );
       }
@@ -160,7 +160,7 @@ export async function PATCH(
         `PATCH /api/submissions: la petición ${doc._id} está aprobada pero no hay jugador con nameKey "${doc.nameKey}".`
       );
       return apiError(
-        "Tu petición figura aprobada pero no encontramos tu ficha publicada. Escribinos para que lo revisemos.",
+        "Tu petición figura aprobada pero no encontramos tu ficha publicada. Escríbenos para que lo revisemos.",
         409
       );
     }

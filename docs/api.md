@@ -3,6 +3,16 @@
 Las rutas propias del proyecto. Todas devuelven JSON; los errores tienen la forma
 `{ "error": "mensaje" }`.
 
+> **Los mensajes de error van en TUTEO**, no en voseo: son texto que lee el
+> usuario, igual que el diccionario de `lib/i18n.ts`, y durante un tiempo el
+> sitio mezcló los dos registros —el diccionario en tuteo, los errores de la API
+> en voseo— porque nadie lo había dicho en ningún lado. La regla vale también
+> para el panel de admin: una sola convención es más fácil de sostener que
+> "público en tuteo, admin en voseo".
+>
+> Los COMENTARIOS del código y la salida de los scripts siguen en voseo, y está
+> bien: no los lee nadie más que quien mantiene esto.
+
 ---
 
 ## `GET /api/leaderboard`

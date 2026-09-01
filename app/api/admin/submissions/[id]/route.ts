@@ -45,14 +45,14 @@ function resolveRow(
   if (chosen === undefined) {
     const list = rows.map((r) => "#" + r.rank + " (" + r.score + " SP)").join(", ");
     return {
-      error: `Hay ${rows.length} jugadores con ese nombre en el ladder: ${list}. Elegí cuál es antes de aprobar.`,
+      error: `Hay ${rows.length} jugadores con ese nombre en el ladder: ${list}. Elige cuál es antes de aprobar.`,
     };
   }
 
   const row = rows.find((r) => r.rank === chosen);
   if (!row) {
     return {
-      error: `El puesto #${chosen} ya no corresponde a ese nombre. Recargá la cola y volvé a elegir.`,
+      error: `El puesto #${chosen} ya no corresponde a ese nombre. Recarga la cola y vuelve a elegir.`,
     };
   }
 
@@ -89,7 +89,7 @@ export async function POST(
   // Rechazar sin motivo deja al solicitante sin nada que hacer con la
   // respuesta, y a vos sin memoria de por qué lo rechazaste.
   if (action === "reject" && !reason) {
-    return apiError("Indicá el motivo del rechazo.");
+    return apiError("Indica el motivo del rechazo.");
   }
   if (reason && reason.length > MAX_REASON) {
     return apiError(`El motivo no puede pasar de ${MAX_REASON} caracteres.`);
@@ -161,7 +161,7 @@ export async function POST(
     const conflict = await findSocialConflict(socials, doc.nameKey);
     if (conflict) {
       return apiError(
-        `Ese canal ya está asignado a "${conflict.playerName}". Revisá cuál de los dos corresponde antes de aprobar.`,
+        `Ese canal ya está asignado a "${conflict.playerName}". Revisa cuál de los dos corresponde antes de aprobar.`,
         409
       );
     }
