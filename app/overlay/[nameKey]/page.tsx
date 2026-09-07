@@ -44,9 +44,14 @@ export default async function OverlayPage({
    * existe en el top 1000 y uno que existe pero no pidió su ficha. Se arreglan
    * distinto, así que decirlas distinto es la mitad del trabajo.
    *
-   * Cuesta poco: `getMergedLeaderboard` está cacheado 60 s y lo comparte con la
-   * home, así que mil visitas en un minuto son una sola consulta a la API
-   * oficial.
+   * Cuesta poco: acá `getMergedLeaderboard` sí va cacheado 60 s, así que mil
+   * visitas en un minuto son una sola consulta a la API oficial.
+   *
+   * El caché quedó SOLO acá. La home y /api/leaderboard lo perdieron porque con
+   * tráfico esporádico el stale-while-revalidate les servía el estado que dejó
+   * la visita anterior (ver el comentario en app/[lang]/page.tsx). El overlay no
+   * tiene ese problema: vive en OBS refrescando solo, o sea tráfico parejo, y
+   * con eso la entrada nunca envejece más que la ventana.
    */
   const board = await getMergedLeaderboard(60);
   const win = windowAround(board.rows, nameKey, rows, pinnedRank);

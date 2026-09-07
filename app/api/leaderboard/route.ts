@@ -13,7 +13,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
-    const board = await getMergedLeaderboard(60);
+    // Sin caché nuestro, por lo mismo que la home: ver el comentario largo en
+    // app/[lang]/page.tsx.
+    const board = await getMergedLeaderboard(false);
 
     return json({
       season: board.season,

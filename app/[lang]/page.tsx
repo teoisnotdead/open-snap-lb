@@ -21,9 +21,38 @@ export default async function LeaderboardPage({
   const lang: Lang = raw;
   const t = getDictionary(lang);
 
+  /**
+   * Sin caché nuestro, a propósito.
+   *
+   * El Data Cache de Next revalida por tiempo con stale-while-revalidate: pasada
+   * la ventana, el que entra se lleva igual la copia vieja y recién ahí dispara
+   * el refresco. El que se beneficia es el siguiente. Con tráfico bajo eso no
+   * son "60 s de atraso" sino EL HUECO HASTA LA VISITA ANTERIOR, que no tiene
+   * techo: levantando el server de dev el 7/9/2026, el primer request sirvió una
+   * entrada del 1/9 —seis días, con la tabla todavía vacía— y recién entonces
+   * fue a buscar datos nuevos.
+   *
+   * Acortar la ventana no lo arregla: mientras sea menor que el hueco entre
+   * visitas, la entrada se refresca una vez por visita igual y el atraso sigue
+   * siendo el hueco. El único valor que lo elimina es no cachear.
+   *
+   * Lo que se paga es un fetch al origen por visita (~50 KB, ~200 ms, sin rate
+   * limit observado — ver docs/leaderboard-api.md). Es barato justo cuando duele
+   * el stale: con poco tráfico son pocos fetch, y con mucho tráfico no habría
+   * cola stale que arreglar. No hay régimen donde cachear acá convenga.
+   *
+   * Lo que NO arregla, porque no es nuestro: el CloudFront de marvelsnap, con un
+   * TTL medido en más de 3,5 min. Ese piso lo compartimos con la página oficial
+   * —verificado en el navegador: pide esta misma URL, con estos mismos
+   * parámetros— así que no explica ninguna diferencia contra ella. Sacando esta
+   * capa quedamos leyendo la misma entrada de cache que lee su navegador.
+   *
+   * El overlay sí sigue cacheando: ahí el patrón es polling desde OBS, o sea
+   * tráfico parejo, que es el caso donde el caché rinde y no deja cola stale.
+   */
   let board;
   try {
-    board = await getMergedLeaderboard(60);
+    board = await getMergedLeaderboard(false);
   } catch (err) {
     return <BoardUnavailable error={err} lang={lang} t={t} />;
   }
