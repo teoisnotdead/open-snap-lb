@@ -19,10 +19,19 @@ Las rutas propias del proyecto. Todas devuelven JSON; los errores tienen la form
 
 Ranking en vivo del endpoint oficial, mergeado con `players`.
 
+> **`fetchedAt` vs `dataAt`.** No son lo mismo y la diferencia importa:
+> `fetchedAt` es cuándo pedimos los datos, `dataAt` es cuándo el origen los
+> generó. Entre los dos hay dos cachés que no controlamos del todo —el
+> CloudFront de marvelsnap y el Data Cache de Next— así que `dataAt` puede
+> quedar varios minutos atrás sin que nada esté fallando. **Para saber qué tan
+> frescos son los números, mirá `dataAt`.** Sale del header `Date` del origen;
+> ver `originDate` en `lib/leaderboard.ts`.
+
 ```jsonc
 {
   "season": "2026-08",
-  "fetchedAt": "2026-08-24T03:00:00.000Z",
+  "fetchedAt": "2026-08-24T03:00:00.000Z",  // cuándo lo pedimos nosotros
+  "dataAt": "2026-08-24T02:56:41.000Z",     // de cuándo son los números: ver abajo
   "total": 50520,          // jugadores en TODO el ladder
   "deltaSince": "2026-08-23T03:07:12.000Z",  // contra qué momento se comparó
   "count": 1000,           // filas devueltas (la API sirve top 1000 y nada más)

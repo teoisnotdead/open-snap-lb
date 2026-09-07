@@ -17,7 +17,14 @@ export async function GET() {
 
     return json({
       season: board.season,
+      /** Cuándo lo pedimos nosotros. Para frescura mirá `dataAt`. */
       fetchedAt: board.fetchedAt.toISOString(),
+      /**
+       * Cuándo generó el origen estos números, de su header `Date`. Puede
+       * quedar varios minutos atrás de `fetchedAt` sin que nada esté mal: hay
+       * un CloudFront de por medio que no es nuestro. Ver `originDate`.
+       */
+      dataAt: board.dataAt.toISOString(),
       /** Jugadores en todo el ladder; `rows` es solo el top 1000 que sirve la API. */
       total: board.total,
       /**

@@ -64,6 +64,8 @@ async function loadBaseline(season: string): Promise<Baseline | null> {
 export interface MergedBoard {
   season: string;
   fetchedAt: Date;
+  /** De cuándo son los números. Es lo que mira la cabecera: ver `originDate`. */
+  dataAt: Date;
   /** Jugadores en TODO el ladder, no solo los visibles. */
   total: number;
   rows: MergedLeaderboardRow[];
@@ -176,6 +178,7 @@ export async function getMergedLeaderboard(
   return {
     season: board.season,
     fetchedAt: board.fetchedAt,
+    dataAt: board.dataAt,
     total: board.total,
     rows,
     ...(baseline ? { deltaSince: baseline.takenAt } : {}),

@@ -144,7 +144,19 @@ Age: 172
 ```
 
 - El `Age` sube monótonamente y sigue siendo HIT pasados ~3 minutos → TTL de
-  varios minutos.
+  varios minutos. **Re-medido el 7/9/2026:** 20 pedidos espaciados 10 s, `Age`
+  subiendo parejo de 18 a 212 y HIT en todos — o sea **TTL > 3,5 min**, y es
+  cota inferior porque nunca lo vimos resetear.
+- **El `Date` es el del ORIGEN, no el del hit:** CloudFront lo preserva y
+  cuenta el tiempo aparte en `Age` (tres hits seguidos con `Date: 19:07:22` y
+  `Age: 67`). Eso lo vuelve un "de cuándo son estos datos" confiable, y es de
+  donde sale el `dataAt` de la API y el chip "Sincronizado" de la home. Ojo:
+  por eso mismo **no hay que restarle `Age`** — sería contar dos veces.
+- **La página oficial come el mismo cache.** No trae los datos en el HTML: los
+  pide desde el navegador al mismo endpoint. Si se la ve más fresca que a
+  nosotros no es que ellos tengan un canal mejor, es que cada POP de CloudFront
+  tiene su propia ventana y no están sincronizadas — su navegador lee la de su
+  POP, nuestra función lee la del suyo.
 - Los datos **sí cambian** entre corridas (vi `total` moverse 50114 → 50254 y
   el score de `Holic` bajar 9700 → 9689 en el lapso de la investigación).
 - **Consecuencia para el cron:** sincronizar más seguido que el TTL del cache

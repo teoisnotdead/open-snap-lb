@@ -21,7 +21,15 @@ export interface LeaderboardFetchResult {
   season: string;
   /** Total de jugadores en el ladder (mucho mayor que rows.length). */
   total: number;
+  /** Cuándo PEDIMOS los datos. Para hablar de frescura sirve `dataAt`, no esto. */
   fetchedAt: Date;
+  /**
+   * Cuándo el ORIGEN generó estos datos, según su header `Date`.
+   *
+   * Es la única de las dos fechas que dice algo sobre qué tan viejos son los
+   * números. Ver `originDate`.
+   */
+  dataAt: Date;
 }
 
 class LeaderboardError extends Error {
@@ -77,11 +85,51 @@ interface FetchOpts {
   revalidate?: number | false;
 }
 
+interface MonthResponse {
+  body: RawLeaderboardResponse;
+  /** Ver `LeaderboardFetchResult.dataAt`. */
+  dataAt: Date;
+}
+
+/**
+ * Cuándo generó el origen esta respuesta, según su header `Date`.
+ *
+ * Existe porque entre el origen y la página hay DOS cachés y ninguna es
+ * nuestra de punta a punta: el CloudFront de marvelsnap (TTL medido en más de
+ * 3,5 min — ver docs/leaderboard-api.md) y el Data Cache de Next, que además
+ * sirve la copia vieja mientras revalida de fondo. Marcar la hora con
+ * `new Date()` en el render dice cuándo se dibujó la página, no de cuándo son
+ * los números: con eso la cabecera anunciaba "Sincronizado recién" encima de
+ * datos de varios minutos atrás, que es peor que no decir nada.
+ *
+ * El `Date` sirve justamente porque las dos capas lo dejan intacto:
+ *  - CloudFront preserva el del origen y cuenta el tiempo aparte, en `Age`.
+ *    Medido: tres hits seguidos con `Date: 19:07:22` y `Age: 67`. Por eso NO
+ *    se le resta `Age` — sería descontar el mismo tiempo dos veces.
+ *  - Next guarda los headers en la entrada de caché y los replica al leerla
+ *    (`headers: Object.fromEntries(...)` en server/lib/patch-fetch.js).
+ *
+ * Sin header, o con uno que no parsea, cae a `new Date()`: es la lectura
+ * optimista de antes, y para un dato de presentación es mejor que un hueco.
+ */
+function originDate(res: Response): Date {
+  const header = res.headers.get("date");
+  if (!header) return new Date();
+
+  const parsed = new Date(header);
+  if (Number.isNaN(parsed.getTime())) return new Date();
+
+  // Un origen con el reloj adelantado daría "generado en el futuro", y de ahí
+  // salen los "hace -2 min". Preferimos capear en ahora.
+  const now = new Date();
+  return parsed > now ? now : parsed;
+}
+
 async function fetchMonth(
   year: number,
   month: number,
   opts: FetchOpts
-): Promise<RawLeaderboardResponse> {
+): Promise<MonthResponse> {
   // `year` se manda por fidelidad al contrato aunque la API lo ignore.
   const url = `${BASE}?month=${month}&year=${year}&region=${REGION}`;
 
@@ -117,7 +165,7 @@ async function fetchMonth(
     throw new LeaderboardError("La API no devolvió un array `results`.");
   }
 
-  return parsed;
+  return { body: parsed, dataAt: originDate(res) };
 }
 
 /** Normaliza una fila cruda. La API manda `rank` 0-indexed; acá pasa a 1-indexed. */
@@ -157,13 +205,14 @@ export async function fetchLeaderboard(
   const live = liveSeason(now);
 
   const build = (
-    data: RawLeaderboardResponse,
+    res: MonthResponse,
     season: { year: number; month: number }
   ): LeaderboardFetchResult => ({
-    rows: data.results.map(normalizeRow),
+    rows: res.body.results.map(normalizeRow),
     season: seasonLabel(season.year, season.month),
-    total: data.total,
+    total: res.body.total,
     fetchedAt: now,
+    dataAt: res.dataAt,
   });
 
   try {
@@ -225,11 +274,11 @@ export async function fetchSeason(
   const parsed = parseSeason(season);
   if (!parsed) throw new LeaderboardError(`Temporada inválida: "${season}"`, 400);
 
-  const data = await fetchMonth(parsed.year, parsed.month, {
+  const res = await fetchMonth(parsed.year, parsed.month, {
     revalidate: opts.revalidate ?? false,
   });
 
-  if (data.results.length === 0) {
+  if (res.body.results.length === 0) {
     throw new LeaderboardError(
       `La API no devolvió filas para ${season}. Puede que ya no la sirva.`,
       404
@@ -237,10 +286,11 @@ export async function fetchSeason(
   }
 
   return {
-    rows: data.results.map(normalizeRow),
+    rows: res.body.results.map(normalizeRow),
     season,
-    total: data.total,
+    total: res.body.total,
     fetchedAt: new Date(),
+    dataAt: res.dataAt,
   };
 }
 

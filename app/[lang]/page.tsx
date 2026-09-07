@@ -53,7 +53,7 @@ export default async function LeaderboardPage({
         t={t}
         active="leaderboard"
         season={board.season}
-        syncedAt={board.fetchedAt}
+        syncedAt={board.dataAt}
       />
 
       {/* 2x2 en móvil: cuatro columnas en 390 px cortaban los números por la mitad. */}
