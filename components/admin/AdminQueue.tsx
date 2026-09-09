@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AllianceQueue, type AllianceRow } from "@/components/admin/AllianceQueue";
+import { formatStatusToken } from "@/lib/status-token";
 import type { SubmissionStatus, SubmissionView } from "@/lib/types";
 
 const TABS: { key: SubmissionStatus; label: string }[] = [
@@ -212,6 +213,8 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
         {s.rejectionReason && <Field label="Motivo" value={s.rejectionReason} />}
       </dl>
 
+      <Recovery token={s.statusToken} discord={s.discord} email={s.email} />
+
       {error && (
         <p className="mb-3 rounded-lg border border-[#4a2320] bg-[#2a1614] px-3.5 py-2.5 text-[12.5px] text-neg">
           {error}
@@ -328,5 +331,92 @@ function Field({
       </dt>
       <dd className="min-w-0 break-words text-ink-2">{value}</dd>
     </>
+  );
+}
+
+/**
+ * El código de seguimiento, para reenviárselo a quien lo perdió.
+ *
+ * Recuperar es MANDAR EL MISMO, no emitir otro. Si ya revisaste a mano que esta
+ * persona es esta cuenta, esa decisión no se vuelve a tomar porque haya perdido
+ * un papel; emitir uno nuevo sería responder a una pregunta que nadie hizo
+ * ("¿se filtró?"), y dejaría a la gente con códigos viejos que dejan de
+ * funcionar sin aviso. Mismo criterio que separa rotar de expulsar en las
+ * alianzas: ver `app/api/alliances/[tag]/rotate/route.ts`.
+ *
+ * Toda la seguridad de esto se apoya en UNA regla, y por eso está escrita en
+ * pantalla y no solo acá: se manda al contacto que ya está guardado, nunca al
+ * que te escribe. Quien contacta desde otro lado no está recuperando nada, está
+ * reclamando una identidad — y eso va a la cola como cualquier otra petición.
+ *
+ * Oculto por defecto porque este panel se comparte por pantalla, igual que el
+ * `joinCode` en `LeaderPanel`.
+ */
+function Recovery({
+  token,
+  discord,
+  email,
+}: {
+  token: string;
+  discord?: string;
+  email?: string;
+}) {
+  const [shown, setShown] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const contacto = [discord && `Discord ${discord}`, email && email]
+    .filter(Boolean)
+    .join(" · ");
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(token);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Sin portapapeles: que se lea y se copie a mano. Por eso además se
+      // muestra en texto, igual que el código de alianza.
+      setShown(true);
+    }
+  }
+
+  return (
+    <div className="mb-4 rounded-lg border border-line-soft bg-bg px-3.5 py-3">
+      <div className="mb-2 flex flex-wrap items-center gap-2.5">
+        <span className="text-[11px] font-semibold tracking-[0.06em] text-ink-4">
+          CÓDIGO<span className="ml-1 font-normal tracking-normal">·priv</span>
+        </span>
+        <code className="num text-[13px] tracking-[0.08em] text-ink-2">
+          {shown ? formatStatusToken(token) : "••••-••••-••••"}
+        </code>
+        <button
+          onClick={() => setShown((v) => !v)}
+          className="rounded-md border border-line-strong px-2.5 py-1 text-[12px] text-ink-4 transition-colors hover:border-line-bright hover:text-ink-2"
+        >
+          {shown ? "Ocultar" : "Ver"}
+        </button>
+        <button
+          onClick={copy}
+          className="rounded-md border border-line-strong px-2.5 py-1 text-[12px] text-ink-4 transition-colors hover:border-line-bright hover:text-ink-2"
+        >
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+      </div>
+
+      {contacto ? (
+        <p className="text-[12px] leading-relaxed text-ink-4">
+          Reenvíaselo a <span className="text-ink-3">{contacto}</span> — al contacto
+          que dejó al pedir, nunca al que te escribe. Si te contactan desde otro
+          lado, eso es un reclamo de identidad nuevo y va a la cola.
+        </p>
+      ) : (
+        /* No debería pasar: `POST /api/submissions` exige al menos un contacto.
+           Si igual aparece —un doc viejo, una carga a mano— no hay a dónde
+           reenviar nada, y decirlo es mejor que dejar el bloque mudo. */
+        <p className="text-[12px] leading-relaxed text-neg">
+          Esta petición no tiene contacto guardado: no hay a dónde reenviarlo.
+        </p>
+      )}
+    </div>
   );
 }

@@ -229,6 +229,7 @@ anulen; está verificado con GET y POST seguidos.
 | `npm run test:socials` | 18 casos de parseo de handles y normalización |
 | `npm run test:tokens` | 17 casos del token de seguimiento |
 | `npm run test:overlay` | 28 casos de la ventana del overlay: bordes del ladder y homónimos |
+| `npm run test:overlay-key` | 21 casos de la llave secreta del overlay: largo, parseo y que no choque con los otros dos códigos |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run test:self-edit` | 27 casos de la edición con el código, contra la ruta viva (necesita `npm run dev`). Se autolimpia |
 | `npm run db:archive-season -- 2026-07` | Congela una temporada antes de que la API la suelte |
@@ -246,24 +247,39 @@ anulen; está verificado con GET y POST seguidos.
 
 ## Overlay para streams
 
-`/overlay/<nombre>` devuelve las filas del ladder alrededor de un jugador, con
+`/overlay/<llave>` devuelve las filas del ladder alrededor de un jugador, con
 fondo transparente, para pegar en OBS como **Browser Source**.
 
 No es una Twitch Extension y no lo necesita: no hay cuenta de desarrollador que
 sacar, ni revisión que esperar, y funciona igual en YouTube o Kick porque la
 capa se compone del lado del streamer.
 
-**Solo para cuentas vinculadas.** Un nombre que no está en `players` devuelve
-404, en la página y en la API. El motivo es de cuota antes que de producto:
-cada capa abierta es una consulta por minuto contra las invocaciones de Vercel,
-y sin el corte cualquiera puede apuntar un overlay a cualquier fila del top
-1000. La URL se la damos hecha al jugador en su ficha, con botón de copiar;
-a quien no vinculó se le muestra ahí mismo qué se está perdiendo.
+**La URL lleva una llave secreta, no el nombre del jugador.** Antes era
+`/overlay/<nombre>` y eso la hacía adivinable: el nombre normalizado sale de la
+fila pública del ladder, así que cualquiera podía abrir la capa de otro. Hoy
+cada cuenta vinculada tiene una `overlayKey` de 16 caracteres —independiente de
+su código de seguimiento— y sin ella no hay overlay: la página y la API
+devuelven lo mismo para una llave mal formada que para una que no existe.
+
+Esto además resuelve el problema de cuota que motivó el corte original: cada
+capa abierta es una consulta por minuto contra las invocaciones de Vercel, y sin
+llave cualquiera podía apuntar un overlay a cualquier fila del top 1000.
+
+**Dónde está la URL.** En `/<lang>/request/<código>` —la misma página donde el
+jugador edita sus datos— con botón de copiar y botón de rotar. **No** está en la
+ficha pública: ahí la vería cualquiera que entre al perfil. A quien todavía no
+vinculó se le muestra en la ficha qué se está perdiendo, sin URL.
+
+**Rotar** genera una llave nueva y **rompe la fuente de OBS que ya esté
+configurada** — es para cuando la URL se filtró, en una captura de la escena o
+en un tutorial. Por eso el botón pide confirmación, y por eso la llave no se
+deriva del código de seguimiento: si se dedujera uno del otro, filtrar la capa
+sería filtrar la ficha entera.
 
 ```
-https://<tu-app>/overlay/730
-https://<tu-app>/overlay/730?rows=7
-https://<tu-app>/overlay/leaf?rank=211
+https://<tu-app>/overlay/K7M2QW9X4RTFVBND
+https://<tu-app>/overlay/K7M2QW9X4RTFVBND?rows=7
+https://<tu-app>/overlay/K7M2QW9X4RTFVBND?rank=211
 ```
 
 | Parámetro | Default | Qué hace |
@@ -298,8 +314,8 @@ distingue las dos fallas y las dice:
 
 | Qué pasó | Qué se ve |
 |---|---|
-| El nombre no está en el top 1000 | "Revisa que esté escrito igual que en el ladder" |
-| Está en el ladder pero no vinculado | "Los overlays son para cuentas vinculadas" |
+| La llave no existe, está mal copiada o se rotó | "Esta URL no corresponde a ningún overlay" |
+| La llave es buena pero el jugador no está en el top 1000 | "Ese jugador no está en el top 1000" |
 
 Las dos comparten el diseño de la capa pero con borde rojizo, para que se lean
 como un error y no como parte del overlay: esto se compone sobre el stream, así
@@ -345,12 +361,40 @@ Rechazar exige un motivo, que el solicitante ve en su página de estado.
 Al enviar, cada petición entrega un **código de seguimiento** de 12 caracteres
 (`RYNG-XNWG-VENT`). Con eso el solicitante consulta su estado en `/{lang}/request`
 o directo en `/{lang}/request/{código}`. Es lo único que tiene: no hay cuentas ni
-avisos, así que si lo pierde hay que buscarlo por el contacto que dejó.
+avisos, así que si lo pierde se lo reenviamos a mano — ver más abajo.
 
 Es un token **aleatorio** y no el id de Mongo porque los ObjectId llevan un
 contador incremental: desde uno conocido se adivinan los vecinos, y cualquiera
 que mandara una petición podría leer las de al lado. El alfabeto no tiene 0, 1,
 I, L, O ni U, que son los caracteres que se confunden al dictarlo.
+
+### Si alguien pierde su código
+
+**Se le reenvía el mismo, y el proceso es manual.** El código se otorgó porque
+una persona revisó la petición y decidió que ese humano es esa cuenta; si
+recuperarlo se pudiera hacer con algo más flojo que eso, recuperar sería el
+camino fácil para quedarse con la ficha de otro.
+
+Reenviar el mismo y no emitir uno nuevo es deliberado. Emitir otro respondería a
+una pregunta que nadie hizo —"¿se filtró?"— y dejaría por ahí códigos viejos que
+dejan de funcionar sin aviso. Rotar es una herramienta aparte, para cuando la
+persona dice que se filtró; mismo criterio que separa rotar de expulsar en las
+alianzas.
+
+En el panel, cada petición muestra su código —oculto por defecto, porque esa
+pantalla se comparte— junto al Discord y el correo guardados. **La regla que
+sostiene todo esto: se manda al contacto que ya está en la petición, nunca al
+que te escribe.** Quien contacta desde otro lado no está recuperando nada, está
+reclamando una identidad, y eso vuelve a la cola como cualquier otra petición.
+
+Del lado público, `/{lang}/request` ofrece el canal para pedirlo. Ese bloque
+**no se muestra hasta que completes `SITE_CONTACT` en `lib/contact.ts`**: un
+"escríbenos" sin dirección manda a la persona a buscar un canal que no existe.
+
+No está automatizado por correo a propósito. El proyecto no manda un solo email
+—no hay proveedor ni dependencia— y el email es *opcional* al pedir la ficha: se
+acepta "Discord **o** correo", así que un flujo automático dejaría afuera a
+quien solo dejó Discord y habría que mantener igual el camino manual.
 
 ### Editar con el código, sin volver a la cola
 

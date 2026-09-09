@@ -81,6 +81,26 @@ export interface PlayerDoc {
   verifiedAt?: Date;
 
   /**
+   * La llave secreta del overlay de stream. Índice único parcial.
+   *
+   * La URL del overlay ERA `/overlay/<nameKey>`, y eso la hacía adivinable: el
+   * `nameKey` sale del nombre público del jugador, así que cualquiera que viera
+   * una fila del ladder podía armar la capa de esa persona. Ahora la URL es
+   * `/overlay/<overlayKey>` y no hay nada que derivar.
+   *
+   * Es INDEPENDIENTE del `statusToken`, no derivada de él, y eso es lo que hace
+   * que se pueda tener en pantalla: esta URL vive pegada en OBS durante meses y
+   * termina en capturas de "así tengo armado el stream". Si de ahí se pudiera
+   * sacar el código de edición, filtrar la capa sería filtrar la ficha entera.
+   *
+   * Opcional porque los docs anteriores a este cambio no la tienen. Se genera
+   * al aprobar, y para los que ya estaban, la primera vez que su dueño abre la
+   * página del código — ver `ensureOverlayKey`.
+   */
+  overlayKey?: string;
+  overlayKeyRotatedAt?: Date;
+
+  /**
    * Denormalizado desde el último sync. Sirve para dos cosas:
    *  - desambiguar nombres duplicados en el ladder (elegimos la fila cuyo rank
    *    esté más cerca del último conocido);

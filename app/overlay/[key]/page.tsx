@@ -1,19 +1,22 @@
-import { notFound } from "next/navigation";
 import { OverlayBoard } from "@/components/OverlayBoard";
 import { getMergedLeaderboard } from "@/lib/merge";
 import { clampRows, windowAround } from "@/lib/overlay";
-import { isLinked } from "@/lib/players";
-import { toNameKey } from "@/lib/names";
+import { parseOverlayKey } from "@/lib/overlay-key";
+import { findPlayerByOverlayKey } from "@/lib/players";
 import "./overlay.css";
 
 export const dynamic = "force-dynamic";
 
 /**
- * /overlay/[nameKey]?rows=5&rank=284
+ * /overlay/[key]?rows=5&rank=284
  *
  * La capa para OBS: las filas del ladder alrededor del streamer, con la suya
  * marcada. Se pega como "Browser Source" y no necesita nada de Twitch — ni
  * cuenta de desarrollador, ni revisión — así que sirve igual en YouTube o Kick.
+ *
+ * La URL lleva la LLAVE del jugador, no su nombre. Antes era `/overlay/<nameKey>`
+ * y el nameKey se deriva del nombre público: cualquiera que viera una fila del
+ * ladder podía abrir la capa de esa persona. Ver `PlayerDoc.overlayKey`.
  *
  * El primer render lo hace el servidor a propósito: OBS carga la página una
  * vez y la deja meses corriendo, y una capa que arranca vacía esperando a que
@@ -24,14 +27,14 @@ export default async function OverlayPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ nameKey: string }>;
+  params: Promise<{ key: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { nameKey: raw } = await params;
+  const { key: raw } = await params;
   const sp = await searchParams;
 
-  const nameKey = toNameKey(decodeURIComponent(raw));
-  if (!nameKey) notFound();
+  const key = parseOverlayKey(decodeURIComponent(raw));
+  if (!key) return <OverlayNotice motivo="llaveMala" />;
 
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? null;
   const rows = clampRows(one(sp.rows));
@@ -39,13 +42,23 @@ export default async function OverlayPage({
   const pinnedRank = Number.isInteger(rank) && rank > 0 ? rank : undefined;
 
   /**
-   * El ladder va primero aunque el corte sea por estar vinculado, para poder
-   * separar dos fallas que dan la misma pantalla en blanco: un nombre que no
-   * existe en el top 1000 y uno que existe pero no pidió su ficha. Se arreglan
-   * distinto, así que decirlas distinto es la mitad del trabajo.
+   * Ahora la llave va PRIMERO, al revés que antes.
    *
-   * Cuesta poco: acá `getMergedLeaderboard` sí va cacheado 60 s, así que mil
-   * visitas en un minuto son una sola consulta a la API oficial.
+   * Cuando el corte era "¿este nombre está vinculado?", el ladder iba adelante
+   * para poder separar dos fallas que daban la misma pantalla en blanco. Ya no
+   * se puede: sin llave válida no sabemos de qué jugador hablamos, así que no
+   * hay a quién buscar en el ladder. Y además no queremos: resolver el ladder
+   * antes de validar sería trabajo regalado a cualquiera que tire URLs al azar.
+   *
+   * Los tres avisos siguen siendo distintos entre sí, que era el punto — solo
+   * que el de "llave mala" ahora cubre lo que antes era "no está vinculado".
+   */
+  const player = await findPlayerByOverlayKey(key);
+  if (!player) return <OverlayNotice motivo="llaveMala" />;
+
+  /**
+   * Cacheado 60 s, así que mil visitas en un minuto son una sola consulta a la
+   * API oficial.
    *
    * El caché quedó SOLO acá. La home y /api/leaderboard lo perdieron porque con
    * tráfico esporádico el stale-while-revalidate les servía el estado que dejó
@@ -54,16 +67,15 @@ export default async function OverlayPage({
    * con eso la entrada nunca envejece más que la ventana.
    */
   const board = await getMergedLeaderboard(60);
-  const win = windowAround(board.rows, nameKey, rows, pinnedRank);
+  const win = windowAround(board.rows, player.nameKey, rows, pinnedRank);
 
   if (!win) return <OverlayNotice motivo="ausente" />;
-  if (!(await isLinked(nameKey))) return <OverlayNotice motivo="sinVincular" />;
 
   return (
     <main className="ov-wrap">
       <OverlayBoard
         initial={{ selfRank: win.selfRank, ambiguous: win.ambiguous, rows: win.rows }}
-        nameKey={nameKey}
+        overlayKey={key}
         rows={rows}
         pinnedRank={pinnedRank}
       />
@@ -92,23 +104,23 @@ export default async function OverlayPage({
  * configurar algo" en un vistazo, no como una pieza del overlay ni como
  * publicidad.
  */
-function OverlayNotice({ motivo }: { motivo: "ausente" | "sinVincular" }) {
+function OverlayNotice({ motivo }: { motivo: "ausente" | "llaveMala" }) {
   return (
     <div className="ov-card ov-notice">
       {motivo === "ausente" ? (
         <>
-          <strong>Ese nombre no está en el top 1000</strong>
+          <strong>Ese jugador no está en el top 1000</strong>
           <span>
-            Revisa que esté escrito igual que en el ladder. Solo entran los
-            1000 que devuelve la API oficial.
+            La llave es correcta, pero el nombre no aparece en el ladder. Solo
+            entran los 1000 que devuelve la API oficial.
           </span>
         </>
       ) : (
         <>
-          <strong>Esta cuenta no tiene overlay todavía</strong>
+          <strong>Esta URL no corresponde a ningún overlay</strong>
           <span>
-            Los overlays son para cuentas vinculadas. Se pide en el sitio,
-            en <em>Vincular cuenta</em>, y lo revisa una persona.
+            Puede estar incompleta, o ser una que ya rotaste. La actual está en
+            tu página de código, la que abres con el código de tu ficha.
           </span>
         </>
       )}

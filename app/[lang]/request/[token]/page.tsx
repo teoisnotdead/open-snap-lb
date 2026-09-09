@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LeaderPanel, type Member } from "@/components/LeaderPanel";
+import { LostCode } from "@/components/LostCode";
+import { OverlayLink } from "@/components/OverlayLink";
 import { SelfEditForm } from "@/components/SelfEditForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
 import { WarningIcon } from "@/components/icons";
 import { listAllianceMembers } from "@/lib/alliances";
 import { alliancesCollection } from "@/lib/db";
+import { overlaySetup } from "@/lib/overlay-url";
 import { findSubmissionByToken } from "@/lib/submissions";
-import { formatStatusToken } from "@/lib/tokens";
+import { formatStatusToken } from "@/lib/status-token";
 import { getDictionary, isLang, type Lang } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/format";
 import type { SubmissionDoc } from "@/lib/types";
@@ -50,6 +53,16 @@ export default async function RequestStatusPage({
     members: Member[];
     banned: string[];
   } | null = null;
+  /**
+   * La URL del overlay para OBS, si esta cuenta tiene derecho a una.
+   *
+   * Se muestra ACÁ y no en la ficha del jugador. La ficha es pública, así que
+   * ahí la URL de una cuenta vinculada la veía cualquiera que entrara al
+   * perfil — y no es un dato del jugador, es la configuración de quien vinculó
+   * la cuenta. Del mismo tipo que el `joinCode` de arriba, y por eso en el
+   * mismo lugar: detrás del `statusToken`, en una página con `noindex`.
+   */
+  let overlay: { url: string; pinnedRank?: number } | null = null;
 
   try {
     doc = await findSubmissionByToken(token);
@@ -74,6 +87,28 @@ export default async function RequestStatusPage({
           members: await listAllianceMembers(mine.tag),
           banned: mine.bannedNameKeys ?? [],
         };
+      }
+
+      /**
+       * `overlaySetup` devuelve null si el jugador no tiene ficha, que es el
+       * MISMO corte que aplican `/overlay` y `/api/overlay`: sin ficha no hay
+       * llave. Casi siempre coincide con la petición aprobada —aprobar crea la
+       * ficha— pero si la ficha se borró después, dar una URL sería mandar a la
+       * persona a pegar en OBS una capa que no va a responder.
+       */
+      if (doc.status === "approved") {
+        /**
+         * Falla suave, y va aparte del try de afuera a propósito: ese pinta la
+         * pantalla de "la base no responde", y esto es lo ÚLTIMO por lo que
+         * conviene ocultarle a alguien el estado de su petición. Además acá se
+         * ESCRIBE —`overlaySetup` genera la llave si falta— así que es la parte
+         * de la página con más motivos para romperse.
+         */
+        try {
+          overlay = await overlaySetup(doc.nameKey);
+        } catch (err) {
+          console.error("No se pudo preparar el overlay:", err);
+        }
       }
     }
   } catch (err) {
@@ -104,6 +139,7 @@ export default async function RequestStatusPage({
               <span>{t.request.notFound}</span>
             </p>
             <TokenLookup lang={lang} t={t} />
+            <LostCode t={t} />
           </div>
         ) : (
           <div className="flex flex-col gap-5">
@@ -215,6 +251,18 @@ export default async function RequestStatusPage({
                     allianceCode: "",
                   }}
                 />
+
+                {/* Debajo de la edición a propósito: quien vuelve acá viene casi
+                    siempre a corregir un handle, y la URL del overlay se copia
+                    una vez y queda pegada en OBS por meses. */}
+                {overlay && (
+                  <OverlayLink
+                    url={overlay.url}
+                    pinnedRank={overlay.pinnedRank}
+                    statusToken={doc.statusToken}
+                    t={t}
+                  />
+                )}
 
                 <Link
                   href={`/${lang}/player/${encodeURIComponent(doc.nameKey)}`}

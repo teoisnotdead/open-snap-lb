@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { submissionsCollection } from "./db";
-import { parseStatusToken } from "./tokens";
+import { parseStatusToken } from "./status-token";
 import type { SubmissionDoc, SubmissionView } from "./types";
 
 /**

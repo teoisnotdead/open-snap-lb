@@ -3,7 +3,7 @@ import { playersCollection, submissionsCollection } from "@/lib/db";
 import { apiError, json, readJson, requireAdminAuth } from "@/lib/api";
 import { getAdminSession } from "@/lib/admin-auth";
 import { fetchLeaderboard, indexByNameKey } from "@/lib/leaderboard";
-import { findSocialConflict } from "@/lib/players";
+import { ensureOverlayKey, findSocialConflict } from "@/lib/players";
 import { SOCIAL_FIELDS } from "@/lib/profile-fields";
 import { findSubmissionById, toSubmissionView } from "@/lib/submissions";
 import type { LeaderboardRow, SocialField } from "@/lib/types";
@@ -201,6 +201,22 @@ export async function POST(
           { nameKey: doc.nameKey, lastRank: { $exists: false } },
           { $set: { lastRank: seedRank } }
         );
+      }
+
+      /**
+       * La llave del overlay, con el mismo patrón de SEMILLA que `lastRank` y
+       * por un motivo más fuerte: si este jugador ya estaba aprobado y su llave
+       * anda pegada en un OBS, re-aprobarlo no puede cambiársela. Rotar es una
+       * decisión suya, no un efecto secundario de que un admin toque su ficha.
+       *
+       * Falla suave a propósito. Si acá se rompe algo, la aprobación —que es lo
+       * que la persona está esperando— ya está escrita, y la llave se genera
+       * sola la próxima vez que abra su página de código. Ver `ensureOverlayKey`.
+       */
+      try {
+        await ensureOverlayKey(doc.nameKey);
+      } catch (err) {
+        console.error("No se pudo sembrar la llave del overlay al aprobar:", err);
       }
     } catch (err) {
       if ((err as { code?: number }).code === 11000) {

@@ -1,5 +1,7 @@
+import { randomInt } from "node:crypto";
 import type { Filter } from "mongodb";
 import { playersCollection } from "./db";
+import { OVERLAY_KEY_ALPHABET, OVERLAY_KEY_LENGTH } from "./overlay-key";
 import { SOCIAL_FIELDS } from "./profile-fields";
 import type { PlayerDoc, SocialField } from "./types";
 
@@ -29,31 +31,82 @@ export async function findSocialConflict(
 }
 
 /**
- * Si este jugador pidió su ficha y se la dieron.
- *
- * Vive acá y no en `lib/overlay.ts` porque ese módulo lo importa un componente
- * cliente: cualquier camino hacia el driver de Mongo, aunque sea un
- * `await import()`, termina con el bundler pidiendo `child_process` en el
- * navegador.
- *
- * El overlay está limitado a los vinculados, y el motivo es de cuota antes que
- * de producto: cada capa abierta es una consulta por minuto contra las
- * invocaciones de Vercel, y sin este corte cualquiera puede apuntar un overlay
- * a cualquier fila del top 1000 y hacer correr esa cuenta.
- *
- * **Ante un error de base devuelve `true`, no `false`.** Va al revés que el
- * resto del proyecto —donde sin configuración se cierra— porque acá no se
- * protege nada secreto: el ladder es público y las filas ya salen del
- * leaderboard oficial, no de Mongo. Fallar cerrado dejaría la capa de un stream
- * en vivo en negro durante un hipo de la base, que es mucho peor que servir
- * unas filas públicas de más.
+ * Una llave de overlay nueva. Vive acá y no en `lib/overlay-key.ts` porque usa
+ * `node:crypto`, y ese archivo lo importa un componente cliente.
  */
-export async function isLinked(nameKey: string): Promise<boolean> {
-  try {
-    const players = await playersCollection();
-    return (await players.countDocuments({ nameKey }, { limit: 1 })) > 0;
-  } catch (err) {
-    console.error("No se pudo verificar si el jugador está vinculado:", err);
-    return true;
+export function generateOverlayKey(): string {
+  let out = "";
+  for (let i = 0; i < OVERLAY_KEY_LENGTH; i++) {
+    out += OVERLAY_KEY_ALPHABET[randomInt(OVERLAY_KEY_ALPHABET.length)];
   }
+  return out;
+}
+
+/**
+ * El jugador dueño de esta llave, o null.
+ *
+ * Es la única entrada al overlay. Una llave mal formada y una que no existe
+ * devuelven lo mismo a propósito, igual que con el `statusToken`: distinguirlas
+ * le confirmaría a quien prueba al azar que acertó el formato.
+ *
+ * Acá se falla CERRADO, y es un cambio respecto de cómo funcionaba el overlay
+ * antes. El corte anterior —`isLinked`, que ya no existe— devolvía `true` ante
+ * un error de base a propósito, porque no protegía nada: el ladder es público y
+ * la URL era adivinable de todos modos. Esta consulta sí es la puerta, y una
+ * puerta que se abre sola cuando Mongo tose no es una puerta.
+ *
+ * El costo es real y conocido: durante una caída de la base, las capas abiertas
+ * en OBS muestran el aviso en vez de las filas. Se recuperan solas en el
+ * refresco siguiente, que es cada 60 s.
+ */
+export async function findPlayerByOverlayKey(key: string): Promise<PlayerDoc | null> {
+  const players = await playersCollection();
+  return players.findOne({ overlayKey: key });
+}
+
+/**
+ * La llave de este jugador, generándola si todavía no tiene.
+ *
+ * Esto ES la migración, y por eso no hay script de backfill: los jugadores
+ * aprobados antes de que existiera el campo se la ganan la primera vez que
+ * abren su página de código, que es exactamente el momento en que la necesitan.
+ * Un script tendría que acordarse de correrlo alguien.
+ *
+ * El reintento es por el choque de `uniq_overlay_key`. Con 30^16 no va a pasar
+ * nunca, pero el mismo criterio se aplica en el insert de `submissions` y en la
+ * rotación del `joinCode`: un duplicado no reintentado sería un 500 por mala
+ * suerte pura.
+ */
+export async function ensureOverlayKey(nameKey: string): Promise<string | null> {
+  const players = await playersCollection();
+
+  const existing = await players.findOne({ nameKey }, { projection: { overlayKey: 1 } });
+  if (!existing) return null;
+  if (existing.overlayKey) return existing.overlayKey;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const overlayKey = generateOverlayKey();
+    try {
+      /**
+       * El filtro incluye `overlayKey: { $exists: false }` y no solo el
+       * `nameKey`: si dos pestañas de la misma persona entran a la vez, la
+       * segunda no pisa la llave que acaba de escribir la primera —lo que le
+       * rompería el OBS a alguien que quizá ya copió la URL.
+       */
+      const res = await players.updateOne(
+        { nameKey, overlayKey: { $exists: false } },
+        { $set: { overlayKey, updatedAt: new Date() } }
+      );
+
+      if (res.modifiedCount === 1) return overlayKey;
+
+      // Perdimos la carrera: la llave buena es la que quedó escrita.
+      const now = await players.findOne({ nameKey }, { projection: { overlayKey: 1 } });
+      return now?.overlayKey ?? null;
+    } catch (err) {
+      if ((err as { code?: number }).code !== 11000) throw err;
+    }
+  }
+
+  return null;
 }

@@ -37,12 +37,13 @@ const POLL_MS = 60_000;
  */
 export function OverlayBoard({
   initial,
-  nameKey,
+  overlayKey,
   rows,
   pinnedRank,
 }: {
   initial: OverlayData;
-  nameKey: string;
+  /** La llave del jugador, que es por donde entra la API. Ver `PlayerDoc.overlayKey`. */
+  overlayKey: string;
   rows: number;
   pinnedRank?: number;
 }) {
@@ -52,7 +53,7 @@ export function OverlayBoard({
     let vivo = true;
 
     const url =
-      `/api/overlay/${encodeURIComponent(nameKey)}?rows=${rows}` +
+      `/api/overlay/${encodeURIComponent(overlayKey)}?rows=${rows}` +
       (pinnedRank ? `&rank=${pinnedRank}` : "");
 
     const tick = async () => {
@@ -71,7 +72,7 @@ export function OverlayBoard({
       vivo = false;
       clearInterval(id);
     };
-  }, [nameKey, rows, pinnedRank]);
+  }, [overlayKey, rows, pinnedRank]);
 
   return (
     <div className="ov-card">

@@ -23,7 +23,7 @@ import {
   listAllianceMembers,
 } from "../lib/alliances";
 import { JOIN_CODE_ALPHABET } from "../lib/join-code";
-import { ALPHABET } from "../lib/tokens";
+import { ALPHABET } from "../lib/status-token";
 import { toNameKey } from "../lib/names";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";

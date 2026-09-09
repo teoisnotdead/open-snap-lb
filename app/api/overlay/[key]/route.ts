@@ -1,13 +1,13 @@
 import { getMergedLeaderboard } from "@/lib/merge";
 import { clampRows, windowAround } from "@/lib/overlay";
-import { isLinked } from "@/lib/players";
-import { toNameKey } from "@/lib/names";
+import { parseOverlayKey } from "@/lib/overlay-key";
+import { findPlayerByOverlayKey } from "@/lib/players";
 import { apiError, json } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/overlay/[nameKey]?rows=5&rank=284
+ * GET /api/overlay/[key]?rows=5&rank=284
  *
  * Las pocas filas alrededor de un jugador, para que el overlay de OBS se
  * refresque sin volver a bajar el ladder entero.
@@ -18,21 +18,26 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(
   req: Request,
-  ctx: { params: Promise<{ nameKey: string }> }
+  ctx: { params: Promise<{ key: string }> }
 ) {
-  const { nameKey: raw } = await ctx.params;
-  const nameKey = toNameKey(decodeURIComponent(raw));
-  if (!nameKey) return apiError("Falta el nombre del jugador.");
+  const { key: raw } = await ctx.params;
+
+  /**
+   * Mismo 404 para una llave mal formada y para una que no existe. Separarlos
+   * le confirmaría a quien prueba al azar cuándo acertó el formato, que es la
+   * mitad del trabajo de adivinar. Igual criterio que `findSubmissionByToken`.
+   */
+  const key = parseOverlayKey(decodeURIComponent(raw));
+  if (!key) return apiError("Overlay no encontrado.", 404);
 
   const params = new URL(req.url).searchParams;
   const size = clampRows(params.get("rows"));
   const pinned = Number(params.get("rank"));
 
   try {
-    // Mismo corte que la página, y por el mismo motivo. Ver `isLinked`.
-    if (!(await isLinked(nameKey))) {
-      return apiError("El overlay es para cuentas vinculadas.", 404);
-    }
+    // Mismo corte que la página, y por el mismo motivo. Ver `overlayKey`.
+    const player = await findPlayerByOverlayKey(key);
+    if (!player) return apiError("Overlay no encontrado.", 404);
 
     /**
      * Los mismos 60 s de cache que la home. El overlay pregunta cada minuto,
@@ -42,7 +47,7 @@ export async function GET(
     const board = await getMergedLeaderboard(60);
     const win = windowAround(
       board.rows,
-      nameKey,
+      player.nameKey,
       size,
       Number.isInteger(pinned) && pinned > 0 ? pinned : undefined
     );

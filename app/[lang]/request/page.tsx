@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { LostCode } from "@/components/LostCode";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
 import { getDictionary, isLang, type Lang } from "@/lib/i18n";
@@ -35,7 +36,10 @@ export default async function RequestLookupPage({
           {t.request.lookupSubtitle}
         </p>
 
-        <TokenLookup lang={lang} t={t} />
+        <div className="flex flex-col gap-5">
+          <TokenLookup lang={lang} t={t} />
+          <LostCode t={t} />
+        </div>
       </div>
     </main>
   );

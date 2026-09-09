@@ -123,6 +123,19 @@ const en = {
     teaserBody:
       "Linked accounts get an overlay for OBS: your row and the ones around you, live on stream.",
     teaserCta: "Link your account",
+    ownedBody:
+      "The overlay URL belongs to whoever linked this account. If that is you, it is on your code page, next to your details.",
+    ownedCta: "Open it with my code",
+    secret:
+      "Treat this URL like a password: anyone who has it can open your overlay. Keep it off screen while you set up OBS.",
+    rotate: "New URL",
+    rotating: "Generating…",
+    rotateHelp:
+      "Rotate it if it leaked — a screenshot of your OBS setup, a scene you lent out. The old URL stops working the moment you do.",
+    rotateConfirm: "Yes, break the current one",
+    rotateCancel: "Cancel",
+    rotated: "Done. Paste this URL into OBS — the old one no longer works.",
+    rotateFailed: "That did not go through. Try again in a moment.",
   },
   chart: {
     spTitle: "{name}’s Snap Points",
@@ -285,6 +298,10 @@ const en = {
     lookupLabel: "TRACKING CODE",
     lookupButton: "Check",
     lookupHelp: "12 characters. Dashes and lowercase are fine.",
+    lostTitle: "Lost your code?",
+    lostBody:
+      "Write to us from the same Discord or email you left when you asked for your listing, and we will send the same code back. It has to be that contact — it is the only thing that tells us the account is yours.",
+    lostWrite: "Write to us at",
     seeProfile: "See my profile",
     tryAgain: "Send a new request",
     editTitle: "Edit your details",
@@ -452,6 +469,19 @@ const es: Dictionary = {
     teaserBody:
       "Las cuentas vinculadas se llevan un overlay para OBS: tu fila y las de alrededor, en vivo en el stream.",
     teaserCta: "Vincula tu cuenta",
+    ownedBody:
+      "La URL del overlay es de quien vinculó esta cuenta. Si eres tú, la tienes en tu página de código, junto a tus datos.",
+    ownedCta: "Abrirla con mi código",
+    secret:
+      "Trata esta URL como una contraseña: cualquiera que la tenga puede abrir tu overlay. No la dejes en pantalla mientras configuras OBS.",
+    rotate: "URL nueva",
+    rotating: "Generando…",
+    rotateHelp:
+      "Rótala si se filtró — una captura de tu OBS, una escena que prestaste. La URL vieja deja de funcionar en ese mismo momento.",
+    rotateConfirm: "Sí, romper la actual",
+    rotateCancel: "Cancelar",
+    rotated: "Listo. Pega esta URL en OBS — la anterior ya no funciona.",
+    rotateFailed: "No se pudo. Prueba de nuevo en un momento.",
   },
   chart: {
     spTitle: "Snap Points de {name}",
@@ -614,6 +644,10 @@ const es: Dictionary = {
     lookupLabel: "CÓDIGO DE SEGUIMIENTO",
     lookupButton: "Consultar",
     lookupHelp: "12 caracteres. Los guiones y las minúsculas dan igual.",
+    lostTitle: "¿Perdiste tu código?",
+    lostBody:
+      "Escríbenos desde el mismo Discord o correo que dejaste al pedir tu ficha y te reenviamos el mismo código. Tiene que ser ese contacto — es lo único que nos permite saber que la cuenta es tuya.",
+    lostWrite: "Escríbenos a",
     seeProfile: "Ver mi perfil",
     tryAgain: "Enviar una nueva petición",
     editTitle: "Edita tus datos",

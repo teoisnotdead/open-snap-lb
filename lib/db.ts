@@ -90,6 +90,22 @@ export const PLAYER_INDEXES: IndexDescription[] = [
 
   // Para listar creators / filtrar la tabla por verificados.
   { key: { verified: 1, lastRank: 1 }, name: "verified_rank" },
+
+  /**
+   * La llave del overlay, que es por dónde entra `/overlay/[key]`: sin índice,
+   * cada refresco de cada capa abierta sería un scan de la colección.
+   *
+   * Parcial y con `$type: "string"` por lo mismo que los canales sociales: sin
+   * el filtro, todos los docs que todavía no tienen llave entrarían al índice
+   * como `null` y chocarían entre sí — o sea, solo UN jugador podría estar sin
+   * llave, y justo venimos de un mundo donde no la tiene ninguno.
+   */
+  {
+    key: { overlayKey: 1 },
+    name: "uniq_overlay_key",
+    unique: true,
+    partialFilterExpression: { overlayKey: { $type: "string" } },
+  },
 ];
 
 /**

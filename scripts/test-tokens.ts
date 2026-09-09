@@ -6,13 +6,13 @@
  * ya no existe —verifica el admin al aprobar— y con él se fueron esos casos.
  * Lo que queda es la llave con la que alguien vuelve a consultar su petición.
  */
+import { generateStatusToken } from "../lib/tokens";
 import {
-  generateStatusToken,
   formatStatusToken,
   parseStatusToken,
   STATUS_TOKEN_LENGTH,
   ALPHABET,
-} from "../lib/tokens";
+} from "../lib/status-token";
 
 const ok: string[] = [];
 const bad: string[] = [];
