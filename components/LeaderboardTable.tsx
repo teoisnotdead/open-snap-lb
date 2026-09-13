@@ -218,7 +218,7 @@ export function LeaderboardTable({
         </div>
 
         {limit < filtered.length && (
-          <div className="flex justify-center pt-5">
+          <div className="flex flex-wrap justify-center gap-2.5 pt-5">
             <button
               type="button"
               onClick={() => setLimit((n) => n + PAGE)}
@@ -228,6 +228,20 @@ export function LeaderboardTable({
                 n: formatScore(Math.min(PAGE, filtered.length - limit)),
               })}
             </button>
+            {/* Quien ya pidió una segunda tanda está recorriendo la tabla, no
+                echando un vistazo: le ahorramos los clics que faltan (con
+                las 1000 sin filtrar, ocho más). Si
+                lo que queda entra en una tanda, los dos botones harían lo
+                mismo, así que ahí no aparece. */}
+            {limit >= 2 * PAGE && filtered.length - limit > PAGE && (
+              <button
+                type="button"
+                onClick={() => setLimit(filtered.length)}
+                className="rounded-lg border border-line-strong px-5 py-2.5 text-[13px] text-ink-3 hover:text-ink"
+              >
+                {t.table.showAll}
+              </button>
+            )}
           </div>
         )}
       </section>

@@ -84,6 +84,7 @@ const en = {
     results: "results",
     linkCta: "Link your account",
     showMore: "Show {n} more",
+    showAll: "Show all",
     noResults: "Nobody matches “{q}” in the top {total}.",
     verifiedTooltip: "Verified account — reviewed by hand",
     ambiguousTooltip:
@@ -430,6 +431,7 @@ const es: Dictionary = {
     results: "resultados",
     linkCta: "Vincula tu cuenta",
     showMore: "Mostrar {n} más",
+    showAll: "Mostrar todos",
     noResults: "Nadie coincide con “{q}” en el top {total}.",
     verifiedTooltip: "Cuenta verificada — revisada a mano",
     ambiguousTooltip:
