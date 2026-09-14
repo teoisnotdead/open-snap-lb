@@ -70,6 +70,7 @@ export default async function HowPage({
 
         <Section title={t.how.s7Title}>
           <p>{t.how.s7a}</p>
+          <p>{t.how.s7c}</p>
           <p>
             <Link href={`/${lang}/request`} className={LINK}>
               {t.how.s7link}
