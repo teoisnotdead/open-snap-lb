@@ -248,6 +248,7 @@ Reglas de entrada:
 | Al menos un contacto (Discord o email) | Sin cuentas ni notificaciones, es el único canal para rechazar o repreguntar |
 | `allianceName` exige `allianceTag` | La tabla muestra el tag; el nombre solo sería dato huérfano |
 | Una sola pendiente por nombre (409) | Índice `uniq_pending_per_player`. Sin esto, cien peticiones del mismo jugador dejan el panel inusable |
+| Canal ya asignado a otra cuenta (409) | Antes se descubría recién al aprobar, y la pendiente quedaba sin poder aprobarse. Casi siempre es alguien que se cambió el nombre: el mensaje lo manda a mudar su ficha con el código |
 
 ---
 
@@ -306,6 +307,48 @@ primera, las dos pantallas mostrarían datos que ya no son los publicados.
 Deja rastro en `editedAt` y `editCount`, que el panel muestra sobre la petición.
 No hay nada que aprobar —esa decisión ya está tomada—, pero un contador que sube
 solo es lo único que delata un código filtrado.
+
+---
+
+## `POST /api/submissions/[token]/rename`
+
+El jugador muda su ficha al nombre que tiene ahora en el juego. Body:
+`{playerName, rank?}` — el `rank` solo decide algo si el nombre nuevo está
+repetido en el ladder.
+
+Existe porque el nombre es la identidad y el juego deja cambiárselo. Quien se
+renombra queda con una ficha que no matchea ninguna fila, y no podía arreglarlo
+pidiendo otra: sus canales siguen tomados por la ficha vieja y la aprobación
+choca contra ella. La única salida era borrar el documento a mano.
+
+**No pasa por la cola**, y es la única escritura pública que toca la identidad.
+El código prueba que quien pide es la persona que ya se aprobó; que el nombre
+nuevo sea suyo no lo puede probar nadie —no hay IDs—, tampoco quien revisa. Así
+que en vez de agregar espera sobre una ficha rota, se acota cuándo se puede:
+
+| Regla | Por qué |
+|---|---|
+| La petición tiene que estar `approved` (409 si no) | Sin ficha publicada no hay nada que mover |
+| El nombre actual **ya no está** en el ladder (409) | Es lo que vuelve inofensivo un código filtrado: una ficha que funciona no se puede mover, así que nadie te la saca de tu fila. Y una vez mudada tampoco se vuelve a mover mientras el nombre nuevo siga en la tabla |
+| El nombre nuevo **sí está** en el ladder (404) | Mismo anti-basura que al pedir, y de ahí salen el nombre exacto y el puesto |
+| El nombre nuevo no tiene ficha (409) | La consulta previa es para poder decirlo; lo que lo impide de verdad es `uniq_nameKey` |
+| El nombre nuevo no tiene una petición pendiente (409) | Dos reclamos sobre el mismo nombre sí son una pregunta para un humano |
+| Nombre repetido sin `rank` (409) | No se adivina cuál de los homónimos es. Con `rank` se elige la fila más cercana, no la exacta: entre cargar la lista y apretar el botón alguien pudo subir un puesto |
+| Se valida contra el ladder **sin cache**, y si no responde no se sigue | Al aprobar el ladder es contexto para una decisión humana; acá es la puerta |
+
+Lo que se muda, todo dentro de **una transacción** (`movePlayer`, la única del
+proyecto): la ficha en `players` con su `overlayKey` —la URL pegada en OBS sigue
+andando—, **todas** las peticiones aprobadas de ese nombre, el liderazgo y el
+veto en `alliances`, y los `snapshots`. Tiene que ser todo o nada: si la ficha
+se mudara y la petición no, el código quedaría apuntando al nombre viejo, que
+queda libre — y el día que otro lo vincule, ese código editaría su ficha.
+
+Deja rastro en `renamedFrom`, `renamedAt` y `renameCount`, que se ven en la
+página de estado y en el panel.
+
+Lo que queda abierto, a sabiendas: alguien ya aprobado, cuyo nombre no esté en
+la tabla, puede mudar su ficha a la fila de otro que no esté vinculado. Se ve en
+el panel y tiene un contacto guardado detrás.
 
 ---
 

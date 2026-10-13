@@ -232,6 +232,7 @@ anulen; está verificado con GET y POST seguidos.
 | `npm run test:overlay-key` | 21 casos de la llave secreta del overlay: largo, parseo y que no choque con los otros dos códigos |
 | `npm run test:admin-auth` | 31 casos de hash de clave y sesiones firmadas |
 | `npm run test:self-edit` | 27 casos de la edición con el código, contra la ruta viva (necesita `npm run dev`). Se autolimpia |
+| `npm run test:rename` | 41 casos de la mudanza de nombre: las reglas del ladder con filas inventadas y la mudanza contra la base. No necesita `npm run dev`. Se autolimpia |
 | `npm run db:archive-season -- 2026-07` | Congela una temporada antes de que la API la suelte |
 | `npm run db:seed-demo` | Siembra un jugador con historial sintético |
 | `npm run db:seed-demo -- --clean` | Lo borra |
@@ -409,13 +410,30 @@ indemostrables el día de la edición como el día de la aprobación, así que
 mandarlos otra vez a la cola agregaría espera sin agregar certeza, y mientras
 tanto el dato viejo sigue publicado.
 
-El **contacto no se edita** por ahí, y el nombre de jugador tampoco. El contacto
-es la forma de llegar a la persona si hay que revertir algo, y un código puede
-terminar en una captura: dejar que quien lo tenga cambie el Discord de destino
-convertiría una fuga en un secuestro silencioso de la ficha. Cada edición queda
-fechada y contada (`editedAt`, `editCount`) y se ve en la cola — no hay nada que
-aprobar, pero un contador que sube solo es lo único que delata un código
-filtrado.
+El **contacto no se edita** por ahí. Es la forma de llegar a la persona si hay
+que revertir algo, y un código puede terminar en una captura: dejar que quien lo
+tenga cambie el Discord de destino convertiría una fuga en un secuestro
+silencioso de la ficha. Cada edición queda fechada y contada (`editedAt`,
+`editCount`) y se ve en la cola — no hay nada que aprobar, pero un contador que
+sube solo es lo único que delata un código filtrado.
+
+### Cambiarse el nombre en el juego
+
+El nombre es la identidad, así que quien se lo cambia queda con la ficha pegada
+al nombre viejo: su fila nueva sale sin links ni tick y el overlay deja de
+encontrarlo. Pedir otra ficha no lo arregla —sus canales siguen tomados por la
+vieja— y el formulario ahora lo dice en vez de dejar una pendiente que no se
+puede aprobar.
+
+La salida es mudar la ficha con el código (`POST
+/api/submissions/[token]/rename`). La página de estado lo ofrece sola cuando el
+nombre de la ficha ya no está en el ladder: se elige la fila nueva y la ficha se
+va entera —canales, alianza, historial por hora, la URL del overlay— con el
+mismo código. Tampoco pasa por la cola, y lo que la acota está en
+[`docs/api.md`](docs/api.md): solo se mueve una ficha cuyo nombre ya no está en
+la tabla, solo a un nombre que sí está y que no tiene ficha ni petición
+pendiente, y cada mudanza queda a la vista en el panel (`renamedFrom`,
+`renamedAt`, `renameCount`).
 
 ### Lo que el panel todavía no tiene
 
@@ -454,9 +472,10 @@ Son del endpoint oficial, no nuestras — el detalle está en
   declara cada jugador al pedir su ficha, así que la columna queda vacía para
   quien no lo hizo, y nadie puede comprobarla.
 - **El nombre es la identidad.** Si un jugador aprobado se cambia el nombre en
-  el juego, deja de ser encontrado y su historial deja de crecer, en silencio.
-  Y si además abandona el nombre, otro puede pedirlo: sin IDs de jugador,
-  controlar el nombre *es* la identidad.
+  el juego, deja de ser encontrado y su historial deja de crecer hasta que mude
+  su ficha con el código — no lo podemos detectar por él. Y si además abandona
+  el nombre, otro puede pedirlo: sin IDs de jugador, controlar el nombre *es*
+  la identidad.
 - **El Δ 24 h no siempre se puede calcular.** Existe para las 1000 filas —cada
   corrida guarda el ladder entero comprimido en un documento—, pero queda en
   guión si todavía no hay una lectura de hace un día, si el jugador no estaba en

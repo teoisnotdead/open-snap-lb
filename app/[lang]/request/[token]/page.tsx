@@ -4,12 +4,14 @@ import { notFound } from "next/navigation";
 import { LeaderPanel, type Member } from "@/components/LeaderPanel";
 import { LostCode } from "@/components/LostCode";
 import { OverlayLink } from "@/components/OverlayLink";
+import { RenameForm } from "@/components/RenameForm";
 import { SelfEditForm } from "@/components/SelfEditForm";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TokenLookup } from "@/components/TokenLookup";
 import { WarningIcon } from "@/components/icons";
 import { listAllianceMembers } from "@/lib/alliances";
 import { alliancesCollection } from "@/lib/db";
+import { fetchLeaderboard } from "@/lib/leaderboard";
 import { overlaySetup } from "@/lib/overlay-url";
 import { findSubmissionByToken } from "@/lib/submissions";
 import { formatStatusToken } from "@/lib/status-token";
@@ -63,6 +65,15 @@ export default async function RequestStatusPage({
    * mismo lugar: detrás del `statusToken`, en una página con `noindex`.
    */
   let overlay: { url: string; pinnedRank?: number } | null = null;
+  /**
+   * El nombre de la ficha ya no está en el ladder: o salió del top 1000, o la
+   * persona se cambió el nombre en el juego. Desde acá no se distinguen, y la
+   * pantalla dice las dos cosas.
+   *
+   * Es lo que decide si se ofrece mudar la ficha, y es la misma condición que
+   * exige la ruta — ver `lib/rename.ts`.
+   */
+  let nameGone = false;
 
   try {
     doc = await findSubmissionByToken(token);
@@ -108,6 +119,24 @@ export default async function RequestStatusPage({
           overlay = await overlaySetup(doc.nameKey);
         } catch (err) {
           console.error("No se pudo preparar el overlay:", err);
+        }
+
+        /**
+         * Sin cache, al revés que el overlay de arriba. Esta página se abre de
+         * vez en cuando, y con tráfico así una entrada cacheada devuelve el
+         * ladder que dejó la visita anterior, tenga la edad que tenga: ofrecería
+         * mudar una ficha que ya volvió a la tabla, o seguiría ofreciéndolo
+         * justo después de mudarla.
+         *
+         * Si el ladder no responde no se ofrece nada: la mudanza tampoco
+         * andaría, porque se valida contra él.
+         */
+        try {
+          const nameKey = doc.nameKey;
+          const board = await fetchLeaderboard({ revalidate: false });
+          nameGone = !board.rows.some((r) => r.nameKey === nameKey);
+        } catch {
+          // Ver arriba.
         }
       }
     }
@@ -184,12 +213,30 @@ export default async function RequestStatusPage({
                   </>
                 )}
 
+                {/* El rastro de la mudanza, a la vista de quien tiene el código:
+                    si no la hizo él, es la señal de que el código se filtró. */}
+                {doc.renamedFrom && doc.renamedAt && (
+                  <>
+                    <dt className="text-ink-4">{t.request.renamedFrom}</dt>
+                    <dd className="min-w-0 break-words text-ink-2">
+                      {doc.renamedFrom} · {formatDateTime(doc.renamedAt, lang)}
+                    </dd>
+                  </>
+                )}
+
                 <dt className="text-ink-4">{t.request.tokenLabel}</dt>
                 <dd className="font-mono tracking-[0.08em] text-ink-2">
                   {formatStatusToken(doc.statusToken)}
                 </dd>
               </dl>
             </section>
+
+            {/* Arriba de todo lo demás: con la ficha despegada de su fila, esto
+                es a lo que vino la persona, y editar un canal no arregla nada
+                mientras no se mude. */}
+            {doc.status === "approved" && nameGone && (
+              <RenameForm t={t} token={doc.statusToken} currentName={doc.playerName} />
+            )}
 
             {/* Lo que pidió. Se puede mostrar porque la llave es un token
                 aleatorio, no un id adivinable. El contacto sigue afuera. */}

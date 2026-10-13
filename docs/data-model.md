@@ -42,9 +42,13 @@ Implementado en `lib/names.ts`.
    > score no cambió.
 2. **El nombre es mutable.** Si un jugador aprobado se cambia el nombre, su
    `nameKey` deja de aparecer en el ladder y su historial deja de crecer, en
-   silencio. Es detectable (`lastSeenAt` se queda viejo) y se resuelve con una
-   petición nueva. Peor: si además abandona el nombre, otro puede pedirlo —
-   sin IDs de jugador, controlar el nombre *es* la identidad.
+   silencio. Es detectable (`lastSeenAt` se queda viejo) y lo resuelve el
+   propio jugador: con su código muda la ficha al nombre nuevo
+   (`POST /api/submissions/[token]/rename`, ver `api.md`), y con ella se van
+   sus peticiones aprobadas, su historial, su alianza y la llave del overlay.
+   Una petición nueva NO sirve: sus canales siguen tomados por la ficha vieja.
+   Peor: si además abandona el nombre, otro puede pedirlo — sin IDs de
+   jugador, controlar el nombre *es* la identidad.
 3. **Lowercase colapsa `Leaf` y `leaf`**, que en el juego son cuentas
    distintas. Se acepta a propósito: la ambigüedad hay que manejarla igual por
    el punto 1, y a cambio el formulario perdona errores de mayúsculas.
@@ -137,6 +141,7 @@ nombre.
 | `status` | `pending`/`approved`/`rejected` | |
 | `rejectionReason` | string? | Obligatorio al rechazar |
 | `reviewedAt` / `reviewedBy` | | |
+| `renamedFrom` / `renamedAt` / `renameCount` | | Rastro de la mudanza de nombre: cómo se llamaba justo antes, cuándo y cuántas van. Al mudar, `nameKey` y `playerName` pasan a ser los nuevos |
 
 ### El público entra por `statusToken`, no por `_id`
 

@@ -177,6 +177,16 @@ function SubmissionCard({ submission: s }: { submission: SubmissionView }) {
                 {s.editCount != null && s.editCount > 1 ? ` (${s.editCount} veces)` : null}
               </>
             )}
+            {/* Lo mismo, con más motivo: mudar la ficha cambia a qué FILA se le
+                pegan los links, y tampoco pasó por acá. Es el único lugar donde
+                se ve si alguien se mudó al nombre de otro. */}
+            {s.renamedFrom && s.renamedAt && (
+              <>
+                {` · se mudó desde "${s.renamedFrom}" `}
+                {new Date(s.renamedAt).toLocaleString("es")}
+                {s.renameCount != null && s.renameCount > 1 ? ` (${s.renameCount} veces)` : null}
+              </>
+            )}
           </p>
         </div>
 

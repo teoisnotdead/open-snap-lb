@@ -314,8 +314,18 @@ const en = {
     editSaving: "Saving…",
     editSaved: "Saved. The table shows the new details on its next load.",
     editLocked:
-      "Your contact details and your player name can't be changed here — write to us if either needs to change. Everything else is yours to edit.",
+      "Your contact details can't be changed here — write to us if they need to change. Your player name isn't edited either: if you change it in the game, come back to this page and you can move your listing to the new one.",
     editedAt: "Last edited",
+    renamedFrom: "Previous name",
+    renameTitle: "Changed your name in the game?",
+    renameBody:
+      "“{name}” isn't in the top 1 000 right now, so your listing isn't attached to any row. If you dropped out, there's nothing to do: it comes back on its own when you re-enter. If you changed your name, move your listing to the new one — it keeps your channels, your alliance, your history and your overlay URL, and your code stays the same.",
+    renameOpen: "Move my listing to my new name",
+    renameConfirmBody:
+      "You're about to move the listing from “{from}” to “{to}” (#{rank}). It can't be moved again while that name is on the ladder, so make sure it's your row.",
+    renameConfirm: "Yes, that's my row",
+    renameBack: "Pick another",
+    renameMoving: "Moving…",
     dbDown:
       "We can't reach the database right now, so we can't show the status of your request. It's still there — try again in a few minutes.",
   },
@@ -349,7 +359,10 @@ const en = {
     s8Title: "Editing later is automatic",
     s8a: "That by-hand review happens once. After your request is approved, the same tracking code lets you change your channels, your alliance tag and its name from the status page — and the change is published on the spot. No second review, no queue, no waiting. Clearing a field removes it.",
     s8b: "It works that way because none of those fields can be checked against the official API: a Twitch username and an alliance name are just as unprovable the day you edit them as the day they were approved, so sending them back to the queue would add a wait without adding certainty — while the outdated data stays on the table. What approval settled was who you are, and changing a link doesn't reopen that.",
-    s8c: "Which is why the code is worth guarding: whoever holds it can change what shows next to your name. Every edit is stamped with a date and counted, and both the status page and the review panel show it. Your contact details and your player name are the exception — those aren't editable with the code, so write to us if either has to change.",
+    s8c: "Which is why the code is worth guarding: whoever holds it can change what shows next to your name. Every edit is stamped with a date and counted, and both the status page and the review panel show it. Your contact details are the exception — those aren't editable with the code, so write to us if they have to change.",
+    s9Title: "If you change your name in the game",
+    s9a: "Because identity is the name, changing it leaves your listing attached to the old one: your new row shows up without links or tick, and the overlay stops finding you. You don't need to request a new listing. Open the status page with your code and, once your old name is no longer in the top 1 000, it lets you pick your new row and move the listing — it keeps your channels, your alliance, your hourly history and your overlay URL, and the code stays the same.",
+    s9b: "That doesn't go through a second review either, but it has limits: a listing only moves once the name it holds is gone from the ladder — so nobody holding your code can take it off your row — only to a name that is on the table and has no listing, and every move is dated and visible to whoever reviews.",
     legal:
       "Unofficial project, not affiliated with Second Dinner or Nuverse. Marvel Snap and its marks belong to their respective owners.",
   },
@@ -662,8 +675,18 @@ const es: Dictionary = {
     editSaving: "Guardando…",
     editSaved: "Guardado. La tabla muestra los datos nuevos la próxima vez que cargue.",
     editLocked:
-      "Tu contacto y tu nombre de jugador no se cambian aquí — escríbenos si alguno tiene que cambiar. Todo lo demás lo editas tú.",
+      "Tu contacto no se cambia aquí — escríbenos si tiene que cambiar. Tu nombre de jugador tampoco se edita: si te lo cambias en el juego, vuelve a esta página y podrás mover tu ficha al nuevo.",
     editedAt: "Última edición",
+    renamedFrom: "Nombre anterior",
+    renameTitle: "¿Te cambiaste el nombre en el juego?",
+    renameBody:
+      "“{name}” no aparece ahora en el top 1 000, así que tu ficha no está pegada a ninguna fila. Si es porque saliste del top, no hay nada que hacer: vuelve sola cuando entres de nuevo. Si te cambiaste el nombre, mueve tu ficha al nuevo: se lleva tus canales, tu alianza, tu historial y la URL de tu overlay, y tu código sigue siendo el mismo.",
+    renameOpen: "Mover mi ficha a mi nombre nuevo",
+    renameConfirmBody:
+      "Vas a mover la ficha de “{from}” a “{to}” (#{rank}). Mientras ese nombre siga en el ladder no se puede volver a mover, así que revisa que sea tu fila.",
+    renameConfirm: "Sí, es mi fila",
+    renameBack: "Elegir otra",
+    renameMoving: "Moviendo…",
     dbDown:
       "No podemos conectarnos a la base ahora mismo, así que no podemos mostrarte el estado de tu petición. Sigue ahí — intenta de nuevo en unos minutos.",
   },
@@ -697,7 +720,10 @@ const es: Dictionary = {
     s8Title: "Editar después es automático",
     s8a: "Esa revisión a mano ocurre una sola vez. Una vez aprobada tu petición, el mismo código de seguimiento te deja cambiar tus canales, el tag de tu alianza y su nombre desde la página de estado — y el cambio se publica en el momento. Sin una segunda revisión, sin cola y sin esperar. Dejar un campo vacío lo quita.",
     s8b: "Funciona así porque nada de eso se puede comprobar contra la API oficial: un usuario de Twitch y un nombre de alianza son tan indemostrables el día que los editas como el día que se aprobaron, así que mandarlos de vuelta a la cola agregaría espera sin agregar certeza — y mientras tanto el dato viejo sigue en la tabla. Lo que la aprobación decidió fue quién eres, y cambiar un link no vuelve a abrir esa pregunta.",
-    s8c: "Por eso vale la pena cuidar el código: quien lo tenga puede cambiar lo que se muestra junto a tu nombre. Cada edición queda fechada y contada, y se ve tanto en la página de estado como en el panel de revisión. La excepción es tu contacto y tu nombre de jugador: esos no se editan con el código, así que escríbenos si alguno tiene que cambiar.",
+    s8c: "Por eso vale la pena cuidar el código: quien lo tenga puede cambiar lo que se muestra junto a tu nombre. Cada edición queda fechada y contada, y se ve tanto en la página de estado como en el panel de revisión. La excepción es tu contacto: ese no se edita con el código, así que escríbenos si tiene que cambiar.",
+    s9Title: "Si te cambias el nombre en el juego",
+    s9a: "Como la identidad es el nombre, al cambiártelo tu ficha se queda pegada al nombre viejo: tu fila nueva aparece sin links ni tick, y el overlay deja de encontrarte. No hace falta pedir otra ficha. Abre la página de estado con tu código y, en cuanto tu nombre viejo ya no esté en el top 1 000, podrás elegir tu fila nueva y mover la ficha: se lleva tus canales, tu alianza, tu historial por hora y la URL del overlay, y el código sigue siendo el mismo.",
+    s9b: "Tampoco pasa por una segunda revisión, pero tiene límites: la ficha solo se mueve cuando el nombre que tiene ya no está en el ladder —así nadie con tu código te la saca de tu fila—, solo a un nombre que esté en la tabla y que no tenga ficha, y cada mudanza queda fechada y a la vista de quien revisa.",
     legal:
       "Proyecto no oficial, sin afiliación con Second Dinner ni Nuverse. Marvel Snap y sus marcas pertenecen a sus respectivos dueños.",
   },

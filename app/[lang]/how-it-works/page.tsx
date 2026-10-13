@@ -88,6 +88,11 @@ export default async function HowPage({
           <p>{t.how.s8c}</p>
         </Section>
 
+        <Section title={t.how.s9Title}>
+          <p>{t.how.s9a}</p>
+          <p>{t.how.s9b}</p>
+        </Section>
+
         <p className="mt-12 border-t border-line pt-6 text-[12.5px] leading-relaxed text-ink-4">
           {t.how.legal}
         </p>

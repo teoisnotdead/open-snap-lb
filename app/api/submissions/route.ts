@@ -2,6 +2,7 @@ import { submissionsCollection } from "@/lib/db";
 import { fetchLeaderboard, indexByNameKey, LeaderboardError } from "@/lib/leaderboard";
 import { apiError, json, readJson } from "@/lib/api";
 import { toNameKey, isValidNameKey } from "@/lib/names";
+import { findSocialConflict } from "@/lib/players";
 import { generateStatusToken } from "@/lib/tokens";
 import { CONTACT_PARSERS } from "@/lib/socials";
 import { parseProfileFields, type ProfileFieldsInput } from "@/lib/profile-fields";
@@ -80,6 +81,24 @@ export async function POST(req: Request) {
       return apiError(
         `No encontramos a "${rawName}" en el top ${board.rows.length} actual. Solo se puede pedir por una cuenta que esté en el leaderboard.`,
         404
+      );
+    }
+
+    /**
+     * El choque de canales se avisa ACÁ y no recién al aprobar.
+     *
+     * El caso de todos los días es alguien que se cambió el nombre en el juego
+     * y viene a pedir una ficha nueva con los mismos canales, que siguen tomados
+     * por la suya vieja. Dejarlo pasar creaba una pendiente que nadie podía
+     * aprobar —el panel chocaba contra esa ficha— y la persona se quedaba
+     * esperando una respuesta que no iba a llegar. La salida existe y no
+     * necesita cola: mudar la ficha con el código. Ver `lib/rename.ts`.
+     */
+    const conflict = await findSocialConflict(socials, nameKey);
+    if (conflict) {
+      return apiError(
+        `Ese canal ya está en la ficha de "${conflict.playerName}". Si esa ficha es tuya y te cambiaste el nombre en el juego, no pidas una nueva: ábrela con tu código de seguimiento y muévela a tu nombre actual. Si no es tuya, escríbenos.`,
+        409
       );
     }
 

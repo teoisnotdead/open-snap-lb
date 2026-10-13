@@ -279,6 +279,21 @@ export interface SubmissionDoc {
   editedAt?: Date;
   editCount?: number;
 
+  /**
+   * El rastro de una mudanza de nombre: cómo se llamaba la ficha justo antes de
+   * la última, cuándo fue y cuántas lleva.
+   *
+   * Mismo papel que `editedAt` / `editCount`, y con más motivo. Mover la ficha
+   * con el código (`POST /api/submissions/[token]/rename`) es lo único que el
+   * jugador puede hacer solo y que toca la IDENTIDAD, no un dato declarado: el
+   * `nameKey` de arriba deja de ser el que revisó el admin. No vuelve a la cola
+   * —ver `lib/rename.ts`—, así que este rastro es todo lo que le queda al panel
+   * para enterarse.
+   */
+  renamedFrom?: string;
+  renamedAt?: Date;
+  renameCount?: number;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -287,13 +302,14 @@ export interface SubmissionDoc {
 export interface SubmissionView
   extends Omit<
     SubmissionDoc,
-    "_id" | "createdAt" | "updatedAt" | "reviewedAt" | "editedAt"
+    "_id" | "createdAt" | "updatedAt" | "reviewedAt" | "editedAt" | "renamedAt"
   > {
   id: string;
   createdAt: string;
   updatedAt: string;
   reviewedAt?: string;
   editedAt?: string;
+  renamedAt?: string;
   /**
    * Filas del ladder vivo que tienen este nombre, resueltas al vuelo.
    *

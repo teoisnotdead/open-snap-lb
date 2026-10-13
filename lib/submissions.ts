@@ -44,7 +44,7 @@ export function toSubmissionView(
   doc: SubmissionDoc,
   candidates?: SubmissionView["candidates"]
 ): SubmissionView {
-  const { _id, createdAt, updatedAt, reviewedAt, editedAt, ...rest } = doc;
+  const { _id, createdAt, updatedAt, reviewedAt, editedAt, renamedAt, ...rest } = doc;
 
   return {
     ...rest,
@@ -53,6 +53,7 @@ export function toSubmissionView(
     updatedAt: updatedAt.toISOString(),
     ...(reviewedAt ? { reviewedAt: reviewedAt.toISOString() } : {}),
     ...(editedAt ? { editedAt: editedAt.toISOString() } : {}),
+    ...(renamedAt ? { renamedAt: renamedAt.toISOString() } : {}),
     ...(candidates?.length ? { candidates } : {}),
   };
 }
@@ -83,6 +84,8 @@ export function toPublicStatus(doc: SubmissionDoc) {
     createdAt: doc.createdAt.toISOString(),
     ...(doc.reviewedAt ? { reviewedAt: doc.reviewedAt.toISOString() } : {}),
     ...(doc.editedAt ? { editedAt: doc.editedAt.toISOString() } : {}),
+    ...(doc.renamedFrom ? { renamedFrom: doc.renamedFrom } : {}),
+    ...(doc.renamedAt ? { renamedAt: doc.renamedAt.toISOString() } : {}),
     /**
      * Si esta petición se puede editar sola con el código. Lo decide el
      * servidor y no la pantalla: es la misma condición que aplica `PATCH`, y
